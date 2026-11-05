@@ -1,0 +1,692 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Cartero Digital</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Lexend:wght@400;500;700&family=JetBrains+Mono:wght@500&display=swap">
+<style>
+/* Layout: cabecera tipo sello postal, pestañas de misiones, ventanas de correo simuladas con panel lateral */
+:root{
+  --bg:#f2f3fa; --paper:#ffffff; --ink:#1d2147; --muted:#555b85; --line:#d6d9ee;
+  --accent:#3b44c4; --accent-ink:#ffffff; --stamp:#e2553f; --stamp-ink:#ffffff; --post:#f5c542; --post-ink:#352700;
+  --ok:#1f8a4c; --ok-bg:#e1f4e8; --bad:#c43c2f; --bad-bg:#fbe5e2; --soft:#eceefb; --sel:#fff1c7;
+  --f-display:"Baloo 2","Trebuchet MS",system-ui,sans-serif;
+  --f-body:"Lexend",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"JetBrains Mono",ui-monospace,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#12142b; --paper:#1c1f3d; --ink:#e7e8fb; --muted:#a6aad3; --line:#30355f;
+  --accent:#8b93ff; --accent-ink:#11132b; --stamp:#ff8370; --stamp-ink:#2a0d08; --post:#f5cd5a; --post-ink:#2a1f00;
+  --ok:#5fd18e; --ok-bg:#163527; --bad:#ff8a7c; --bad-bg:#3a1d1a; --soft:#262a52; --sel:#3d3418; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#12142b; --paper:#1c1f3d; --ink:#e7e8fb; --muted:#a6aad3; --line:#30355f;
+  --accent:#8b93ff; --accent-ink:#11132b; --stamp:#ff8370; --stamp-ink:#2a0d08; --post:#f5cd5a; --post-ink:#2a1f00;
+  --ok:#5fd18e; --ok-bg:#163527; --bad:#ff8a7c; --bad-bg:#3a1d1a; --soft:#262a52; --sel:#3d3418; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:16px;line-height:1.55;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 48px}
+.wrap{max-width:1020px;margin:0 auto;display:flex;flex-direction:column;gap:22px}
+h1,h2,h3{font-family:var(--f-display);text-wrap:balance;margin:0;line-height:1.1}
+p{margin:0}
+button{font-family:inherit}
+button:focus-visible,[tabindex]:focus-visible{outline:3px solid var(--post);outline-offset:2px}
+
+header.hero{display:flex;gap:18px;align-items:center;flex-wrap:wrap}
+.stamp{width:84px;height:84px;flex:none}
+.hero-text{flex:1;min-width:0;display:flex;flex-direction:column;gap:4px}
+.hero h1{font-size:clamp(2rem,5.4vw,3rem);color:var(--accent)}
+.hero p{color:var(--muted);max-width:62ch}
+.score{font-family:var(--f-display);font-weight:700;background:var(--post);color:var(--post-ink);border-radius:999px;padding:8px 18px;font-variant-numeric:tabular-nums;white-space:nowrap;font-size:1.1rem}
+
+nav.tabs{display:flex;gap:8px;flex-wrap:wrap}
+nav.tabs button{font:700 1rem var(--f-display);border:2px solid var(--line);background:var(--paper);color:var(--ink);padding:8px 14px;border-radius:12px;cursor:pointer;display:flex;gap:8px;align-items:center}
+nav.tabs .n{display:inline-grid;place-items:center;width:24px;height:24px;border-radius:50%;background:var(--soft);font-size:.85rem}
+nav.tabs button[aria-selected="true"]{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+nav.tabs button[aria-selected="true"] .n{background:var(--accent-ink);color:var(--accent)}
+
+section.mission{display:flex;flex-direction:column;gap:16px}
+.intro{background:var(--paper);border:2px solid var(--line);border-radius:16px;padding:16px 18px;display:flex;flex-direction:column;gap:6px}
+.intro h2{font-size:1.6rem}
+.intro p{color:var(--muted);max-width:72ch}
+.label{font:700 .74rem var(--f-body);letter-spacing:.09em;text-transform:uppercase;color:var(--stamp)}
+.grid2{display:grid;grid-template-columns:minmax(0,1.45fr) minmax(0,1fr);gap:16px;align-items:start}
+@media (max-width:780px){.grid2{grid-template-columns:minmax(0,1fr)}}
+.grid2>*{min-width:0}
+.panel{background:var(--paper);border:2px solid var(--line);border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:12px}
+.panel h3{font-size:1.3rem}
+.btn{font:700 1rem var(--f-display);border:2px solid transparent;border-radius:12px;padding:8px 16px;cursor:pointer;background:var(--soft);color:var(--ink)}
+.btn.primary{background:var(--accent);color:var(--accent-ink)}
+.btn:disabled{opacity:.55;cursor:default}
+.feedback{border-radius:12px;padding:12px 14px;display:flex;flex-direction:column;gap:6px}
+.feedback.right{background:var(--ok-bg)}.feedback.wrong{background:var(--bad-bg)}
+.feedback strong{font-family:var(--f-display);font-size:1.1rem}
+.tip{background:var(--sel);border-radius:12px;padding:12px 14px;font-size:.95rem}
+
+/* Ventana de correo simulada (estilo neutro, inventado) */
+.mail{border:2px solid var(--line);border-radius:14px;overflow:hidden;background:var(--paper);box-shadow:0 6px 18px rgba(20,24,80,.08)}
+.mail .titlebar{background:var(--accent);color:var(--accent-ink);padding:8px 12px;display:flex;justify-content:space-between;align-items:center;font:700 1rem var(--f-display)}
+.mail .titlebar .dots{display:flex;gap:5px}.mail .titlebar .dots i{width:10px;height:10px;border-radius:50%;background:var(--accent-ink);opacity:.5;display:block}
+.field{display:flex;gap:10px;align-items:center;padding:9px 12px;border-bottom:1px solid var(--line);min-height:44px}
+.field .k{font-weight:700;color:var(--muted);width:62px;flex:none;font-size:.9rem}
+.field .v{flex:1;min-width:0;font-size:.95rem;overflow-wrap:anywhere}
+.chipaddr{display:inline-block;background:var(--soft);border-radius:999px;padding:2px 10px;margin:2px 4px 2px 0;font-size:.88rem}
+.mail .body{padding:14px 12px;display:flex;flex-direction:column;gap:10px;font-size:.95rem}
+.attach{display:flex;gap:8px;align-items:center;border:1.5px solid var(--line);border-radius:10px;padding:6px 10px;font-size:.88rem;align-self:flex-start;max-width:100%}
+.attach svg{flex:none}
+.sig{border-top:1px dashed var(--line);padding-top:8px;color:var(--muted);font-size:.88rem}
+.toolbar{display:flex;gap:8px;align-items:center;padding:10px 12px;border-top:1px solid var(--line);flex-wrap:wrap}
+.sendbtn{background:var(--accent);color:var(--accent-ink);border-radius:999px;padding:6px 18px;font:700 .95rem var(--f-display)}
+.tool{width:34px;height:34px;border-radius:8px;display:grid;place-items:center;background:var(--soft)}
+.part{cursor:pointer;border-radius:8px;outline:2px dashed transparent;outline-offset:-2px;transition:outline-color .15s,background .15s}
+.part:hover{outline-color:var(--post)}
+.part.seen{background:color-mix(in srgb,var(--ok-bg) 70%,transparent)}
+.part.active{outline:3px solid var(--stamp);outline-offset:-3px}
+.part.good{outline:3px solid var(--ok);outline-offset:-3px;background:var(--ok-bg)}
+.part.nope{outline:3px solid var(--bad);outline-offset:-3px}
+.info .ico{width:48px;height:48px;border-radius:12px;background:var(--soft);display:grid;place-items:center;font:800 1.1rem var(--f-display);color:var(--accent)}
+.info .head{display:flex;gap:12px;align-items:center}
+.seenlist{display:flex;gap:6px;flex-wrap:wrap}
+.seenlist span{font-size:.78rem;border-radius:999px;padding:2px 9px;background:var(--soft);color:var(--muted)}
+.seenlist span.on{background:var(--ok-bg);color:var(--ok);font-weight:700}
+
+/* Misión 2: fichas */
+.chips{display:flex;gap:8px;flex-wrap:wrap}
+.chip{border:2px solid var(--line);background:var(--paper);color:var(--ink);border-radius:12px;padding:8px 12px;cursor:pointer;font-size:.92rem;text-align:left;max-width:100%;overflow-wrap:anywhere}
+.chip.sel{border-color:var(--stamp);background:var(--sel)}
+.chip.used{display:none}
+.drop{min-height:30px;border:2px dashed var(--line);border-radius:8px;padding:4px 8px;cursor:pointer;color:var(--muted);font-size:.88rem;display:flex;align-items:center;flex-wrap:wrap;gap:4px}
+.drop.armed{border-color:var(--stamp);background:var(--sel)}
+.drop.filled{border-style:solid;border-color:var(--ok);background:var(--ok-bg);color:var(--ink)}
+.drop.shake{animation:shake .35s}
+@keyframes shake{25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+@media (prefers-reduced-motion:reduce){.drop.shake{animation:none}}
+.task{background:var(--soft);border-radius:12px;padding:12px 14px;font-size:.95rem}
+
+/* Misión 3 */
+.prompt{font:800 1.35rem var(--f-display);color:var(--stamp)}
+.dots10{display:flex;gap:5px;flex-wrap:wrap}.dots10 i{width:22px;height:8px;border-radius:4px;background:var(--line);display:block}
+.dots10 i.ok{background:var(--ok)}.dots10 i.ko{background:var(--bad)}.dots10 i.now{background:var(--post)}
+
+/* Misión 4: Creative Commons */
+.cc-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
+.ccard{background:var(--paper);border:2px solid var(--line);border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:8px}
+.ccard .top{display:flex;gap:10px;align-items:center}
+.ccard h3{font-size:1.1rem}
+.ccard p{font-size:.9rem;color:var(--muted)}
+.ccicon{width:44px;height:44px;flex:none}
+.scen{display:grid;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));gap:16px}
+.sc{background:var(--paper);border:2px solid var(--line);border-radius:16px;overflow:hidden;display:flex;flex-direction:column}
+.sc .pic{display:block;width:100%;height:130px}
+.sc .lic{display:flex;gap:6px;align-items:center;padding:8px 12px;background:var(--soft);flex-wrap:wrap;font:500 .82rem var(--f-mono)}
+.sc .lic svg{width:26px;height:26px}
+.sc .bd{padding:12px 14px;display:flex;flex-direction:column;gap:10px;flex:1}
+.sc .q{font-weight:700}
+.opts{display:flex;flex-direction:column;gap:8px}
+.opts button{text-align:left;font:500 .93rem var(--f-body);background:var(--bg);color:var(--ink);border:2px solid var(--line);border-radius:10px;padding:8px 12px;cursor:pointer}
+.opts button.r{background:var(--ok-bg);border-color:var(--ok)}
+.opts button.w{background:var(--bad-bg);border-color:var(--bad)}
+.attr{font:500 .85rem var(--f-mono);background:var(--soft);border-radius:10px;padding:10px 12px;overflow-wrap:anywhere}
+.tasl{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.tasl div{background:var(--soft);border-radius:12px;padding:10px 12px;font-size:.9rem}
+.tasl b{font:800 1.3rem var(--f-display);color:var(--stamp);display:block}
+
+/* Misión 5 */
+.quiz{display:flex;flex-direction:column;gap:12px}
+.qitem{background:var(--paper);border:2px solid var(--line);border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:10px}
+.qitem .qq{font-weight:700}
+.diploma{border:3px dashed var(--accent);border-radius:18px;padding:20px;background:var(--paper);text-align:center;display:flex;flex-direction:column;gap:8px;align-items:center}
+.diploma h3{font-size:1.6rem;color:var(--accent)}
+.ficha{display:flex;gap:12px;flex-wrap:wrap;background:var(--paper);border:2px solid var(--line);border-radius:14px;padding:12px 14px}
+.ficha label{display:flex;flex-direction:column;gap:3px;font-size:.78rem;font-weight:800;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;flex:1 1 180px;min-width:0}
+.ficha input{border:2px solid var(--line);border-radius:10px;padding:8px 10px;background:var(--bg);color:var(--ink);font:inherit;font-size:1rem;text-transform:none;letter-spacing:0;font-weight:400;width:100%}
+.ficha input:focus-visible{outline:3px solid var(--accent);outline-offset:1px}
+#informe{background:var(--paper);border:2px solid var(--line);border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:12px}
+#informe h3{font-size:1.35rem}
+.rwrap{overflow-x:auto}
+.rtable{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
+.rtable th,.rtable td{text-align:left;padding:8px 6px;border-bottom:1px solid var(--line);font-size:.93rem;vertical-align:top}
+.rtable th{font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.rtable .rf{font-size:.85rem;color:var(--muted)}
+.pend{font-size:.75rem;color:var(--muted);background:var(--bg);border-radius:999px;padding:1px 8px;white-space:nowrap}
+.copybox{font:500 .82rem var(--f-mono);background:var(--bg);border:2px dashed var(--line);border-radius:10px;padding:10px;white-space:pre-wrap;overflow-wrap:anywhere;max-height:260px;overflow:auto}
+.cbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.cmsg{font-size:.9rem;color:var(--muted)}
+.relato{background:var(--paper);border:2px solid var(--line);border-radius:18px;padding:18px;display:grid;grid-template-columns:120px minmax(0,1fr);gap:20px;align-items:start}
+@media (max-width:620px){.relato{grid-template-columns:minmax(0,1fr)}.relato .pini{width:96px}}
+.relato .pini{width:120px;height:auto;display:block}
+.relato .rt{display:flex;flex-direction:column;gap:10px;min-width:0}
+.relato .cap{font-size:.74rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--accent)}
+.relato h2{font-size:clamp(1.5rem,3.6vw,2rem);text-wrap:balance}
+.relato p{max-width:68ch;line-height:1.65}
+.relato[hidden]{display:none}
+.relato .nw{white-space:nowrap}
+.relato .dlg{padding-left:14px;border-left:3px solid var(--line)}
+.relato .reto{border:2px dashed var(--accent);border-radius:14px;padding:12px 16px;display:flex;flex-direction:column;gap:6px;margin-top:4px}
+.relato .reto b.t{font-size:.8rem;letter-spacing:.08em;text-transform:uppercase;color:var(--accent)}
+.relato .reto ul{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:4px}
+.vids{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:14px}
+.vid{background:var(--paper);border:2px solid var(--line);border-radius:16px;padding:14px;display:flex;flex-direction:column;gap:8px}
+.vid.seen{border-color:var(--ok)}
+.vid .src{font-weight:800;font-size:.7rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.vid h3{font-size:1.08rem}
+.vid .kindtag{align-self:flex-start;font-size:.72rem;font-weight:800;border-radius:999px;padding:2px 9px;background:var(--bg);color:var(--muted)}
+.vid a.go{display:inline-flex;gap:8px;align-items:center;align-self:flex-start;background:var(--accent);color:var(--accent-ink);text-decoration:none;font-weight:800;border-radius:999px;padding:7px 14px}
+.vid a.go svg{width:16px;height:16px}
+.vid .q{font-size:.92rem;background:var(--bg);border-radius:10px;padding:8px 10px}
+.vid label.ck{display:flex;gap:8px;align-items:center;font-weight:700;font-size:.92rem;cursor:pointer;margin-top:auto}
+.vid label.ck input{width:20px;height:20px;accent-color:var(--ok)}
+.vid.tarea{border-color:var(--accent);border-width:3px}
+.vid.tarea .kindtag{background:var(--accent);color:var(--accent-ink)}
+.vfilter{display:flex;gap:8px;flex-wrap:wrap}
+.indic{border:2px solid var(--line);border-radius:14px;padding:12px 16px;display:flex;flex-direction:column;gap:10px;margin-top:4px;background:var(--bg)}
+.indic>b.t{font-size:.8rem;letter-spacing:.08em;text-transform:uppercase;color:var(--accent)}
+.indic .cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px}
+.indic h4{margin:0;font-size:.95rem}
+.indic ul{margin:0;padding-left:0;list-style:none;display:flex;flex-direction:column;gap:6px;font-size:.88rem;line-height:1.45}
+.indic li{overflow-wrap:anywhere}
+.indic .crit{display:inline-block;font-weight:800;border:1.5px solid var(--accent);color:var(--accent);border-radius:6px;padding:0 5px;margin-right:4px;font-size:.78rem;font-variant-numeric:tabular-nums}
+.indic .do{color:var(--muted);font-size:.8rem}
+.valora{border:2px solid var(--accent);border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:10px;background:var(--paper)}
+.valora h3{font-size:1.2rem}
+.valora .cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px}
+.valora h4{margin:0 0 4px;font-size:.95rem}
+.valora td{font-size:.85rem}
+.vstar{font-weight:800;white-space:nowrap;font-variant-numeric:tabular-nums}
+.vbar{display:inline-flex;gap:2px;margin-left:6px;vertical-align:middle}.vbar i{width:8px;height:8px;border-radius:2px;background:var(--line);display:block}.vbar i.on{background:var(--ok)}
+.llave{border:2px dashed var(--accent);border-radius:12px;padding:12px;display:flex;flex-direction:column;gap:6px}
+.llave code{font:700 1.3rem var(--f-mono,monospace);letter-spacing:.06em;color:var(--accent);overflow-wrap:anywhere}
+footer{color:var(--muted);font-size:.85rem;text-align:center}
+</style>
+
+<div class="wrap">
+  <header class="hero">
+    <svg class="stamp" viewBox="0 0 84 84" aria-hidden="true">
+      <path d="M6 6h72v72H6z" fill="var(--paper)" stroke="var(--stamp)" stroke-width="3" stroke-dasharray="4 3"/>
+      <rect x="14" y="14" width="56" height="56" rx="4" fill="var(--stamp)"/>
+      <rect x="22" y="28" width="40" height="28" rx="3" fill="var(--stamp-ink)"/>
+      <path d="M22 30l20 15 20-15" fill="none" stroke="var(--stamp)" stroke-width="3"/>
+      <text x="42" y="66" text-anchor="middle" font-size="8" font-weight="700" fill="var(--stamp-ink)" font-family="Arial">@ CORREO</text>
+    </svg>
+    <div class="hero-text">
+      <h1>Cartero Digital</h1>
+      <p>Cinco misiones para dominar el correo electrónico: sus partes (Para, CC, CCO, Asunto, Adjunto…) y cómo insertar imágenes con licencia Creative Commons.</p>
+    </div>
+    <div class="score" id="score">Sellos: 0</div>
+  </header>
+
+  <section class="relato" aria-labelledby="relato-t">
+    <svg class="pini" viewBox="0 0 120 150" aria-label="Pini, la mascota de Radio La Piña">
+  <path d="M60 14l6 12h-12z" fill="#5f8f3a"/>
+  <ellipse cx="60" cy="86" rx="36" ry="50" fill="#a5642f"/>
+  <g fill="none" stroke="#6e3a17" stroke-width="3" stroke-linecap="round">
+    <path d="M32 58q7 8 14 0q7 8 14 0q7 8 14 0q7 8 14 0"/>
+    <path d="M27 104q8 8 16 0q8 8 17 0q8 8 17 0q8 8 16 0"/>
+    <path d="M33 122q7 7 14 0q6 7 13 0q7 7 14 0q6 7 13 0"/>
+    <path d="M40 42q5 6 10 0q5 6 10 0q5 6 10 0q5 6 10 0"/>
+  </g>
+  <ellipse cx="48" cy="78" rx="8" ry="9" fill="#fff"/><ellipse cx="72" cy="78" rx="8" ry="9" fill="#fff"/>
+  <circle cx="50" cy="80" r="4" fill="#1d1d1d"/><circle cx="74" cy="80" r="4" fill="#1d1d1d"/>
+  <path d="M50 92q10 9 20 0" fill="none" stroke="#1d1d1d" stroke-width="3" stroke-linecap="round"/>
+  <path d="M22 76a38 42 0 0 1 76 0" fill="none" stroke="#2b2f3a" stroke-width="6"/>
+  <rect x="14" y="70" width="14" height="22" rx="5" fill="#e2553f"/><rect x="92" y="70" width="14" height="22" rx="5" fill="#e2553f"/>
+  <path d="M21 92q0 16 18 18" fill="none" stroke="#2b2f3a" stroke-width="3"/>
+  <rect x="38" y="104" width="12" height="9" rx="4" fill="#2b2f3a"/>
+</svg>
+    <div class="rt">
+      <span class="cap">Rumbo a Europa · Radio La Piña · Italia</span>
+      <h2 id="relato-t">Una carta para Bolonia</h2>
+      <p>Radio La Piña tiene un plan nuevo: grabar un programa junto a un colegio de otro país europeo. La profe ha encontrado una clase de 5.º de <b>Bolonia</b>, en Italia, que también tiene radio escolar y tiene muchas ganas de conocer Castilla y León.</p>
+      <p class="dlg">—¡Les mandamos una carta! —propone Pini.</p>
+      <p class="dlg">—¿Por correo postal? Tardaría una semana en llegar —contesta la <span class="nw">tutora—</span>. Mejor un correo electrónico: llega en segundos.</p>
+      <p>Pini se pone manos a la obra, pero enseguida le asaltan las dudas. ¿A quién pone en «Para» y a quién en «CC»? El director quiere estar enterado, pero la clase italiana no necesita ver su dirección: ¿será eso la copia oculta? ¿Qué escribe en el asunto? ¿Y cómo adjunta el guion del programa?</p>
+      <p>Además, Pini quiere enseñarles cómo son los pinares de nuestra tierra. Encuentra en internet una foto preciosa y está a punto de pegarla cuando recuerda algo importante: las imágenes también tienen autor. Tendrá que buscar una con licencia Creative Commons y citarla bien.</p>
+      <p>Si el correo llega completo y bien escrito, la clase de Bolonia contestará: «Ciao, amici di Radio La Piña!». Ayuda a Pini a convertirse en un cartero digital de primera.</p>
+      <div class="reto"><b class="t">Vuestro reto: superar las misiones</b>
+        <ul>
+        <li><b>Misión 1:</b> Las partes</li>
+        <li><b>Misión 2:</b> Rellena el correo</li>
+        <li><b>Misión 3:</b> ¿Dónde está?</li>
+        <li><b>Misión 4:</b> Imágenes CC</li>
+        <li><b>Misión 5:</b> Vídeos y juegos</li>
+        <li><b>Misión 6:</b> Examen e informe</li>
+        </ul>
+      </div>
+      <div class="indic"><b class="t">Indicadores de logro · Programación de TIAC</b>
+        <div class="cols">
+          <div><h4>5.º de Primaria</h4><ul><li><span class="crit">Crit. 2.1</span><b>2.1.1</b> Redacta la carta al consulado en un correo de Educacyl con destinatario, asunto, saludo, cuerpo y despedida, desde la plantilla o con texto propio según su ruta, y lee los iconos y las palabras en inglés del correo (clip de adjuntar, Send, Reply, Forward) para usarlos correctamente. <span class="do">(CCL5 · CP1)</span></li><li><span class="crit">Crit. 2.2</span><b>2.2.1</b> Envía el PDF del dossier como adjunto del correo o, en la ruta avanzada, como enlace de OneDrive, y comprueba que se abre. <span class="do">(CCL5 · CE3)</span></li><li><span class="crit">Crit. 3.3</span><b>3.3.1</b> Inserta en el Word colaborativo una imagen de un banco Creative Commons y escribe debajo su autor y su fuente. <span class="do">(CD2 · CCEC4)</span></li><li><span class="crit">Crit. 3.4</span><b>3.4.1</b> Reconoce los iconos de la licencia CC de la imagen elegida (BY, NC, ND, SA) y explica si puede usarla en el dossier. <span class="do">(CC3 · CCEC4)</span></li></ul></div>
+          <div><h4>6.º de Primaria</h4><ul><li><span class="crit">Crit. 2.1</span><b>2.1.1</b> Escribe un correo con todas sus partes (Para, CC, CCO, asunto, saludo, cuerpo, despedida, firma y adjunto) y sabe cuándo usar CC y CCO. <span class="do">(CCL5 · CC1)</span></li><li><span class="crit">Crit. 3.3</span><b>3.3.1</b> Usa imágenes con licencia Creative Commons y escribe su autor o la web de origen. <span class="do">(CD2 · CE3)</span></li><li><span class="crit">Crit. 3.4</span><b>3.4.1</b> Reconoce las licencias Creative Commons (BY, NC, ND, SA, CC0) y el ©, y cita una imagen con título, autor, fuente y licencia. <span class="do">(CC3 · CCEC4)</span></li></ul></div>
+        </div>
+      </div><!--/indic-->
+    </div>
+  </section>
+
+  <div class="ficha">
+    <label for="alNombre">Nombre y apellido<input id="alNombre" autocomplete="off" placeholder="Escribe tu nombre"></label>
+    <label for="alCurso">Curso y grupo<input id="alCurso" autocomplete="off" placeholder="Ej.: 5.º B"></label>
+  </div>
+
+  <nav class="tabs" role="tablist" id="tabs">
+    <button role="tab" data-t="partes" aria-selected="true"><span class="n">1</span>Las partes</button>
+    <button role="tab" data-t="rellena" aria-selected="false"><span class="n">2</span>Rellena el correo</button>
+    <button role="tab" data-t="senala" aria-selected="false"><span class="n">3</span>¿Dónde está?</button>
+    <button role="tab" data-t="imagenes" aria-selected="false"><span class="n">4</span>Imágenes CC</button>
+    <button role="tab" data-t="videos" aria-selected="false"><span class="n">5</span>Vídeos y juegos</button>
+    <button role="tab" data-t="examen" aria-selected="false"><span class="n">6</span>Examen e informe</button>
+  </nav>
+
+  <!-- MISIÓN 1 -->
+  <section class="mission" id="m-partes">
+    <div class="intro">
+      <span class="label">Misión 1 · Explora</span>
+      <h2>Conoce las partes de un correo</h2>
+      <p>Pulsa cada zona del correo para descubrir para qué sirve. Cuando las hayas visto todas, ganarás tus primeros sellos.</p>
+    </div>
+    <div class="grid2">
+      <div class="mail" id="mail1">
+        <div class="titlebar"><span>Mensaje nuevo</span><span class="dots"><i></i><i></i><i></i></span></div>
+        <div class="field part" tabindex="0" data-p="de"><span class="k">De</span><span class="v"><span class="chipaddr">marta.5b@cole-ejemplo.es</span></span></div>
+        <div class="field part" tabindex="0" data-p="para"><span class="k">Para</span><span class="v"><span class="chipaddr">profe.lengua@cole-ejemplo.es</span></span></div>
+        <div class="field part" tabindex="0" data-p="cc"><span class="k">CC</span><span class="v"><span class="chipaddr">familia.marta@correo-ejemplo.es</span></span></div>
+        <div class="field part" tabindex="0" data-p="cco"><span class="k">CCO</span><span class="v"><span class="chipaddr">tutora.5b@cole-ejemplo.es</span></span></div>
+        <div class="field part" tabindex="0" data-p="asunto"><span class="k">Asunto</span><span class="v"><b>Trabajo de los volcanes – Marta 5.º B</b></span></div>
+        <div class="body">
+          <div class="part" tabindex="0" data-p="saludo" style="padding:4px">Hola, Ana:</div>
+          <div class="part" tabindex="0" data-p="cuerpo" style="padding:4px">Te envío mi trabajo sobre los volcanes. He incluido una foto del Teide con su licencia. ¿Me dices si está bien?</div>
+          <div class="part" tabindex="0" data-p="imagen" style="padding:4px;display:flex;flex-direction:column;gap:4px">
+            <svg viewBox="0 0 300 110" style="width:100%;max-width:300px;height:auto;border-radius:8px;display:block" aria-label="Ilustración de un volcán"><rect width="300" height="110" fill="#9fd3f0"/><path d="M60 110l70-70h40l70 70z" fill="#7a5b44"/><path d="M130 40h40l-8-8h-24z" fill="#5a4030"/><path d="M137 32c-10-14 4-24 13-12 6-14 22-8 13 6" fill="#ccc"/><rect y="100" width="300" height="10" fill="#6fb35b"/></svg>
+            <span style="font-size:.78rem;color:var(--muted)">«Volcán» por Alex Pino, CC BY 4.0</span>
+          </div>
+          <div class="part" tabindex="0" data-p="despedida" style="padding:4px">Un saludo,</div>
+          <div class="sig part" tabindex="0" data-p="firma" style="padding:4px 4px 0">Marta Ruiz · 5.º B · CEIP Ejemplo</div>
+          <div class="attach part" tabindex="0" data-p="adjunto"><svg width="22" height="22" viewBox="0 0 24 24"><path d="M16 6l-8 8a3 3 0 0 0 4 4l9-9a5 5 0 0 0-7-7l-9 9a7 7 0 0 0 10 10l7-7" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round"/></svg><span>volcanes_marta.pdf · 1,2 MB</span></div>
+        </div>
+        <div class="toolbar">
+          <span class="sendbtn part" tabindex="0" data-p="enviar">Enviar</span>
+          <span class="tool part" tabindex="0" data-p="clip" title="Adjuntar"><svg width="18" height="18" viewBox="0 0 24 24"><path d="M16 6l-8 8a3 3 0 0 0 4 4l9-9a5 5 0 0 0-7-7l-9 9a7 7 0 0 0 10 10l7-7" fill="none" stroke="var(--ink)" stroke-width="2" stroke-linecap="round"/></svg></span>
+          <span class="tool part" tabindex="0" data-p="insimg" title="Insertar imagen"><svg width="18" height="18" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2" fill="none" stroke="var(--ink)" stroke-width="2"/><circle cx="9" cy="10" r="2" fill="var(--ink)"/><path d="M4 18l6-5 4 3 3-2 3 3" fill="none" stroke="var(--ink)" stroke-width="2"/></svg></span>
+        </div>
+      </div>
+      <div class="panel info" id="info1"></div>
+    </div>
+  </section>
+
+  <!-- MISIÓN 2 -->
+  <section class="mission" id="m-rellena" hidden>
+    <div class="intro">
+      <span class="label">Misión 2 · Rellena</span>
+      <h2>Prepara el correo de la excursión</h2>
+      <p>Lee el encargo. Pulsa una ficha y después pulsa el hueco donde debe ir. Si te equivocas, el hueco temblará.</p>
+    </div>
+    <div class="task" id="task2"><b>Encargo:</b> Eres el delegado de clase. Escribe a <b>Lucía, la profesora</b>, para avisar de la excursión al museo. Pon en copia a <b>Pablo, el otro delegado</b>, para que lo vea. Avisa también al <b>director</b> sin que los demás vean su dirección. Adjunta la <b>autorización</b>.</div>
+    <div class="grid2">
+      <div class="mail">
+        <div class="titlebar"><span>Mensaje nuevo</span><span class="dots"><i></i><i></i><i></i></span></div>
+        <div class="field"><span class="k">Para</span><div class="drop v" data-slot="para">Pulsa aquí</div></div>
+        <div class="field"><span class="k">CC</span><div class="drop v" data-slot="cc">Pulsa aquí</div></div>
+        <div class="field"><span class="k">CCO</span><div class="drop v" data-slot="cco">Pulsa aquí</div></div>
+        <div class="field"><span class="k">Asunto</span><div class="drop v" data-slot="asunto">Pulsa aquí</div></div>
+        <div class="body">
+          <div class="drop" data-slot="cuerpo">Cuerpo del mensaje: pulsa aquí</div>
+          <div class="drop" data-slot="adjunto">📎 Adjunto: pulsa aquí</div>
+        </div>
+      </div>
+      <div class="panel">
+        <h3>Fichas</h3>
+        <div class="chips" id="chips2"></div>
+        <div id="fb2"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- MISIÓN 3 -->
+  <section class="mission" id="m-senala" hidden>
+    <div class="intro">
+      <span class="label">Misión 3 · Señala</span>
+      <h2>Has recibido un correo. ¿Dónde está cada parte?</h2>
+      <p>Lee la orden y pulsa en la parte correcta del correo.</p>
+    </div>
+    <div class="dots10" id="dots3"></div>
+    <div class="grid2">
+      <div class="mail" id="mail3">
+        <div class="titlebar"><span>Bandeja de entrada</span><span class="dots"><i></i><i></i><i></i></span></div>
+        <div class="field part" data-p="asunto" tabindex="0"><span class="k">Asunto</span><span class="v"><b>Fotos del huerto escolar 🌱</b></span></div>
+        <div class="field part" data-p="de" tabindex="0"><span class="k">De</span><span class="v"><span class="chipaddr">huerto@cole-ejemplo.es</span></span></div>
+        <div class="field part" data-p="para" tabindex="0"><span class="k">Para</span><span class="v"><span class="chipaddr">5b@cole-ejemplo.es</span></span></div>
+        <div class="field part" data-p="cc" tabindex="0"><span class="k">CC</span><span class="v"><span class="chipaddr">6a@cole-ejemplo.es</span><span class="chipaddr">6b@cole-ejemplo.es</span></span></div>
+        <div class="field part" data-p="fecha" tabindex="0"><span class="k">Fecha</span><span class="v">3 nov 2026, 9:15</span></div>
+        <div class="body">
+          <div class="part" data-p="saludo" tabindex="0" style="padding:4px">¡Hola, chicos y chicas!</div>
+          <div class="part" data-p="cuerpo" tabindex="0" style="padding:4px">Las lechugas ya han crecido. Os mando las fotos y la lista de riego de noviembre.</div>
+          <div class="part" data-p="imagen" tabindex="0" style="padding:4px;display:flex;flex-direction:column;gap:4px">
+            <svg viewBox="0 0 300 90" style="width:100%;max-width:300px;height:auto;border-radius:8px;display:block" aria-label="Ilustración de lechugas"><rect width="300" height="90" fill="#cfe9c4"/><rect y="62" width="300" height="28" fill="#8a5b3b"/><circle cx="60" cy="58" r="18" fill="#4fa34a"/><circle cx="130" cy="58" r="20" fill="#5cb855"/><circle cx="200" cy="58" r="17" fill="#4fa34a"/><circle cx="260" cy="58" r="15" fill="#5cb855"/></svg>
+            <span style="font-size:.78rem;color:var(--muted)">«Lechugas» por Huerto Abierto, CC BY-SA 4.0</span>
+          </div>
+          <div class="part" data-p="despedida" tabindex="0" style="padding:4px">¡Hasta el jueves!</div>
+          <div class="sig part" data-p="firma" tabindex="0" style="padding:4px 4px 0">Equipo del Huerto · CEIP Ejemplo</div>
+          <div class="attach part" data-p="adjunto" tabindex="0"><svg width="22" height="22" viewBox="0 0 24 24"><path d="M16 6l-8 8a3 3 0 0 0 4 4l9-9a5 5 0 0 0-7-7l-9 9a7 7 0 0 0 10 10l7-7" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round"/></svg><span>riego_noviembre.pdf</span></div>
+        </div>
+        <div class="toolbar"><span class="sendbtn part" data-p="responder" tabindex="0">Responder</span><span class="btn part" data-p="reenviar" tabindex="0" style="padding:5px 14px">Reenviar</span></div>
+      </div>
+      <div class="panel">
+        <span class="label" id="n3">Orden 1</span>
+        <p class="prompt" id="prompt3"></p>
+        <div id="fb3"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- MISIÓN 4 -->
+  <section class="mission" id="m-imagenes" hidden>
+    <div class="intro">
+      <span class="label">Misión 4 · Imágenes Creative Commons</span>
+      <h2>¿Puedo poner esta imagen en mi correo?</h2>
+      <p>Las imágenes de internet tienen autor. Que aparezcan en un buscador no significa que puedas usarlas como quieras. Las licencias <b>Creative Commons (CC)</b> dicen qué permite el autor. Aprende sus piezas y luego resuelve los casos.</p>
+    </div>
+    <div class="cc-row" id="ccrow"></div>
+    <div class="panel">
+      <h3>Cómo se cita una imagen: la regla T·A·F·L</h3>
+      <div class="tasl">
+        <div><b>T</b>Título de la imagen</div>
+        <div><b>A</b>Autor o autora</div>
+        <div><b>F</b>Fuente: dónde la encontraste</div>
+        <div><b>L</b>Licencia, por ejemplo CC BY 4.0</div>
+      </div>
+      <div class="attr">«Volcán al atardecer» por Alex Pino, en Banco de Imágenes Libres, CC BY 4.0</div>
+      <p style="font-size:.9rem;color:var(--muted)">Pon esta línea justo debajo de la imagen que insertes en el correo. Para encontrar imágenes CC, usa buscadores con filtro de licencia, como el buscador de Openverse o el filtro «Derechos de uso» de las imágenes de tu buscador habitual, y pide ayuda a tu profe.</p>
+    </div>
+    <div class="scen" id="scen"></div>
+  </section>
+
+
+  <section class="mission" id="m-videos" hidden>
+    <div class="intro"><span class="label">Misión 5 · Vídeos y juegos</span>
+      <h2>Mira, piensa y juega</h2>
+      <p>Abre cada vídeo o juego (se abre en una pestaña nueva), míralo con tu profe y responde en tu cuaderno a la pregunta. Marca la casilla al terminar: cuenta para tu informe.</p></div>
+    <div class="vids" id="vids"></div>
+  </section>
+
+  <!-- MISIÓN 5 -->
+  <section class="mission" id="m-examen" hidden>
+    <div class="intro">
+      <span class="label">Misión 6 · Examen final</span>
+      <h2>¿Eres un buen cartero digital?</h2>
+      <p>Responde a las ocho preguntas. Al final conseguirás tu diploma.</p>
+    </div>
+    <div class="quiz" id="quiz"></div>
+    <div class="diploma" id="diploma" hidden></div>
+    <div id="informe"></div>
+  </section>
+
+  <footer>Actividad educativa. Las direcciones, personas, imágenes y webs que aparecen son ficticias.</footer>
+</div>
+
+<script>
+const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
+let pts=0;const add=n=>{pts+=n;$('#score').textContent='Sellos: '+pts};
+const keyAct=(el,fn)=>{el.addEventListener('click',fn);el.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();fn()}})};
+
+/* ---------- MISIÓN 1 ---------- */
+const parts={
+ de:['De','Remitente','Quién envía el correo. Normalmente aparece solo: es tu propia dirección.'],
+ para:['Para','Destinatario','La persona principal a la que escribes. Puedes poner una o varias direcciones.'],
+ cc:['CC','Con copia','Otras personas que reciben una copia para estar informadas. Todos ven quién está en CC.'],
+ cco:['CCO','Con copia oculta','Reciben el correo, pero nadie más ve su dirección. Muy útil para enviar a muchas personas sin mostrar sus correos (protege la privacidad).'],
+ asunto:['Asunto','Tema del correo','Un título corto que resume el mensaje. Nunca lo dejes vacío: ayuda a saber de qué trata antes de abrirlo.'],
+ saludo:['Saludo','Saludo','La forma de empezar: «Hola, Ana:» o «Buenos días:». Se escribe con dos puntos.'],
+ cuerpo:['Cuerpo','El mensaje','Lo que quieres contar. Claro, ordenado y con buena ortografía.'],
+ imagen:['Imagen','Imagen insertada','Una imagen dentro del mensaje. Si no es tuya, usa una con licencia Creative Commons y cita título, autor, fuente y licencia debajo.'],
+ despedida:['Despedida','Despedida','Cierra el mensaje con educación: «Un saludo», «Gracias», «Hasta pronto».'],
+ firma:['Firma','Firma','Tu nombre y, si quieres, tu curso o colegio. Así saben quién escribe.'],
+ adjunto:['Adjunto','Archivo adjunto','Un archivo que viaja con el correo: un PDF, una foto, un documento… Antes de enviar, comprueba que lo has adjuntado.'],
+ enviar:['Enviar','Botón Enviar','Manda el correo. ¡Repasa todo antes de pulsarlo! Una vez enviado, no se puede deshacer.'],
+ clip:['📎','Botón Adjuntar','El clip sirve para añadir archivos adjuntos.'],
+ insimg:['🖼','Insertar imagen','Coloca una imagen dentro del texto del correo, no como archivo aparte.']
+};
+const seen=new Set();let bonus1=false;
+function info1(k){
+  const p=parts[k];
+  $('#info1').innerHTML=`<div class="head"><span class="ico">${p[0]}</span><div><span class="label">${seen.size} de ${Object.keys(parts).length} descubiertas</span><h3>${p[1]}</h3></div></div><p>${p[2]}</p>
+  <div class="seenlist">${Object.keys(parts).map(x=>`<span class="${seen.has(x)?'on':''}">${parts[x][1]}</span>`).join('')}</div>
+  ${seen.size===Object.keys(parts).length?`<div class="tip"><b>¡Todas descubiertas! +20 sellos.</b> <button class="btn primary" style="margin-left:6px" onclick="show('rellena')">Ir a la misión 2</button></div>`:''}`;
+}
+$('#info1').innerHTML=`<div class="head"><span class="ico">@</span><div><span class="label">0 de ${Object.keys(parts).length} descubiertas</span><h3>Pulsa una parte del correo</h3></div></div><p>Cada zona marcada al pasar el ratón es una parte del correo. Empieza por arriba: ¿qué será «CCO»?</p>`;
+$$('#mail1 .part').forEach(el=>keyAct(el,()=>{
+  $$('#mail1 .part').forEach(x=>x.classList.remove('active'));el.classList.add('active','seen');
+  seen.add(el.dataset.p);
+  if(seen.size===Object.keys(parts).length&&!bonus1){bonus1=true;add(20)}
+  info1(el.dataset.p);
+}));
+
+/* ---------- MISIÓN 2 ---------- */
+const chips2=[
+ {t:'lucia.profe@cole-ejemplo.es',s:'para'},
+ {t:'pablo.delegado@cole-ejemplo.es',s:'cc'},
+ {t:'direccion@cole-ejemplo.es',s:'cco'},
+ {t:'Excursión al museo – jueves 12',s:'asunto'},
+ {t:'Hola, Lucía: te recuerdo que el jueves vamos al museo. Te adjunto la autorización. Un saludo, Hugo (delegado de 5.º B).',s:'cuerpo'},
+ {t:'autorizacion_museo.pdf',s:'adjunto'}
+].sort(()=>Math.random()-.5);
+let sel2=null,done2=0,err2=0;const fails2=[];
+function render2(){
+  $('#chips2').innerHTML=chips2.map((c,i)=>`<button class="chip" data-i="${i}">${c.s==='adjunto'?'📎 ':''}${c.t}</button>`).join('');
+  $$('#chips2 .chip').forEach(b=>b.onclick=()=>{$$('#chips2 .chip').forEach(x=>x.classList.remove('sel'));b.classList.add('sel');sel2=+b.dataset.i;$$('.drop').forEach(d=>d.classList.toggle('armed',!d.classList.contains('filled')))});
+}
+$$('#m-rellena .drop').forEach(d=>d.onclick=()=>{
+  if(sel2===null||d.classList.contains('filled'))return;
+  const c=chips2[sel2];
+  if(c.s===d.dataset.slot){
+    d.classList.add('filled');d.innerHTML=d.classList.contains('v')&&c.s!=='asunto'?`<span class="chipaddr">${c.t}</span>`:(c.s==='adjunto'?'📎 ':'')+c.t;
+    $(`#chips2 .chip[data-i="${sel2}"]`).classList.add('used');done2++;add(5);
+    $('#fb2').innerHTML='';
+  }else{
+    err2++;fails2.push(`Puso «${c.t.length>45?c.t.slice(0,45)+'…':c.t}» en ${d.dataset.slot.toUpperCase()} y no ahí`);d.classList.remove('shake');void d.offsetWidth;d.classList.add('shake');
+    const hint={para:'«Para» es la persona principal: Lucía.',cc:'En CC va quien recibe una copia y todos lo ven: Pablo.',cco:'En CCO va quien no queremos que se vea: el director.',asunto:'El asunto es un título corto.',cuerpo:'El cuerpo es el texto largo con saludo y despedida.',adjunto:'El adjunto es un archivo.'}[c.s];
+    $('#fb2').innerHTML=`<div class="feedback wrong"><strong>Ahí no va.</strong><span>${hint}</span></div>`;
+  }
+  sel2=null;$$('#chips2 .chip').forEach(x=>x.classList.remove('sel'));$$('.drop').forEach(x=>x.classList.remove('armed'));
+  if(done2===chips2.length)$('#fb2').innerHTML=`<div class="feedback right"><strong>¡Correo listo para enviar!</strong><span>Lo has completado con ${err2} ${err2===1?'error':'errores'}. Recuerda: Para = principal, CC = copia visible, CCO = copia oculta.</span><button class="btn primary" style="align-self:flex-start" onclick="show('senala')">Ir a la misión 3</button></div>`;
+});
+
+/* ---------- MISIÓN 3 ---------- */
+const orders=[
+ ['asunto','Pulsa en el ASUNTO.'],['de','¿Quién ha ENVIADO el correo?'],['cc','Pulsa en las personas que reciben una COPIA (CC).'],
+ ['adjunto','¿Dónde está el ARCHIVO ADJUNTO?'],['imagen','Pulsa en la IMAGEN con licencia Creative Commons.'],['firma','Pulsa en la FIRMA.'],
+ ['para','¿A quién va dirigido principalmente (PARA)?'],['saludo','Pulsa en el SALUDO.'],['responder','Quieres contestar solo a quien te escribió. ¿Qué botón pulsas?'],
+ ['reenviar','Quieres mandar este correo a tu familia. ¿Qué botón pulsas?']
+];
+let o3=0;const r3=[];let lock3=false;
+function render3(){
+  $('#dots3').innerHTML=orders.map((_,i)=>`<i class="${r3[i]===true?'ok':r3[i]===false?'ko':i===o3?'now':''}"></i>`).join('');
+  $$('#mail3 .part').forEach(x=>x.classList.remove('good','nope'));
+  if(o3>=orders.length){
+    const ok=r3.filter(Boolean).length;
+    $('#n3').textContent='Misión completada';$('#prompt3').textContent=`Has acertado ${ok} de ${orders.length}.`;
+    $('#fb3').innerHTML=`<div class="tip">¿Sabías que en CCO no aparece nadie en un correo recibido? Justo por eso es «oculta». <button class="btn primary" style="margin-top:8px" onclick="show('imagenes')">Ir a la misión 4</button></div>`;return;
+  }
+  $('#n3').textContent=`Orden ${o3+1} de ${orders.length}`;$('#prompt3').textContent=orders[o3][1];$('#fb3').innerHTML='';lock3=false;
+}
+$$('#mail3 .part').forEach(el=>keyAct(el,()=>{
+  if(lock3||o3>=orders.length)return;lock3=true;
+  const want=orders[o3][0],ok=el.dataset.p===want;r3[o3]=ok;if(ok)add(5);
+  el.classList.add(ok?'good':'nope');
+  if(!ok)$(`#mail3 .part[data-p="${want}"]`).classList.add('good');
+  $('#fb3').innerHTML=`<div class="feedback ${ok?'right':'wrong'}"><strong>${ok?'¡Correcto!':'Casi. Mira la parte marcada en verde.'}</strong><span>${parts[want]?parts[want][2]:(want==='responder'?'«Responder» contesta solo al remitente.':'«Reenviar» manda el correo, con sus adjuntos, a otras personas.')}</span></div><button class="btn primary" style="margin-top:8px" id="nx3">Siguiente →</button>`;
+  $('#nx3').onclick=()=>{o3++;render3()};
+}));
+
+/* ---------- MISIÓN 4 ---------- */
+const ccIcon=(t,bg='var(--ink)')=>{
+  const g={
+   cc:'<text x="22" y="28" text-anchor="middle" font-size="15" font-weight="800" fill="var(--paper)" font-family="Arial">cc</text>',
+   by:'<circle cx="22" cy="13" r="4" fill="var(--paper)"/><path d="M15 19h14v9h-4v9h-6v-9h-4z" fill="var(--paper)"/>',
+   nc:'<text x="22" y="29" text-anchor="middle" font-size="19" font-weight="800" fill="var(--paper)" font-family="Arial">€</text><line x1="10" y1="10" x2="34" y2="34" stroke="var(--paper)" stroke-width="3"/>',
+   nd:'<rect x="12" y="15" width="20" height="4" fill="var(--paper)"/><rect x="12" y="24" width="20" height="4" fill="var(--paper)"/>',
+   sa:'<path d="M30 22a8 8 0 1 1-3-6" fill="none" stroke="var(--paper)" stroke-width="3.5"/><path d="M24 12l5 4-5 4z" fill="var(--paper)"/>',
+   zero:'<text x="22" y="29" text-anchor="middle" font-size="18" font-weight="800" fill="var(--paper)" font-family="Arial">0</text>',
+   copy:'<text x="22" y="30" text-anchor="middle" font-size="22" font-weight="800" fill="var(--paper)" font-family="Arial">©</text>'
+  };return `<svg class="ccicon" viewBox="0 0 44 44"><circle cx="22" cy="22" r="20" fill="${bg}"/>${g[t]}</svg>`};
+const ccInfo=[
+ ['by','BY · Reconocimiento','Puedes usarla, pero siempre citando al autor. Todas las licencias CC lo piden.'],
+ ['nc','NC · No comercial','No puedes usarla para ganar dinero ni en anuncios. En un correo de clase, sí.'],
+ ['nd','ND · Sin obras derivadas','Puedes usarla tal cual, pero no recortarla, pintar encima ni hacer montajes.'],
+ ['sa','SA · Compartir igual','Si la modificas, lo que crees debe llevar la misma licencia.'],
+ ['zero','CC0 · Dominio público','El autor renuncia a sus derechos: puedes usarla libremente. Citarlo sigue siendo un buen detalle.'],
+ ['copy','© Todos los derechos reservados','No es CC. No puedes usarla sin permiso del autor, aunque esté en internet.']
+];
+$('#ccrow').innerHTML=ccInfo.map(c=>`<div class="ccard"><div class="top">${ccIcon(c[0],c[0]==='copy'?'var(--stamp)':'var(--ink)')}<h3>${c[1]}</h3></div><p>${c[2]}</p></div>`).join('');
+const pic={
+ mount:'<svg class="pic" viewBox="0 0 300 130" preserveAspectRatio="xMidYMid slice"><rect width="300" height="130" fill="#ffd9a8"/><circle cx="230" cy="40" r="20" fill="#ff9f43"/><path d="M0 130l90-80 60 50 50-40 100 70z" fill="#5d4b8a"/><path d="M90 50l18 16-12-2-6 8-6-8-12 2z" fill="#fff"/></svg>',
+ cat:'<svg class="pic" viewBox="0 0 300 130" preserveAspectRatio="xMidYMid slice"><rect width="300" height="130" fill="#e3ecf7"/><ellipse cx="150" cy="95" rx="55" ry="30" fill="#f2a65a"/><circle cx="150" cy="58" r="26" fill="#f2a65a"/><path d="M128 42l-4-22 16 12zM172 42l4-22-16 12z" fill="#f2a65a"/><circle cx="141" cy="56" r="3" fill="#333"/><circle cx="159" cy="56" r="3" fill="#333"/><path d="M146 66q4 4 8 0" stroke="#333" stroke-width="2" fill="none"/></svg>',
+ ball:'<svg class="pic" viewBox="0 0 300 130" preserveAspectRatio="xMidYMid slice"><rect width="300" height="130" fill="#7cc16b"/><path d="M0 90h300" stroke="#fff" stroke-width="3"/><circle cx="150" cy="70" r="32" fill="#fff" stroke="#222" stroke-width="2"/><path d="M150 52l14 10-5 16h-18l-5-16z" fill="#222"/><text x="150" y="122" text-anchor="middle" font-size="12" font-weight="700" fill="#fff" font-family="Arial">LIGA PRO · FOTO OFICIAL</text></svg>',
+ tree:'<svg class="pic" viewBox="0 0 300 130" preserveAspectRatio="xMidYMid slice"><rect width="300" height="130" fill="#d9f0f7"/><rect x="142" y="70" width="16" height="50" fill="#7a5235"/><circle cx="150" cy="58" r="36" fill="#3f9b4f"/><circle cx="125" cy="70" r="22" fill="#4fae5d"/><circle cx="176" cy="70" r="22" fill="#4fae5d"/><rect y="118" width="300" height="12" fill="#a4d38a"/></svg>',
+ robot:'<svg class="pic" viewBox="0 0 300 130" preserveAspectRatio="xMidYMid slice"><rect width="300" height="130" fill="#ece6fb"/><rect x="118" y="40" width="64" height="50" rx="10" fill="#7b6fd6"/><circle cx="138" cy="62" r="7" fill="#fff"/><circle cx="162" cy="62" r="7" fill="#fff"/><rect x="138" y="76" width="24" height="5" rx="2" fill="#fff"/><line x1="150" y1="40" x2="150" y2="26" stroke="#7b6fd6" stroke-width="4"/><circle cx="150" cy="24" r="5" fill="#ff8a65"/><rect x="128" y="92" width="44" height="26" rx="6" fill="#5c51b8"/></svg>'
+};
+const scen=[
+ {pic:'mount',lic:['cc','by'],licT:'CC BY 4.0 · Autor: Lía Monte',q:'Quieres insertar esta imagen en un correo a tu profe. ¿Qué haces?',
+  o:['La pongo sin más, está en internet','La pongo y escribo debajo título, autora, fuente y licencia','No puedo usarla nunca'],a:1,why:'CC BY permite usarla siempre que cites a la autora.'},
+ {pic:'cat',lic:['cc','by','nd'],licT:'CC BY-ND 4.0 · Autor: Gatos Libres',q:'Quieres recortar el gato y ponerle un sombrero de pirata para tu correo. ¿Puedes?',
+  o:['Sí, si cito al autor','No: ND prohíbe modificarla; puedo usarla tal cual','Sí, porque es para clase'],a:1,why:'ND significa «sin obras derivadas»: nada de recortes ni montajes.'},
+ {pic:'ball',lic:['copy'],licT:'© Todos los derechos reservados · Liga Pro',q:'La encontraste en el buscador de imágenes. ¿La insertas en el correo del equipo?',
+  o:['Sí, porque sale en el buscador','No sin permiso: busco otra con licencia CC','Sí, si le cambio el color'],a:1,why:'© significa que el autor se reserva todos los derechos. Que salga en un buscador no la hace libre.'},
+ {pic:'tree',lic:['zero'],licT:'CC0 · Dominio público',q:'¿Puedes usar esta imagen en tu correo?',
+  o:['Sí, libremente; citar al autor es un detalle opcional','No, porque no sé quién es el autor','Solo si pago'],a:0,why:'CC0 es dominio público: uso libre. Aun así, citar la fuente es una buena costumbre.'},
+ {pic:'robot',lic:['cc','by','nc'],licT:'CC BY-NC 4.0 · Autor: Robotina',q:'Tu tío quiere usarla en el anuncio de su tienda para vender juguetes. ¿Puede?',
+  o:['Sí, si la cita','No: NC prohíbe el uso comercial','Sí, si la imprime pequeña'],a:1,why:'NC significa «no comercial». Para clase sí, para vender no.'},
+ {pic:'mount',lic:['cc','by'],licT:'«Atardecer» · Lía Monte · CC BY 4.0',q:'¿Cuál es la cita correcta para poner bajo la imagen?',
+  o:['Imagen de internet','«Atardecer» por Lía Monte, en Banco de Imágenes Libres, CC BY 4.0','Foto: Google'],a:1,why:'Una buena cita tiene Título, Autora, Fuente y Licencia (T·A·F·L).'}
+];
+$('#scen').innerHTML=scen.map((s,i)=>`<div class="sc">${pic[s.pic]}<div class="lic">${s.lic.map(l=>ccIcon(l,l==='copy'?'var(--stamp)':'var(--ink)')).join('')}<span>${s.licT}</span></div>
+ <div class="bd"><span class="label">Caso ${i+1}</span><p class="q">${s.q}</p><div class="opts">${s.o.map((o,j)=>`<button data-s="${i}" data-o="${j}">${o}</button>`).join('')}</div><div id="f4-${i}"></div></div></div>`).join('');
+$$('#scen .opts button').forEach(b=>b.onclick=()=>{
+  const s=scen[+b.dataset.s],ok=+b.dataset.o===s.a;if(ok)add(10);res4c[b.dataset.s]=ok;
+  [...b.parentElement.children].forEach((x,j)=>{x.disabled=true;if(j===s.a)x.classList.add('r')});if(!ok)b.classList.add('w');
+  $('#f4-'+b.dataset.s).innerHTML=`<div class="feedback ${ok?'right':'wrong'}"><strong>${ok?'¡Bien!':'¡Ojo!'}</strong><span>${s.why}</span></div>`;
+});
+
+/* ---------- MISIÓN 5 ---------- */
+const quiz=[
+ ['Quieres escribir a 25 familias sin que se vean sus direcciones. ¿Dónde las pones?',['En Para','En CC','En CCO'],2],
+ ['¿Qué parte resume en pocas palabras de qué trata el correo?',['El asunto','La firma','El adjunto'],0],
+ ['Escribes a tu profe y quieres que tu madre lo vea también, sabiendo la profe que lo ve. ¿Dónde pones a tu madre?',['CC','CCO','Asunto'],0],
+ ['Has escrito «te adjunto el trabajo» pero no lo has adjuntado. ¿Qué botón te faltó?',['Enviar','El clip (Adjuntar)','Reenviar'],1],
+ ['¿Qué significa CC?',['Correo cerrado','Con copia','Cuidado con el correo'],1],
+ ['Encuentras una imagen con licencia CC BY. Para insertarla en tu correo…',['Debo citar título, autor, fuente y licencia','No puedo usarla','Debo pagar al autor'],0],
+ ['Una imagen tiene el símbolo ©. ¿Qué haces?',['La uso, está en internet','Busco otra con licencia Creative Commons','La recorto y ya es mía'],1],
+ ['¿Qué deberías revisar antes de pulsar Enviar?',['Destinatarios, asunto, ortografía y adjuntos','Solo el color de las letras','Nada, se puede borrar después'],0]
+];
+let qd=0,qo=0;
+$('#quiz').innerHTML=quiz.map((q,i)=>`<div class="qitem"><p class="qq">${i+1}. ${q[0]}</p><div class="opts">${q[1].map((o,j)=>`<button data-q="${i}" data-o="${j}">${o}</button>`).join('')}</div></div>`).join('');
+$$('#quiz .opts button').forEach(b=>b.onclick=()=>{
+  const q=quiz[+b.dataset.q],ok=+b.dataset.o===q[2];res5[b.dataset.q]=ok;setTimeout(renderInforme);
+  [...b.parentElement.children].forEach((x,j)=>{x.disabled=true;if(j===q[2])x.classList.add('r')});
+  if(ok){qo++;add(10)}else b.classList.add('w');
+  if(++qd===quiz.length){
+    const d=$('#diploma');d.hidden=false;
+    const lvl=pts>=200?'Cartero/a Digital Experto/a':pts>=130?'Cartero/a Digital':'Aprendiz de cartero/a';
+    d.innerHTML=`<svg width="70" height="70" viewBox="0 0 84 84" aria-hidden="true"><path d="M6 6h72v72H6z" fill="var(--post)" stroke="var(--stamp)" stroke-width="3" stroke-dasharray="4 3"/><path d="M26 43l10 10 22-24" stroke="var(--post-ink)" stroke-width="7" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    <h3>Diploma de ${lvl}</h3><p>Examen: ${qo} de ${quiz.length} · Sellos totales: <b>${pts}</b></p><p style="color:var(--muted)">Ahora escribe un correo de verdad a tu profe con asunto, saludo, despedida, firma y una imagen CC bien citada.</p>`;
+  }
+});
+
+const STORE='cartero-',TITULO='Cartero Digital',PUNTOS=()=>'Sellos: '+pts;
+const res4c={},res5={};
+function informeRows(){const r=informeRows0();r.splice(r.length-1,0,vidRow('5. Vídeos y juegos'));return r}
+function informeRows0(){
+  const cnt=o=>Object.values(o).filter(x=>x===true).length,ans=o=>Object.values(o).filter(x=>x!==undefined).length,np=Object.keys(parts).length;
+  return [
+   {name:'1. Las partes',ok:seen.size,max:np,done:seen.size===np,fails:seen.size<np?['Partes sin explorar: '+Object.keys(parts).filter(k=>!seen.has(k)).map(k=>parts[k][1]).join(', ')]:[]},
+   {name:'2. Rellena el correo',ok:done2,max:chips2.length,done:done2===chips2.length,fails:fails2.slice()},
+   {name:'3. ¿Dónde está?',ok:r3.filter(x=>x===true).length,max:orders.length,done:r3.filter(x=>x!==undefined).length===orders.length,fails:orders.filter((o,i)=>r3[i]===false).map(o=>'Falló: '+o[1])},
+   {name:'4. Imágenes CC',ok:cnt(res4c),max:scen.length,done:ans(res4c)===scen.length,fails:scen.filter((s,i)=>res4c[i]===false).map((s,i)=>'Caso CC: '+s.q)},
+   {name:'6. Examen final',ok:cnt(res5),max:quiz.length,done:ans(res5)===quiz.length,fails:quiz.filter((q,i)=>res5[i]===false).map(q=>'Falló: '+q[0])}
+  ];
+}
+const VIDS=[{"src": "Lumio · tarea con evaluación", "t": "Netiqueta", "url": "https://lum.io/student/assign/8f31630e-b35a-4af0-841c-9346321b2592", "q": "Inicia sesión con tu cuenta del centro, haz la tarea y completa la evaluación del final.", "kind": "tarea"}, {"src": "Smile and Learn", "t": "Correos electrónicos para niños: características y partes", "url": "https://www.youtube.com/watch?v=Kdn81wnb0gY", "q": "¿Qué partes del correo aparecen en el vídeo? ¿Cuál se te olvida más?", "kind": "video"}, {"src": "Smile and Learn", "t": "La carta y el correo electrónico: características y partes", "url": "https://www.youtube.com/watch?v=yua4dBjMJig", "q": "Escribe dos diferencias entre una carta y un correo electrónico.", "kind": "video"}, {"src": "Smile and Learn", "t": "¿Qué es la netiqueta? Normas de comportamiento en internet", "url": "https://www.youtube.com/watch?v=SrDvQCcNwWQ", "q": "Escribe tres normas de netiqueta para los correos de tu clase.", "kind": "video"}, {"src": "INCIBE", "t": "¿Qué es el phishing?", "url": "https://www.youtube.com/watch?v=uhzV5-iFb5E", "q": "¿Qué pistas te ayudan a descubrir un correo de phishing? Nombra tres.", "kind": "video"}, {"src": "Educar Portal", "t": "¿Qué son las licencias abiertas y los derechos de autor?", "url": "https://www.youtube.com/watch?v=zir9KaU-Qow", "q": "¿Por qué hay que citar al autor de una imagen?", "kind": "video"}, {"src": "Google · Sé genial en Internet", "t": "Juego Interland", "url": "https://beinternetawesome.withgoogle.com/es_es/interland", "q": "Juega a los cuatro mundos de Interland y apunta cuál te costó más.", "kind": "game"}, {"src": "Lumio · clase en directo", "t": "Entra en la clase de Lumio (ID 835883)", "url": "https://www.lumioclass.com/link/835883", "q": "Úsalo cuando tu profe abra la clase en directo en la pizarra.", "kind": "clase"}];
+const seenV={};
+(function(){const PLAY='<svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z" fill="currentColor"/></svg>';
+ const lab={video:'Vídeo',game:'Juego',lumio:'Lumio',tarea:'⭐ Tarea obligatoria con evaluación',clase:'Clase Lumio'},btn={video:PLAY+' Ver vídeo',game:'🎮 Jugar',lumio:'📒 Abrir en Lumio',tarea:'📒 Abrir la tarea',clase:'🏫 Entrar en la clase'},ckl={game:'He jugado',tarea:'He hecho la tarea y la evaluación',clase:'He entrado en la clase'};
+ document.querySelector('#vids').innerHTML=VIDS.map((v,i)=>`<div class="vid ${v.kind==='tarea'?'tarea':''}" id="v-${i}"><span class="src">${v.src}</span><span class="kindtag">${lab[v.kind]}</span><h3>${v.t}</h3><a class="go" href="${v.url}" target="_blank" rel="noopener">${btn[v.kind]}</a><p class="q"><b>Piensa:</b> ${v.q}</p><label class="ck" for="ck-${i}"><input type="checkbox" id="ck-${i}">${ckl[v.kind]||'Lo he visto'}</label></div>`).join('');
+ VIDS.forEach((v,i)=>document.querySelector('#ck-'+i).addEventListener('change',e=>{seenV[i]=e.target.checked;document.querySelector('#v-'+i).classList.toggle('seen',e.target.checked);if(typeof onVidChange==='function')onVidChange()}));})();
+function vidRow(label){const L=VIDS.map((v,i)=>[v,i]).filter(x=>x[0].kind!=='clase');const n=L.filter(x=>seenV[x[1]]).length;return {name:label,ok:n,max:L.length,done:n===L.length,fails:L.filter(x=>!seenV[x[1]]).map(([v])=>(v.kind==='tarea'?'Tarea Lumio sin hacer: ':'Sin marcar: ')+v.t)}}
+/* ---------- Informe para el profe ---------- */
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+['alNombre','alCurso'].forEach(id=>{const el=$('#'+id);try{el.value=localStorage.getItem(STORE+id)||''}catch(e){}
+  el.addEventListener('input',()=>{try{localStorage.setItem(STORE+id,el.value)}catch(e){};renderInforme()})});
+function renderInforme(){
+  const rows=informeRows(),nomRaw=$('#alNombre').value.trim(),nom=nomRaw||'(sin nombre)',cur=$('#alCurso').value.trim()||'(sin curso)';
+  let ok=0,max=0;rows.forEach(r=>{ok+=r.ok;max+=r.max});const all=rows.every(r=>r.done);
+  const d=new Date(),fecha=d.toLocaleDateString('es-ES')+' '+d.toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'});
+  let t=`INFORME: ${TITULO}\nAlumno/a: ${nom}\nCurso: ${cur}\nFecha: ${fecha}\nAciertos: ${ok}/${max}${all?'':' (sin terminar)'} · ${PUNTOS()}\n\n`;
+  rows.forEach(r=>{t+=`- ${r.name}: ${r.ok}/${r.max}${r.done?'':' (sin terminar)'}\n`;r.fails.forEach(f=>t+=`    · ${f}\n`)});
+  $('#informe').innerHTML=`<h3>Informe para tu profe</h3>
+   ${nomRaw?'':'<div class="feedback wrong"><span>Escribe tu nombre y curso arriba, en la ficha, antes de entregar.</span></div>'}
+   <div class="rwrap"><table class="rtable"><thead><tr><th>Misión</th><th>Aciertos</th><th>A repasar</th></tr></thead><tbody>${rows.map(r=>`<tr><td>${r.name}${r.done?'':' <span class="pend">pendiente</span>'}</td><td>${r.ok} / ${r.max}</td><td class="rf">${r.fails.length?r.fails.map(esc).join('<br>'):'—'}</td></tr>`).join('')}</tbody></table></div>
+   <div class="copybox" id="copybox">${esc(t)}</div>
+   <div class="cbar"><button class="btn primary" id="copyBtn">Copiar informe</button><span id="copyMsg" class="cmsg"></span></div>
+   <div class="tip">Pega el informe en un correo a tu profe con el asunto «${TITULO} – ${esc(nom)}», o donde te diga tu profe.</div>`;
+  $('#copyBtn').onclick=()=>{const sel=()=>{const r=document.createRange();r.selectNodeContents($('#copybox'));const s=getSelection();s.removeAllRanges();s.addRange(r);$('#copyMsg').textContent='Texto seleccionado: pulsa Ctrl + C para copiarlo.'};
+    try{navigator.clipboard.writeText(t).then(()=>{$('#copyMsg').textContent='¡Copiado! Pégalo con Ctrl + V.'},sel)}catch(e){sel()}};
+}
+
+/* ---------- Pestañas ---------- */
+const ids=['partes','rellena','senala','imagenes','videos','examen'];
+function show(t){
+  if(!ids.includes(t))t='partes';
+  ids.forEach(x=>$('#m-'+x).hidden=x!==t);
+  document.querySelector('.relato').hidden=t!==ids[0];
+  $$('#tabs button').forEach(b=>b.setAttribute('aria-selected',b.dataset.t===t));
+  if(location.hash!=='#'+t)history.replaceState(null,'','#'+t);
+  if(t==='examen')renderInforme();
+  scrollTo({top:0});
+}
+$$('#tabs button').forEach(b=>b.onclick=()=>show(b.dataset.t));
+addEventListener('hashchange',()=>show(location.hash.slice(1)));
+render2();render3();show(location.hash.slice(1));
+
+
+/* ---------- Valoración de indicadores y llave ---------- */
+const VAL_CFG={"pre": "CAR", "i5": [["2.1.1", [0, 1], "Redacta la carta al consulado en un correo de Educacyl con destinatario, asunto, saludo, cuerpo y despedida, desde la plantilla o con texto propio según su ruta, y lee los iconos y las palabras en inglés del correo (clip de adjuntar, Send, Reply, Forward) para usarlos correctamente.", "CCL5 · CP1"], ["2.2.1", [1], "Envía el PDF del dossier como adjunto del correo o, en la ruta avanzada, como enlace de OneDrive, y comprueba que se abre.", "CCL5 · CE3"], ["3.3.1", [3], "Inserta en el Word colaborativo una imagen de un banco Creative Commons y escribe debajo su autor y su fuente.", "CD2 · CCEC4"], ["3.4.1", [3], "Reconoce los iconos de la licencia CC de la imagen elegida (BY, NC, ND, SA) y explica si puede usarla en el dossier.", "CC3 · CCEC4"]], "i6": [["2.1.1", [1, 2], "Escribe un correo con todas sus partes (Para, CC, CCO, asunto, saludo, cuerpo, despedida, firma y adjunto) y sabe cuándo usar CC y CCO.", "CCL5 · CC1"], ["3.3.1", [3], "Usa imágenes con licencia Creative Commons y escribe su autor o la web de origen.", "CD2 · CE3"], ["3.4.1", [3], "Reconoce las licencias Creative Commons (BY, NC, ND, SA, CC0) y el ©, y cita una imagen con título, autor, fuente y licencia.", "CC3 · CCEC4"]], "vid": 4, "exam": 5};
+function valRows(){return typeof informeRows==='function'?informeRows():Object.values(R)}
+function valScore(rows,idx){let ok=0,max=0,att=false;idx.forEach(i=>{const r=rows[i];if(!r)return;ok+=r.ok;max+=r.max;if(r.ok>0||r.done)att=true});return att?Math.max(1,Math.round(5*ok/(max||1))):0}
+function valAll(){const rows=valRows();return {rows,s5:VAL_CFG.i5.map(x=>valScore(rows,x[1])),s6:VAL_CFG.i6.map(x=>valScore(rows,x[1]))}}
+function valComplete(rows){return rows.every((r,i)=>i===VAL_CFG.vid||r.done)}
+function valKey(v){const ex=VAL_CFG.exam!=null&&v.rows[VAL_CFG.exam]?v.rows[VAL_CFG.exam].ok:0;const raw=VAL_CFG.pre+'-'+v.s5.join('')+'-'+v.s6.join('')+'-'+ex;let h=0;for(let i=0;i<raw.length;i++)h=(h+raw.charCodeAt(i)*(i+7))%1296;return raw+'-'+h.toString(36).toUpperCase().padStart(2,'0')}
+function valCourse(){const c=(document.querySelector('#alCurso')||{}).value||'';return /6/.test(c)?'6':/5/.test(c)?'5':''}
+function valEsc(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
+function appendVal(){
+  const host=document.querySelector('#informe')||document.querySelector('#report');if(!host)return;
+  const old=host.querySelector('.valora');if(old)old.remove();
+  const v=valAll(),c=valCourse(),done=valComplete(v.rows),key=done?valKey(v):'';
+  const bar=n=>`<span class="vbar">${[1,2,3,4,5].map(i=>`<i class="${i<=n?'on':''}"></i>`).join('')}</span>`;
+  const tab=(k,list,sc)=>`<div><h4>${k}.º de Primaria</h4><table class="rtable"><thead><tr><th>Indicador</th><th>0-5</th></tr></thead><tbody>${list.map((x,i)=>`<tr><td><b>${x[0]}</b> ${valEsc(x[2])} <span style="color:var(--muted)">(${x[3]})</span></td><td><span class="vstar">${sc[i]}</span>${bar(sc[i])}</td></tr>`).join('')}</tbody></table></div>`;
+  const cols=(c!=='6'?tab(5,VAL_CFG.i5,v.s5):'')+(c!=='5'?tab(6,VAL_CFG.i6,v.s6):'');
+  const div=document.createElement('div');div.className='valora';
+  div.innerHTML=`<h3>Valoración de los indicadores de logro</h3><p style="font-size:.88rem;color:var(--muted)">Escala de 0 a 5: 0 = no realizado; 5 = realizado con éxito. Es una estimación automática a partir de las misiones relacionadas; tu profe la revisará.${c?'':' Escribe tu curso en la ficha para ver solo el tuyo.'}</p><div class="cols">${cols}</div>
+   <div class="llave">${done?`<b>🔑 ¡Has conseguido la llave de esta web!</b><code>${key}</code><span style="font-size:.88rem">Ya está guardada: vuelve al rincón Piensa de Rumbo a Europa y envía tus notas.</span><a href="../#piensa" style="align-self:flex-start;font-weight:700;color:var(--accent)">Volver al rincón Piensa · Pasaporte TIC ↗</a>`:`<b>🔒 Llave todavía cerrada</b><span style="font-size:.88rem">Termina todas las misiones${VAL_CFG.exam!=null?' y el examen final':''} (los vídeos no son obligatorios) para conseguir la llave de la siguiente parada.</span>`}</div>`;
+  const cb=host.querySelector('#copybox');
+  if(cb){host.insertBefore(div,cb.previousElementSibling&&cb.previousElementSibling.tagName==='H3'?cb.previousElementSibling:cb);
+    let t=cb.textContent.replace(/\nVALORACIÓN DE INDICADORES[\s\S]*$/,'');
+    t+='\nVALORACIÓN DE INDICADORES (0-5)\n'+(c!=='6'?VAL_CFG.i5.map((x,i)=>`  5.º ${x[0]}: ${v.s5[i]}`).join('\n')+'\n':'')+(c!=='5'?VAL_CFG.i6.map((x,i)=>`  6.º ${x[0]}: ${v.s6[i]}`).join('\n')+'\n':'')+'LLAVE: '+(key||'(sin conseguir)')+'\n';
+    cb.textContent=t;
+    const btn=host.querySelector('#copyBtn'),msg=host.querySelector('#copyMsg');
+    if(btn)btn.onclick=()=>{const sel=()=>{const r=document.createRange();r.selectNodeContents(cb);const s=getSelection();s.removeAllRanges();s.addRange(r);if(msg)msg.textContent='Texto seleccionado: pulsa Ctrl + C para copiarlo.'};try{navigator.clipboard.writeText(cb.textContent).then(()=>{if(msg)msg.textContent='¡Copiado! Pégalo con Ctrl + V.'},sel)}catch(e){sel()}};
+  }else host.appendChild(div);
+}
+(function(){
+  if(typeof renderInforme==='function'){const o=renderInforme;renderInforme=function(){o();appendVal()}}
+  else if(typeof renderReport==='function'){const o=renderReport;renderReport=function(){o();appendVal()}}
+})();
+</script>
+
+<script>
+/* Rumbo a Europa: rellena nombre y curso con los datos de la web y guarda la llave en el rincón Piensa */
+(function(){
+  try{
+    var a=(JSON.parse(localStorage.getItem("rumbo-a-europa-v1")||"{}")||{}).alumno||{};
+    [["alNombre",a.nombre],["alCurso",a.clase]].forEach(function(p){var el=document.getElementById(p[0]);if(el&&p[1]&&!el.value.trim()){el.value=p[1];el.dispatchEvent(new Event("input",{bubbles:true}));el.dispatchEvent(new Event("change",{bubbles:true}));}});
+  }catch(e){}
+  if(typeof valKey==="function"){
+    var orig=valKey;
+    valKey=function(v){var k=orig(v);try{var g=JSON.parse(localStorage.getItem("rumbo-piensa-llaves")||"{}")||{};var done=typeof valComplete==="function"?valComplete(v.rows):true;g[VAL_CFG.pre]={llave:k,completa:!!done,fecha:new Date().toISOString()};localStorage.setItem("rumbo-piensa-llaves",JSON.stringify(g));}catch(e){}return k;};
+  }
+})();
+</script>
+</body></html>

@@ -523,7 +523,7 @@
     $("#v-repetir").onclick = () => { cerrar(); reiniciarPersonaje(); };
     const vx = $("#v-excel"); if (vx) vx.onclick = descargarExcel;
     const sig = $("#v-siguiente"); if (sig) sig.onclick = () => { cerrar(); irANivel(nivelI + 1); };
-    const pas = $("#v-pasaporte"); if (pas) pas.onclick = () => { cerrar(); location.hash = ""; mostrarInicio(); };
+    const pas = $("#v-pasaporte"); if (pas) pas.onclick = () => { cerrar(); location.hash = "programa"; };
     $("#v-repetir").focus();
   }
 
@@ -556,6 +556,7 @@
     const datos = {
       fecha: new Date().toISOString(),
       nombre: progreso.alumno.nombre,
+      usuario: progreso.alumno.usuario || "",
       clase: progreso.alumno.clase,
       destino: `Programación · ${nivelI + 1}. ${nivel.ciudad}`,
       ciudad: nivel.ciudad,
@@ -572,22 +573,22 @@
 
   /* ---------- Alumno ---------- */
   function iniciarAlumno() {
-    const n = $("#in-nombre"), c = $("#in-clase"), ok = $("#alumno-ok");
-    n.value = progreso.alumno.nombre || ""; c.value = progreso.alumno.clase || "";
+    const n = $("#in-nombre"), c = $("#in-clase"), u = $("#in-usuario"), ok = $("#alumno-ok");
+    n.value = progreso.alumno.nombre || ""; c.value = progreso.alumno.clase || ""; u.value = progreso.alumno.usuario || "";
     const pintarOk = () => {
       ok.hidden = !progreso.alumno.nombre;
       ok.textContent = `✓ Hola, ${progreso.alumno.nombre}`;
     };
     const cambiar = () => {
-      progreso.alumno = { nombre: n.value.trim(), clase: c.value.trim() };
+      progreso.alumno = { nombre: n.value.trim(), clase: c.value.trim(), usuario: u.value.trim() };
       if (progreso.alumno.nombre) n.classList.remove("falta");
       guardar(); pintarOk();
       window.dispatchEvent(new CustomEvent("alumno-cambiado-prog"));
     };
     window.addEventListener("alumno-cambiado", (e) => {
-      progreso.alumno = Object.assign({}, e.detail); n.value = progreso.alumno.nombre; c.value = progreso.alumno.clase; pintarOk(); pintarInicio();
+      progreso.alumno = Object.assign({}, e.detail); n.value = progreso.alumno.nombre; c.value = progreso.alumno.clase; u.value = progreso.alumno.usuario || ""; pintarOk(); pintarInicio();
     });
-    n.addEventListener("input", cambiar); c.addEventListener("input", cambiar);
+    n.addEventListener("input", cambiar); c.addEventListener("input", cambiar); u.addEventListener("input", cambiar);
     c.addEventListener("input", () => pintarInicio());
     $("#form-alumno").addEventListener("submit", (e) => e.preventDefault());
     pintarOk();
@@ -600,8 +601,17 @@
     pintarInicio();
   }
   function enrutar() {
-    const rob = /^#robotica/.test(location.hash);
+    const h = location.hash;
+    const sec = /^#robotica/.test(h) ? "robotica" : /^#(destino-\d+|programa)$/.test(h) ? "programa" : /^#crea/.test(h) ? "crea" : /^#piensa/.test(h) ? "piensa" : "inicio";
+    document.body.dataset.seccion = sec;
+    const rob = sec === "robotica";
     document.body.classList.toggle("en-robotica", rob);
+    if (window.Rincones && window.Rincones.ruta(h)) {
+      cancelar();
+      $("#inicio").hidden = true; $("#juego").hidden = true;
+      if (window.Robotica) window.Robotica.ocultar();
+      return;
+    }
     if (rob) {
       cancelar();
       $("#inicio").hidden = true; $("#juego").hidden = true;
@@ -619,7 +629,7 @@
     let i = NIVELES.findIndex((_, k) => !progreso.estrellas[k] && desbloqueadoNivel(k));
     irANivel(i < 0 ? 0 : i);
   };
-  $("#btn-volver").onclick = () => { try { history.pushState(null, "", location.pathname + location.search); } catch (e) {} mostrarInicio(); };
+  $("#btn-volver").onclick = () => { location.hash = "programa"; };
   $("#btn-ejecutar").onclick = ejecutar;
   $("#btn-reiniciar").onclick = () => { cancelar(); marcar(null); reiniciarPersonaje(); aviso(null); };
   $("#btn-borrar").onclick = () => { if (PUZLE) { window.EditorBloques.borrar(); cuentaPuzle(); } programa = []; objetivoId = null; reiniciarPersonaje(); pintarPrograma(); aviso(null); };
@@ -628,7 +638,7 @@
   window.addEventListener("hashchange", enrutar);
 
   window.PiniEspalda = espaldaSVG;
-  if (window.Valoraciones) window.Valoraciones.definirActividades("prog", NIVELES.map((n, i) => ({ clave: "prog-" + i, pantalla: "Programación", actividad: `${AVENTURAS[n.aventura].nombre} · ${n.ciudad}`, tipo: "prog", ref: n.ciudad })));
+  if (window.Valoraciones) window.Valoraciones.definirActividades("prog", NIVELES.map((n, i) => ({ clave: "prog-" + i, pantalla: "Programación", actividad: `${AVENTURAS[n.aventura].nombre} · ${n.ciudad}`, destino: `Programación · ${i + 1}. ${n.ciudad}`, ciudad: n.ciudad, tipo: "prog", ref: n.ciudad })));
   const bx = $("#btn-excel"); if (bx) bx.onclick = descargarExcel;
   pintarMarca();
   iniciarAlumno();

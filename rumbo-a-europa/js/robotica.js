@@ -431,7 +431,7 @@
     let alumno = {};
     try { alumno = (JSON.parse(localStorage.getItem("rumbo-a-europa-v1") || "{}") || {}).alumno || {}; } catch (e) {}
     const datos = {
-      fecha: new Date().toISOString(), nombre: alumno.nombre || "(sin nombre)", clase: alumno.clase || "",
+      fecha: new Date().toISOString(), nombre: alumno.nombre || "(sin nombre)", usuario: alumno.usuario || "", clase: alumno.clase || "",
       destino: `Robótica · ${MODOS[modo].nombre} · reto ${retoI + 1}`, ciudad: reto.titulo, estrellas: "",
       bloques: contarB(prog), intentos, personaje: MODOS[modo].nombre, programa: textoProg(prog),
       indicador: val ? val.codigo || "" : "", valoracion: val ? val.nota : ""
@@ -528,12 +528,13 @@
 
   function iniciar() {
     if (VAL()) {
-      VAL().definirActividades("rob", [].concat(...Object.keys(MODOS).map((k) => RETOS.map((r, i) => ({ clave: `rob-${k}-${i}`, pantalla: "Robótica", actividad: `${MODOS[k].nombre} · ${r.titulo}`, tipo: "rob", ref: [k, i] })))));
-      const n = $("#rb-in-nombre"), c = $("#rb-in-clase");
-      const cargar = () => { const a = VAL().alumno(); n.value = a.nombre || ""; c.value = a.clase || ""; };
+      VAL().definirActividades("rob", [].concat(...Object.keys(MODOS).map((k) => RETOS.map((r, i) => ({ clave: `rob-${k}-${i}`, pantalla: "Robótica", actividad: `${MODOS[k].nombre} · ${r.titulo}`, destino: `Robótica · ${MODOS[k].nombre} · reto ${i + 1}`, ciudad: r.titulo, personaje: MODOS[k].nombre, tipo: "rob", ref: [k, i] })))));
+      const n = $("#rb-in-nombre"), c = $("#rb-in-clase"), u = $("#rb-in-usuario");
+      const cargar = () => { const a = VAL().alumno(); n.value = a.nombre || ""; c.value = a.clase || ""; u.value = a.usuario || ""; };
       cargar();
-      const cambiar = () => VAL().ponerAlumno(n.value, c.value);
-      n.addEventListener("input", cambiar); c.addEventListener("input", cambiar);
+      const cambiar = () => VAL().ponerAlumno(n.value, c.value, u.value);
+      n.addEventListener("input", cambiar); c.addEventListener("input", cambiar); u.addEventListener("input", cambiar);
+      window.addEventListener("alumno-cambiado", () => { if ($("#robotica").hidden) cargar(); });
       c.addEventListener("change", pintarMenu);
       window.addEventListener("alumno-cambiado-prog", cargar);
       $("#rb-form-alumno").addEventListener("submit", (e) => e.preventDefault());

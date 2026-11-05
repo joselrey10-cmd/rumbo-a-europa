@@ -1,0 +1,496 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Redes Sociales</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Figtree:wght@400;600;800&family=JetBrains+Mono:wght@500&display=swap">
+<style>
+/* Layout: verde irlandés; vocabulario emparejado, verdadero/falso, línea del tiempo de la huella digital y muro simulado */
+:root{
+  --bg:#f2f6f3; --paper:#ffffff; --ink:#16251d; --muted:#56665c; --line:#d3ded7; --accent:#14804a; --accent-ink:#ffffff; --tram:#f08a24; --tram-ink:#2b1600; --ok:#1d8a52; --ok-bg:#e0f3e8; --bad:#c43c2f; --bad-bg:#fbe5e2; --soft:#e6eee9; --sel:#fff0c9;
+  --f-display:"Bricolage Grotesque","Trebuchet MS",system-ui,sans-serif; --f-body:"Figtree",system-ui,-apple-system,"Segoe UI",sans-serif; --f-mono:"JetBrains Mono",ui-monospace,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){ --bg:#0f1612; --paper:#18211b; --ink:#e4efe8; --muted:#9fb3a6; --line:#2b3a31; --accent:#5fd394; --accent-ink:#062a16; --tram:#ffaa55; --tram-ink:#2b1600; --ok:#5fd18e; --ok-bg:#163527; --bad:#ff8a7c; --bad-bg:#3a1d1a; --soft:#212c25; --sel:#3d3418; color-scheme:dark}}
+:root[data-theme="dark"]{ --bg:#0f1612; --paper:#18211b; --ink:#e4efe8; --muted:#9fb3a6; --line:#2b3a31; --accent:#5fd394; --accent-ink:#062a16; --tram:#ffaa55; --tram-ink:#2b1600; --ok:#5fd18e; --ok-bg:#163527; --bad:#ff8a7c; --bad-bg:#3a1d1a; --soft:#212c25; --sel:#3d3418; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:16px;line-height:1.55;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 48px}
+.wrap{max-width:1060px;margin:0 auto;display:flex;flex-direction:column;gap:20px}
+h1,h2,h3{font-family:var(--f-display);font-weight:400;text-wrap:balance;margin:0;line-height:1.08;letter-spacing:.01em}
+p{margin:0}
+button,input,select,textarea{font-family:inherit;font-size:inherit}
+button:focus-visible,[tabindex]:focus-visible,input:focus-visible,textarea:focus-visible{outline:3px solid var(--tram);outline-offset:2px}
+
+header.hero{display:flex;gap:16px;align-items:center;flex-wrap:wrap}
+.tile{width:80px;height:80px;flex:none}
+.hero-text{flex:1;min-width:0;display:flex;flex-direction:column;gap:4px}
+.hero h1{font-size:clamp(2.2rem,6vw,3.4rem);color:var(--accent)}
+.hero p{color:var(--muted);max-width:64ch}
+.score{font-family:var(--f-display);background:var(--tram);color:var(--tram-ink);border-radius:999px;padding:8px 18px;font-variant-numeric:tabular-nums;white-space:nowrap;font-size:1.1rem}
+
+nav.tabs{display:flex;gap:6px;flex-wrap:wrap}
+nav.tabs button{font:800 .96rem var(--f-body);border:2px solid var(--line);background:var(--paper);color:var(--ink);padding:8px 12px;border-radius:12px;cursor:pointer;display:flex;gap:8px;align-items:center}
+nav.tabs .n{display:inline-grid;place-items:center;width:24px;height:24px;border-radius:6px;background:var(--soft);font-size:.85rem}
+nav.tabs button[aria-selected="true"]{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+nav.tabs button[aria-selected="true"] .n{background:var(--tram);color:var(--tram-ink)}
+
+section.mission{display:flex;flex-direction:column;gap:16px}
+.intro{background:var(--paper);border:2px solid var(--line);border-radius:16px;padding:16px 18px;display:flex;flex-direction:column;gap:6px}
+.intro h2{font-size:1.7rem}
+.intro p{color:var(--muted);max-width:74ch}
+.label{font:800 .74rem var(--f-body);letter-spacing:.1em;text-transform:uppercase;color:var(--accent)}
+.grid2{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);gap:16px;align-items:start}
+@media (max-width:820px){.grid2{grid-template-columns:minmax(0,1fr)}}
+.grid2>*{min-width:0}
+.panel{background:var(--paper);border:2px solid var(--line);border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:12px}
+.panel h3{font-size:1.35rem}
+.btn{font:800 .98rem var(--f-body);border:2px solid var(--line);border-radius:12px;padding:8px 14px;cursor:pointer;background:var(--soft);color:var(--ink)}
+.btn.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.btn.ok{background:var(--ok-bg);color:var(--ok);border-color:var(--ok)}
+.btn.bad{background:var(--bad-bg);color:var(--bad);border-color:var(--bad)}
+.btn:disabled{opacity:.5;cursor:default}
+.choices{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.feedback{border-radius:12px;padding:10px 14px;display:flex;flex-direction:column;gap:5px}
+.feedback.right{background:var(--ok-bg)}.feedback.wrong{background:var(--bad-bg)}
+.feedback strong{font-family:var(--f-display);font-weight:400;font-size:1.15rem}
+.feedback ul{margin:0;padding-left:20px}
+.tip{background:var(--soft);border-radius:12px;padding:10px 14px;font-size:.95rem}
+
+.opts{display:flex;flex-direction:column;gap:8px}
+.opts button{text-align:left;font-size:.95rem;background:var(--bg);color:var(--ink);border:2px solid var(--line);border-radius:12px;padding:9px 12px;cursor:pointer}
+.opts button.r{background:var(--ok-bg);border-color:var(--ok)}.opts button.w{background:var(--bad-bg);border-color:var(--bad)}
+.quiz{display:flex;flex-direction:column;gap:12px}
+.qitem{background:var(--paper);border:2px solid var(--line);border-radius:16px;padding:14px;display:flex;flex-direction:column;gap:10px}
+.qitem .qq{font-weight:800}
+.diploma{border:3px dashed var(--accent);border-radius:20px;padding:20px;background:var(--paper);text-align:center;display:flex;flex-direction:column;gap:8px;align-items:center}
+.diploma h3{font-size:1.7rem;color:var(--accent)}
+.bars{display:flex;gap:4px;flex-wrap:wrap}.bars i{width:24px;height:8px;border-radius:4px;background:var(--line);display:block}
+.bars i.ok{background:var(--ok)}.bars i.ko{background:var(--bad)}.bars i.now{background:var(--tram)}
+
+
+h1,h2,h3{font-weight:800}
+.match{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.6fr);gap:12px}
+@media (max-width:640px){.match{grid-template-columns:minmax(0,1fr)}}
+.col{display:flex;flex-direction:column;gap:8px}
+.term,.def{text-align:left;border:2px solid var(--line);background:var(--paper);color:var(--ink);border-radius:12px;padding:9px 12px;cursor:pointer;font-size:.95rem}
+.term{font-weight:800}
+.term.sel{border-color:var(--tram);background:var(--sel)}
+.term.done,.def.done{border-color:var(--ok);background:var(--ok-bg);cursor:default}
+.def.done b{color:var(--ok)}
+.def.shake{animation:shake .35s}
+@keyframes shake{25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+@media (prefers-reduced-motion:reduce){.def.shake{animation:none}}
+.tf{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}
+.tfc{background:var(--paper);border:2px solid var(--line);border-radius:16px;padding:14px;display:flex;flex-direction:column;gap:10px}
+.tfc p.s{font-weight:700}
+.tfc .choices{margin-top:auto}
+.tl{display:flex;flex-direction:column;gap:12px;border-left:4px solid var(--line);padding-left:16px}
+.tlp{background:var(--paper);border:2px solid var(--line);border-radius:14px;padding:12px;display:flex;flex-direction:column;gap:8px;position:relative}
+.tlp::before{content:"";position:absolute;left:-26px;top:16px;width:14px;height:14px;border-radius:50%;background:var(--accent);border:3px solid var(--bg)}
+.tlp .yr{font:800 .8rem var(--f-body);color:var(--muted);letter-spacing:.06em}
+.tlp .txt{font-weight:600}
+.feed{max-width:420px;width:100%;margin:0 auto;border:10px solid #22302a;border-radius:32px;background:var(--paper);overflow:hidden}
+.feed .top{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;border-bottom:1px solid var(--line);font:800 1.05rem var(--f-display)}
+.fpost{border-bottom:1px solid var(--line);padding:12px;display:flex;flex-direction:column;gap:8px}
+.fpost .h{display:flex;gap:8px;align-items:center;font-size:.9rem}
+.fpost .av{width:32px;height:32px;border-radius:50%;display:grid;place-items:center;color:#fff;font-weight:800;flex:none}
+.fpost .pic{display:block;width:100%;height:150px;border-radius:10px}
+.fpost .cap{font-size:.93rem;overflow-wrap:anywhere}
+.fpost .st{font-size:.8rem;color:var(--muted)}
+.dm{background:var(--soft);border-radius:12px;padding:10px;display:flex;flex-direction:column;gap:6px}
+.dm .bub{background:var(--paper);border-radius:12px;padding:6px 10px;font-size:.9rem;align-self:flex-start;max-width:90%}
+
+.relato{background:var(--paper);border:2px solid var(--line);border-radius:18px;padding:18px;display:grid;grid-template-columns:120px minmax(0,1fr);gap:20px;align-items:start}
+@media (max-width:620px){.relato{grid-template-columns:minmax(0,1fr)}.relato .pini{width:96px}}
+.relato .pini{width:120px;height:auto;display:block}
+.relato .rt{display:flex;flex-direction:column;gap:10px;min-width:0}
+.relato .cap{font-size:.74rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--accent)}
+.relato h2{font-size:clamp(1.5rem,3.6vw,2rem);text-wrap:balance}
+.relato p{max-width:68ch;line-height:1.65}
+.relato .dlg{padding-left:14px;border-left:3px solid var(--line)}
+.relato .reto{border:2px dashed var(--accent);border-radius:14px;padding:12px 16px;display:flex;flex-direction:column;gap:6px;margin-top:4px}
+.relato .reto b.t{font-size:.8rem;letter-spacing:.08em;text-transform:uppercase;color:var(--accent)}
+.relato .reto ul{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:4px}
+.relato[hidden]{display:none}
+.relato .nw{white-space:nowrap}
+.ficha{display:flex;gap:12px;flex-wrap:wrap;background:var(--paper);border:2px solid var(--line);border-radius:14px;padding:12px 14px}
+.ficha label{display:flex;flex-direction:column;gap:3px;font-size:.78rem;font-weight:800;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;flex:1 1 180px;min-width:0}
+.ficha input{border:2px solid var(--line);border-radius:10px;padding:8px 10px;background:var(--bg);color:var(--ink);font:inherit;font-size:1rem;text-transform:none;letter-spacing:0;font-weight:400;width:100%}
+.ficha input:focus-visible{outline:3px solid var(--accent);outline-offset:1px}
+#informe{background:var(--paper);border:2px solid var(--line);border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:12px}
+#informe h3{font-size:1.35rem}
+.rwrap{overflow-x:auto}
+.rtable{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
+.rtable th,.rtable td{text-align:left;padding:8px 6px;border-bottom:1px solid var(--line);font-size:.93rem;vertical-align:top}
+.rtable th{font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.rtable .rf{font-size:.85rem;color:var(--muted)}
+.pend{font-size:.75rem;color:var(--muted);background:var(--bg);border-radius:999px;padding:1px 8px;white-space:nowrap}
+.copybox{font:500 .82rem var(--f-mono);background:var(--bg);border:2px dashed var(--line);border-radius:10px;padding:10px;white-space:pre-wrap;overflow-wrap:anywhere;max-height:260px;overflow:auto}
+.cbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.cmsg{font-size:.9rem;color:var(--muted)}
+
+.vids{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:14px}
+.vid{background:var(--paper);border:2px solid var(--line);border-radius:16px;padding:14px;display:flex;flex-direction:column;gap:8px}
+.vid.seen{border-color:var(--ok)}
+.vid .src{font-weight:800;font-size:.7rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.vid h3{font-size:1.08rem}
+.vid .kindtag{align-self:flex-start;font-size:.72rem;font-weight:800;border-radius:999px;padding:2px 9px;background:var(--bg);color:var(--muted)}
+.vid a.go{display:inline-flex;gap:8px;align-items:center;align-self:flex-start;background:var(--accent);color:var(--accent-ink);text-decoration:none;font-weight:800;border-radius:999px;padding:7px 14px}
+.vid a.go svg{width:16px;height:16px}
+.vid .q{font-size:.92rem;background:var(--bg);border-radius:10px;padding:8px 10px}
+.vid label.ck{display:flex;gap:8px;align-items:center;font-weight:700;font-size:.92rem;cursor:pointer;margin-top:auto}
+.vid label.ck input{width:20px;height:20px;accent-color:var(--ok)}
+.vid.tarea{border-color:var(--accent);border-width:3px}
+.vid.tarea .kindtag{background:var(--accent);color:var(--accent-ink)}
+.vfilter{display:flex;gap:8px;flex-wrap:wrap}
+
+.indic{border:2px solid var(--line);border-radius:14px;padding:12px 16px;display:flex;flex-direction:column;gap:10px;margin-top:4px;background:var(--bg)}
+.indic>b.t{font-size:.8rem;letter-spacing:.08em;text-transform:uppercase;color:var(--accent)}
+.indic .cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px}
+.indic h4{margin:0;font-size:.95rem}
+.indic ul{margin:0;padding-left:0;list-style:none;display:flex;flex-direction:column;gap:6px;font-size:.88rem;line-height:1.45}
+.indic li{overflow-wrap:anywhere}
+.indic .crit{display:inline-block;font-weight:800;border:1.5px solid var(--accent);color:var(--accent);border-radius:6px;padding:0 5px;margin-right:4px;font-size:.78rem;font-variant-numeric:tabular-nums}
+.indic .do{color:var(--muted);font-size:.8rem}
+.valora{border:2px solid var(--accent);border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:10px;background:var(--paper)}
+.valora h3{font-size:1.2rem}
+.valora .cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px}
+.valora h4{margin:0 0 4px;font-size:.95rem}
+.valora td{font-size:.85rem}
+.vstar{font-weight:800;white-space:nowrap;font-variant-numeric:tabular-nums}
+.vbar{display:inline-flex;gap:2px;margin-left:6px;vertical-align:middle}.vbar i{width:8px;height:8px;border-radius:2px;background:var(--line);display:block}.vbar i.on{background:var(--ok)}
+.llave{border:2px dashed var(--accent);border-radius:12px;padding:12px;display:flex;flex-direction:column;gap:6px}
+.llave code{font:700 1.3rem var(--f-mono,monospace);letter-spacing:.06em;color:var(--accent);overflow-wrap:anywhere}
+footer{color:var(--muted);font-size:.85rem;text-align:center}
+</style>
+
+<div class="wrap">
+  <header class="hero">
+    <svg width="80" height="80" viewBox="0 0 80 80" aria-hidden="true" style="flex:none"><rect width="80" height="80" rx="20" fill="var(--accent)"/><circle cx="40" cy="36" r="13" fill="none" stroke="var(--accent-ink)" stroke-width="5"/><circle cx="58" cy="20" r="4" fill="var(--accent-ink)"/><path d="M18 64q22-14 44 0" fill="none" stroke="var(--tram)" stroke-width="5" stroke-linecap="round"/><path d="M22 18l6 6M28 18l-6 6" stroke="var(--accent-ink)" stroke-width="2"/></svg>
+    <div class="hero-text">
+      <h1>Redes Sociales</h1>
+      <p>Cómo funcionan las redes sociales, qué edad hace falta, cómo cuidar tu huella digital y qué hacer si algo del muro te hace sentir mal. La red social «Piñagram», sus cuentas y las personas son inventadas.</p>
+    </div>
+    <div class="score" id="score">Tréboles: 0</div>
+  </header>
+
+  <section class="relato" aria-labelledby="relato-t">
+    <svg class="pini" viewBox="0 0 120 150" aria-label="Pini, la mascota de Radio La Piña">
+  <path d="M60 14l6 12h-12z" fill="#5f8f3a"/>
+  <ellipse cx="60" cy="86" rx="36" ry="50" fill="#a5642f"/>
+  <g fill="none" stroke="#6e3a17" stroke-width="3" stroke-linecap="round">
+    <path d="M32 58q7 8 14 0q7 8 14 0q7 8 14 0q7 8 14 0"/>
+    <path d="M27 104q8 8 16 0q8 8 17 0q8 8 17 0q8 8 16 0"/>
+    <path d="M33 122q7 7 14 0q6 7 13 0q7 7 14 0q6 7 13 0"/>
+    <path d="M40 42q5 6 10 0q5 6 10 0q5 6 10 0q5 6 10 0"/>
+  </g>
+  <ellipse cx="48" cy="78" rx="8" ry="9" fill="#fff"/><ellipse cx="72" cy="78" rx="8" ry="9" fill="#fff"/>
+  <circle cx="50" cy="80" r="4" fill="#1d1d1d"/><circle cx="74" cy="80" r="4" fill="#1d1d1d"/>
+  <path d="M50 92q10 9 20 0" fill="none" stroke="#1d1d1d" stroke-width="3" stroke-linecap="round"/>
+  <path d="M22 76a38 42 0 0 1 76 0" fill="none" stroke="#2b2f3a" stroke-width="6"/>
+  <rect x="14" y="70" width="14" height="22" rx="5" fill="#e2553f"/><rect x="92" y="70" width="14" height="22" rx="5" fill="#e2553f"/>
+  <path d="M21 92q0 16 18 18" fill="none" stroke="#2b2f3a" stroke-width="3"/>
+  <rect x="38" y="104" width="12" height="9" rx="4" fill="#2b2f3a"/>
+</svg>
+    <div class="rt">
+      <span class="cap">Rumbo a Europa · Radio La Piña · Irlanda</span>
+      <h2 id="relato-t">La huella que dejó Leo</h2>
+      <p>Radio La Piña viaja a <b>Irlanda</b>, la isla esmeralda. En su capital, Dublín, tienen sus oficinas europeas muchas de las grandes empresas de redes sociales. Por eso el equipo quiere entrevistar a Siobhan, una ingeniera irlandesa que explica cómo funcionan por dentro.</p>
+      <p class="dlg">—Una red social es como una plaza enorme donde todo el mundo puede verte —cuenta Siobhan—. Y todo lo que haces allí deja una huella: la huella digital.</p>
+      <p>En ese momento, Leo se pone colorado. Hace dos años, su primo le subió a una red social un vídeo suyo bailando en pijama. Leo lo borró hace mucho… pero esta mañana alguien de otro cole se lo ha enseñado: ¡había hecho una captura!</p>
+      <p class="dlg">—Lo que se sube a internet es muy difícil de borrar del todo —dice <span class="nw">Pini—</span>. Por eso las redes sociales tienen edad mínima y hay que aprender a usarlas antes de tenerlas.</p>
+      <p>El equipo prepara un programa sobre cómo funcionan las redes, qué dice la ley sobre la edad, cómo cuidar la huella digital y qué hacer si algo en el muro te hace sentir mal. <i>Dia duit!</i> (¡Hola, en irlandés!)</p>
+      <div class="reto"><b class="t">Vuestro reto: superar las misiones</b>
+        <ul>
+        <li><b>Misión 1:</b> ¿Cómo funciona?</li>
+        <li><b>Misión 2:</b> Edad y normas</li>
+        <li><b>Misión 3:</b> Mi huella digital</li>
+        <li><b>Misión 4:</b> ¿Me hace bien?</li>
+        <li><b>Misión 5:</b> Vídeos y juegos</li>
+        <li><b>Misión 6:</b> Examen e informe</li>
+        </ul>
+      </div>
+      <div class="indic"><b class="t">Indicadores de logro · Programación de TIAC</b>
+        <div class="cols">
+          <div><h4>5.º de Primaria</h4><ul><li><span class="crit">Crit. 4.2</span><b>4.2.2</b> Identifica qué datos personales no debe dar en un anuncio, juego o formulario y explica qué huella digital deja al hacerlo. <span class="do">(CD4 · CC2)</span></li><li><span class="crit">Crit. 4.2</span><b>4.2.3</b> Ante un caso de suplantación aplica el protocolo parar, comprobar y pedir ayuda, y pide permiso antes de publicar fotos o datos de otra persona. <span class="do">(CD4 · CC2)</span></li></ul></div>
+          <div><h4>6.º de Primaria</h4><ul><li><span class="crit">Crit. 4.2</span><b>4.2.1</b> Configura un perfil seguro (cuenta privada, avatar, apodo, sin ubicación ni datos personales) y decide qué se puede publicar y qué no. <span class="do">(CD4 · CC2)</span></li><li><span class="crit">Crit. 4.2</span><b>4.2.2</b> Sabe cómo actuar ante el ciberacoso y la suplantación: no contesta, guarda pruebas, bloquea, denuncia y pide ayuda a un adulto; si lo ve, no lo difunde. <span class="do">(CD4 · CC2)</span></li></ul></div>
+        </div>
+      </div><!--/indic-->
+    </div>
+  </section>
+
+  <div class="ficha">
+    <label for="alNombre">Nombre y apellido<input id="alNombre" autocomplete="off" placeholder="Escribe tu nombre"></label>
+    <label for="alCurso">Curso y grupo<input id="alCurso" autocomplete="off" placeholder="Ej.: 5.º B"></label>
+  </div>
+
+  <nav class="tabs" role="tablist" id="tabs">
+    <button role="tab" data-t="funciona" aria-selected="true"><span class="n">1</span>¿Cómo funciona?</button>
+    <button role="tab" data-t="edad" aria-selected="false"><span class="n">2</span>Edad y normas</button>
+    <button role="tab" data-t="huella" aria-selected="false"><span class="n">3</span>Mi huella digital</button>
+    <button role="tab" data-t="muro" aria-selected="false"><span class="n">4</span>¿Me hace bien?</button>
+    <button role="tab" data-t="videos" aria-selected="false"><span class="n">5</span>Vídeos y juegos</button>
+    <button role="tab" data-t="examen" aria-selected="false"><span class="n">6</span>Examen e informe</button>
+  </nav>
+
+  <section class="mission" id="m-funciona">
+    <div class="intro"><span class="label">Misión 1 · ¿Cómo funciona una red social?</span>
+      <h2>Une cada palabra con su significado</h2>
+      <p>Toca una palabra de la izquierda y después su definición. Son palabras que oirás mucho cuando hablen de redes sociales.</p></div>
+    <div class="match"><div class="col" id="terms"></div><div class="col" id="defs"></div></div>
+    <div id="fb1"></div>
+  </section>
+
+  <section class="mission" id="m-edad" hidden>
+    <div class="intro"><span class="label">Misión 2 · Edad y normas</span>
+      <h2>¿Verdadero o falso?</h2>
+      <p>Las redes sociales no son para cualquier edad. Comprueba lo que sabes sobre sus normas.</p></div>
+    <div class="tf" id="tf"></div>
+  </section>
+
+  <section class="mission" id="m-huella" hidden>
+    <div class="intro"><span class="label">Misión 3 · Mi huella digital</span>
+      <h2>La línea del tiempo de Leo</h2>
+      <p>Estas son publicaciones inventadas de Leo desde que era pequeño hasta el futuro. ¿Cuáles podrían traerle problemas? Marca cada una como «Huella limpia» o «Huella peligrosa».</p></div>
+    <div class="tl" id="tl"></div>
+    <div class="tip"><b>Recuerda:</b> aunque borres algo, alguien pudo hacer una captura, descargarlo o compartirlo. Antes de publicar, pregúntate: ¿me importaría que lo viera mi profe, mi familia o yo mismo dentro de diez años?</div>
+  </section>
+
+  <section class="mission" id="m-muro" hidden>
+    <div class="intro"><span class="label">Misión 4 · ¿Me hace bien este muro?</span>
+      <h2>Desliza por el muro de Piñagram</h2>
+      <p>En las redes no todo es lo que parece. Lee cada publicación o mensaje y elige qué harías.</p></div>
+    <div class="bars" id="bars4"></div>
+    <div class="grid2">
+      <div class="feed"><div class="top"><span>Piñagram</span><span>♡ ✉</span></div><div id="fpost"></div></div>
+      <div class="panel" id="p4"></div>
+    </div>
+  </section>
+
+
+  <section class="mission" id="m-videos" hidden>
+    <div class="intro"><span class="label">Misión 5 · Vídeos y juegos</span>
+      <h2>Mira, piensa y juega</h2>
+      <p>Abre cada vídeo o juego (se abre en una pestaña nueva), míralo con tu profe y responde en tu cuaderno a la pregunta. Marca la casilla al terminar: cuenta para tu informe.</p></div>
+    <div class="vids" id="vids"></div>
+  </section>
+
+
+  <section class="mission" id="m-examen" hidden>
+    <div class="intro"><span class="label">Misión 6 · Examen final</span>
+      <h2>¿Estás preparado para las redes?</h2>
+      <p>Responde a las ocho preguntas. Al final verás tu diploma y el informe para tu profe.</p></div>
+    <div class="quiz" id="quiz"></div>
+    <div class="diploma" id="diploma" hidden></div>
+    <div id="informe"></div>
+  </section>
+
+  <footer>Actividad educativa. Cuentas, publicaciones y personas de los ejemplos son ficticias. Vídeos de Smile and Learn, IS4K, PantallasAmigas e INCIBE; clase de Lumio. Si necesitas ayuda: 017.</footer>
+</div>
+
+<script>
+const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
+let pts=0;const add=n=>{pts+=n;$('#score').textContent='Tréboles: '+pts};
+const keyAct=(el,fn)=>{el.addEventListener('click',fn);el.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();fn(e)}})};
+
+const TERMS=[
+ ['Perfil','Tu página en la red: foto, nombre y lo que publicas.'],['Seguidor','Persona que ve lo que publicas en su muro.'],
+ ['Me gusta','Botón para decir que algo te gusta. Muchas veces se usan para medir la popularidad.'],['Etiquetar','Poner el nombre de otra persona en una foto o publicación. Necesitas su permiso.'],
+ ['Historia','Publicación que desaparece en 24 horas… aunque se puede capturar.'],['Algoritmo','Programa que decide qué te enseña la red para que sigas mirando.'],
+ ['Hashtag','Palabra con # que agrupa publicaciones sobre un tema.'],['Bloquear y denunciar','Herramientas para que alguien no pueda contactarte y avisar a la red de un problema.']
+];
+const defOrder=TERMS.map((t,i)=>i).sort(()=>Math.random()-.5);
+let selT=null;const matched=new Set();let err1=0;const fails1=[];
+const TF=[
+ ['En España, por debajo de los 14 años hace falta el permiso de los padres para que una red social use tus datos.',1,'Así lo dice la ley española de protección de datos. Además, en el Congreso se tramita una ley para subir esa edad a 16.'],
+ ['Muchas redes sociales ponen en sus normas una edad mínima de 13 años.',1,'Lo dicen en sus condiciones de uso. Mentir sobre tu edad para registrarte incumple esas normas.'],
+ ['Si pongo una edad falsa al registrarme, no pasa nada.',0,'Incumples las normas y la red te mostrará contenidos y contactos que no son para tu edad.'],
+ ['Una cuenta privada hace que todo lo que publico sea secreto para siempre.',0,'Ayuda mucho, pero tus seguidores pueden hacer capturas y compartir lo que publicas.'],
+ ['Lo que veo en las redes lo elige un algoritmo para que pase más tiempo mirando.',1,'Por eso es fácil engancharse. Pon un tiempo de uso y tómate descansos.'],
+ ['Puedo etiquetar a mis amigos en cualquier foto sin preguntarles.',0,'Etiquetar a alguien es compartir su imagen: necesitas su permiso.']
+];
+const res2={};const fails2=[];
+const TL=[
+ ['2018 · 3 años','Vídeo de Leo bailando en pijama subido por su primo.',0,'Una imagen así, publicada sin su permiso, puede usarse años después para reírse de él.'],
+ ['2024 · 9 años','Foto del dibujo que ganó el concurso de la biblioteca.',1,'Un logro sin datos personales: huella limpia.'],
+ ['2025 · 10 años','«Me aburro en casa, mis padres no vuelven hasta las 8 😴» con la ubicación activada.',0,'Dice dónde está y que está solo: información peligrosa.'],
+ ['2026 · 11 años','Comentario insultando a un jugador en un vídeo de fútbol.',0,'Los insultos quedan ahí y dicen mucho de quien los escribe, también en el futuro.'],
+ ['2026 · 11 años','Cuña de Radio La Piña sobre Irlanda, publicada en la cuenta del cole.',1,'Contenido educativo y publicado por el colegio: huella limpia.'],
+ ['2032 · 17 años','Leo busca su primer trabajo de verano y la empresa busca su nombre en internet…',0,'Todo lo anterior puede aparecer. ¡Por eso hay que cuidar la huella desde ya!']
+];
+const res3={};const fails3=[];
+const PICS={
+ viaje:'<svg class="pic" viewBox="0 0 300 150" preserveAspectRatio="xMidYMid slice"><rect width="300" height="150" fill="#7fd1f0"/><rect y="105" width="300" height="45" fill="#f4dfa4"/><circle cx="240" cy="35" r="22" fill="#ffd34d"/><path d="M60 105c10-40 20-60 30-60s20 20 30 60z" fill="#3d9b5a"/><text x="150" y="140" text-anchor="middle" font-size="12" font-weight="800" fill="#7a5a00" font-family="Arial">#VidaPerfecta #SinFiltro… (con filtro)</text></svg>',
+ reto:'<svg class="pic" viewBox="0 0 300 150" preserveAspectRatio="xMidYMid slice"><rect width="300" height="150" fill="#2b2b3a"/><text x="150" y="70" text-anchor="middle" font-size="26" font-weight="900" fill="#ff5c5c" font-family="Arial">#RETO</text><text x="150" y="100" text-anchor="middle" font-size="13" fill="#fff" font-family="Arial">¿Aguantas sin respirar 2 minutos?</text></svg>',
+ meme:'<svg class="pic" viewBox="0 0 300 150" preserveAspectRatio="xMidYMid slice"><rect width="300" height="150" fill="#e6e0f5"/><circle cx="150" cy="70" r="30" fill="#f2c9a5"/><path d="M122 52l-6-24 18 14zM178 52l6-24-18 14z" fill="#999"/><text x="150" y="135" text-anchor="middle" font-size="13" font-weight="800" fill="#333" font-family="Arial">«Marta cuando abre la boca» 🐴😂</text></svg>',
+ radio:'<svg class="pic" viewBox="0 0 300 150" preserveAspectRatio="xMidYMid slice"><rect width="300" height="150" fill="#dff3e8"/><rect x="110" y="40" width="80" height="60" rx="10" fill="#14804a"/><circle cx="135" cy="70" r="12" fill="#fff"/><rect x="155" y="58" width="25" height="5" fill="#fff"/><rect x="155" y="68" width="25" height="5" fill="#fff"/><rect x="155" y="78" width="25" height="5" fill="#fff"/><text x="150" y="128" text-anchor="middle" font-size="12" font-weight="800" fill="#14804a" font-family="Arial">Nuevo programa: Irlanda ☘</text></svg>'
+};
+const FEED=[
+ {who:'@lara_viajes',col:'#e2483d',pic:'viaje',cap:'Otro día perfecto en mi vida perfecta 🌴✨',st:'❤ 12.300',q:'Ves fotos así cada día y empiezas a sentir que tu vida es aburrida. ¿Qué es verdad?',o:['Todo el mundo tiene una vida perfecta menos yo','En las redes la gente enseña solo sus mejores momentos, a veces con filtros: no es toda la realidad','Debería publicar fotos falsas yo también'],a:1,why:'Compararte con las redes no es justo contigo: enseñan solo una parte, a menudo retocada. Si algo te hace sentir mal, cuéntalo.'},
+ {who:'@retos_virales',col:'#555',pic:'reto',cap:'¡Hazlo, grábalo y etiquétanos! Los cobardes no lo hacen 😈',st:'❤ 45.000',q:'Un reto viral te pide hacer algo peligroso para tu cuerpo. ¿Qué haces?',o:['Lo hago para no parecer cobarde','No lo hago, no lo comparto y aviso a un adulto','Lo hago pero sin grabarlo'],a:1,why:'Los retos peligrosos pueden causar daños graves. Ser valiente es decir que no.'},
+ {who:'@clase_5b_memes',col:'#7b6fd6',pic:'meme',cap:'Comentad el más gracioso 😂',st:'❤ 87 · 💬 34',q:'Una cuenta anónima se burla de una compañera. ¿Qué haces?',o:['Comento algo gracioso','No comento ni comparto, denuncio la publicación y se lo cuento a un adulto','Le doy a «me gusta» pero no comento'],a:1,why:'Cada «me gusta» o comentario hace más grande el daño. Denunciar y avisar a un adulto lo para.'},
+ {who:'Mensaje de @nuevo_amigo_13',col:'#e08a1e',dm:['¡Hola! He visto tus fotos, eres muy simpática 😊','Tengo tu edad. ¿Me pasas tu número y una foto tuya?','Esto que quede entre nosotros, ¿vale? 🤫'],q:'Alguien que no conoces te escribe así. ¿Qué haces?',o:['Le contesto, parece amable','No contesto, lo bloqueo, lo denuncio y se lo enseño a un adulto de confianza','Le paso solo mi número'],a:2,why:'No sabes quién hay detrás de una cuenta. Si un desconocido te pide fotos, datos o que guardes un secreto, es una señal de alarma: no respondas y cuéntalo enseguida a un adulto.'},
+ {who:'@radiolapina (cuenta del cole)',col:'#14804a',pic:'radio',cap:'Ya podéis escuchar nuestro programa sobre Irlanda ☘🎙',st:'❤ 64',q:'La cuenta del cole publica el nuevo programa. ¿Qué es lo adecuado?',o:['Darle a «me gusta» y escucharlo','Denunciarlo','Escribir comentarios con insultos para reírnos'],a:0,why:'Las redes también sirven para cosas buenas: compartir lo que creamos y aprender juntos, con respeto.'}
+];
+let i4=0;const res4=[];const fails4=[];
+function p4(){
+  $('#bars4').innerHTML=FEED.map((_,i)=>`<i class="${res4[i]===true?'ok':res4[i]===false?'ko':i===i4?'now':''}"></i>`).join('');
+  if(i4>=FEED.length){$('#fpost').innerHTML='<div class="fpost"><b>Has llegado al final del muro 👋</b><span class="st">Buen momento para guardar el móvil y hacer otra cosa.</span></div>';
+    $('#p4').innerHTML=`<h3>Muro revisado: ${res4.filter(Boolean).length} de ${FEED.length}</h3><div class="tip">Si algo de las redes te hace sentir mal, te da miedo o te piden guardar un secreto, cuéntaselo a un adulto de confianza. También puedes llamar al 017.</div>`;return}
+  const f=FEED[i4];
+  $('#fpost').innerHTML=`<div class="fpost"><div class="h"><span class="av" style="background:${f.col}">${f.who.replace(/[^A-Za-z]/g,'')[0].toUpperCase()}</span><b style="overflow-wrap:anywhere;min-width:0">${f.who}</b></div>${f.dm?`<div class="dm">${f.dm.map(m=>`<div class="bub">${m}</div>`).join('')}</div>`:`${PICS[f.pic]}<p class="cap">${f.cap}</p><span class="st">${f.st}</span>`}</div>`;
+  $('#p4').innerHTML=`<span class="label">Publicación ${i4+1} de ${FEED.length}</span><h3>${f.q}</h3><div class="opts">${f.o.map((o,j)=>`<button data-o="${j}">${o}</button>`).join('')}</div><div id="fb4"></div>`;
+  $$('#p4 .opts button').forEach(b=>b.onclick=()=>{const ok=+b.dataset.o===f.a;res4[i4]=ok;if(ok)add(5);else fails4.push(`Muro (${f.who}): eligió «${f.o[+b.dataset.o]}»`);
+    $$('#p4 .opts button').forEach((x,j)=>{x.disabled=true;if(j===f.a)x.classList.add('r')});if(!ok)b.classList.add('w');
+    $('#fb4').innerHTML=`<div class="feedback ${ok?'right':'wrong'}"><strong>${ok?'¡Bien pensado!':'Mejor de otra forma.'}</strong><span>${f.why}</span></div><button class="btn primary" id="nx4" style="margin-top:8px">Seguir deslizando ↓</button>`;
+    $('#nx4').onclick=()=>{i4++;p4()}});
+}
+function r1(){
+  $('#terms').innerHTML=TERMS.map((t,i)=>`<button class="term ${matched.has(i)?'done':''} ${selT===i?'sel':''}" data-t="${i}">${t[0]}</button>`).join('');
+  $('#defs').innerHTML=defOrder.map(i=>`<button class="def ${matched.has(i)?'done':''}" data-d="${i}">${matched.has(i)?`<b>${TERMS[i][0]}:</b> `:''}${TERMS[i][1]}</button>`).join('');
+  $$('#terms .term').forEach(b=>b.onclick=()=>{if(matched.has(+b.dataset.t))return;selT=+b.dataset.t;r1()});
+  $$('#defs .def').forEach(b=>b.onclick=()=>{const d=+b.dataset.d;if(selT===null||matched.has(d))return;
+    if(d===selT){matched.add(d);selT=null;add(3);r1();if(matched.size===TERMS.length)$('#fb1').innerHTML=`<div class="feedback right"><strong>¡Todas unidas!</strong><span>${err1?'Con '+err1+' '+(err1===1?'intento fallido':'intentos fallidos')+'.':'¡Sin fallos!'} Ya conoces el vocabulario de las redes sociales.</span></div>`}
+    else{err1++;fails1.push(`Unió «${TERMS[selT][0]}» con la definición de «${TERMS[d][0]}»`);b.classList.remove('shake');void b.offsetWidth;b.classList.add('shake')}});
+}
+function init(){
+  r1();
+  $('#tf').innerHTML=TF.map((t,i)=>`<div class="tfc"><p class="s">${t[0]}</p><div class="choices"><button class="btn ok" data-i="${i}" data-v="1">Verdadero</button><button class="btn bad" data-i="${i}" data-v="0">Falso</button></div><div id="f2-${i}"></div></div>`).join('');
+  $$('#tf [data-v]').forEach(b=>b.onclick=()=>{const i=+b.dataset.i,t=TF[i],ok=+b.dataset.v===t[1];res2[i]=ok;if(ok)add(4);else fails2.push(`«${t[0].slice(0,60)}…»: era ${t[1]?'verdadero':'falso'}`);
+    b.parentElement.querySelectorAll('button').forEach(x=>x.disabled=true);
+    $('#f2-'+i).innerHTML=`<div class="feedback ${ok?'right':'wrong'}"><strong>${t[1]?'Verdadero':'Falso'}</strong><span>${t[2]}</span></div>`});
+  $('#tl').innerHTML=TL.map((t,i)=>`<div class="tlp"><span class="yr">${t[0]}</span><p class="txt">${t[1]}</p><div class="choices"><button class="btn ok" data-i="${i}" data-v="1">Huella limpia</button><button class="btn bad" data-i="${i}" data-v="0">Huella peligrosa</button></div><div id="f3-${i}"></div></div>`).join('');
+  $$('#tl [data-v]').forEach(b=>b.onclick=()=>{const i=+b.dataset.i,t=TL[i],ok=+b.dataset.v===t[2];res3[i]=ok;if(ok)add(4);else fails3.push(`${t[0]}: era ${t[2]?'huella limpia':'huella peligrosa'}`);
+    b.parentElement.querySelectorAll('button').forEach(x=>x.disabled=true);
+    $('#f3-'+i).innerHTML=`<div class="feedback ${ok?'right':'wrong'}"><span>${t[3]}</span></div>`});
+  p4();
+}
+const QUIZ=[
+ ['¿Qué es la huella digital?',['La marca del dedo en la pantalla','El rastro de todo lo que publicamos y hacemos en internet','Una contraseña'],1],
+ ['En España, ¿hasta qué edad hace falta el permiso de los padres para que una red social use tus datos?',['Hasta los 10 años','Por debajo de los 14 años','Nunca hace falta'],1],
+ ['Una historia que «desaparece en 24 horas»…',['Se borra para siempre y nadie puede guardarla','Puede haber sido capturada por alguien','Solo la ve tu familia'],1],
+ ['¿Qué es el algoritmo de una red social?',['Un programa que decide qué te enseña para que sigas mirando','Un tipo de filtro de fotos','Un amigo virtual'],0],
+ ['Un desconocido te escribe, te pide una foto y que lo guardes en secreto.',['Le mando la foto','No respondo, lo bloqueo, lo denuncio y se lo cuento a un adulto','Le pido su foto primero'],1],
+ ['Antes de etiquetar a un amigo en una foto…',['Le pido permiso','No hace falta preguntar','Lo etiqueto y luego le aviso'],0],
+ ['Ves en las redes vidas «perfectas». ¿Qué es verdad?',['Son siempre reales','Muchas veces son solo los mejores momentos, con filtros','Mi vida es peor'],1],
+ ['Un reto viral es peligroso. ¿Qué haces?',['Lo hago para ser popular','Digo que no, no lo comparto y aviso a un adulto','Lo grabo sin hacerlo del todo'],1]
+];
+const LEVELS=['Experto/a en redes sociales','Usuario/a con criterio','Aprendiz de redes'];
+const DIPLOMA_SVG='<svg width="70" height="70" viewBox="0 0 80 80" aria-hidden="true"><rect width="80" height="80" rx="20" fill="var(--accent)"/><path d="M22 41l12 12 25-26" fill="none" stroke="var(--accent-ink)" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+
+const VIDS=[{"src": "IS4K · Internet Segura for Kids", "t": "Consejos para su primera red social", "url": "https://www.youtube.com/watch?v=zCcAhZia8pA", "q": "¿Qué consejo le darías a alguien que abre su primera red social?", "kind": "video"}, {"src": "Smile and Learn", "t": "Público y privado: ¿qué compartir y qué proteger?", "url": "https://www.youtube.com/watch?v=D45fI_rX8iM", "q": "Haz dos listas: cosas que puedes compartir y cosas que debes proteger.", "kind": "video"}, {"src": "PantallasAmigas", "t": "¿Tienes privacidad de verdad en las redes sociales?", "url": "https://www.youtube.com/watch?v=MXf-YGQr6jI", "q": "¿Quién puede ver lo que publicas en una cuenta pública?", "kind": "video"}, {"src": "PantallasAmigas", "t": "Redes sociales y privacidad: cuida lo que publicas sobre ti", "url": "https://www.youtube.com/watch?v=SQfx8d2tgas", "q": "¿Qué no deberías publicar nunca sobre ti?", "kind": "video"}, {"src": "PantallasAmigas", "t": "Redes sociales y privacidad: cuida lo que publicas sobre los demás", "url": "https://www.youtube.com/watch?v=XASJM7K9EEo", "q": "¿Por qué hay que pedir permiso antes de publicar algo de otra persona?", "kind": "video"}, {"src": "PantallasAmigas", "t": "Privacidad y ciberacoso en redes sociales: limita tus contactos", "url": "https://www.youtube.com/watch?v=_5FdtwIpL-M", "q": "¿Por qué es mejor tener solo contactos que conoces en persona?", "kind": "video"}, {"src": "Smile and Learn", "t": "Influencers para niños: pensamiento crítico", "url": "https://www.youtube.com/watch?v=yyQuyJObd_4", "q": "¿Todo lo que enseña un influencer es real? ¿Por qué?", "kind": "video"}, {"src": "Smile and Learn", "t": "Ciberbullying: ¿cómo evitar el ciberacoso?", "url": "https://www.youtube.com/watch?v=ZHQ03fSn9J0", "q": "¿Qué puedes hacer si ves que alguien sufre ciberacoso? Escribe dos cosas.", "kind": "video"}, {"src": "INCIBE · Día de Internet Segura", "t": "10 trucos para disfrutar de las redes sociales de forma segura", "url": "https://www.youtube.com/watch?v=zKmex8KUl7Q", "q": "Elige los tres trucos que te parezcan más útiles.", "kind": "video"}, {"src": "Google · Sé genial en Internet", "t": "Juego Interland", "url": "https://beinternetawesome.withgoogle.com/es_es/interland", "q": "Juega a los cuatro mundos de Interland y apunta cuál te costó más.", "kind": "game"}, {"src": "INCIBE · OSI", "t": "Juego CyberScouts", "url": "https://cyberscouts.osi.es/", "q": "Juega a CyberScouts y apunta el reto que te resultó más difícil.", "kind": "game"}, {"src": "Lumio · clase en directo", "t": "Entra en la clase de Lumio (ID 835883)", "url": "https://www.lumioclass.com/link/835883", "q": "Úsalo cuando tu profe abra la clase en directo en la pizarra.", "kind": "clase"}];
+const seenV={};
+(function(){const PLAY='<svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z" fill="currentColor"/></svg>';
+ const lab={video:'Vídeo',game:'Juego',lumio:'Lumio',tarea:'⭐ Tarea obligatoria con evaluación',clase:'Clase Lumio'},btn={video:PLAY+' Ver vídeo',game:'🎮 Jugar',lumio:'📒 Abrir en Lumio',tarea:'📒 Abrir la tarea',clase:'🏫 Entrar en la clase'},ckl={game:'He jugado',tarea:'He hecho la tarea y la evaluación',clase:'He entrado en la clase'};
+ document.querySelector('#vids').innerHTML=VIDS.map((v,i)=>`<div class="vid ${v.kind==='tarea'?'tarea':''}" id="v-${i}"><span class="src">${v.src}</span><span class="kindtag">${lab[v.kind]}</span><h3>${v.t}</h3><a class="go" href="${v.url}" target="_blank" rel="noopener">${btn[v.kind]}</a><p class="q"><b>Piensa:</b> ${v.q}</p><label class="ck" for="ck-${i}"><input type="checkbox" id="ck-${i}">${ckl[v.kind]||'Lo he visto'}</label></div>`).join('');
+ VIDS.forEach((v,i)=>document.querySelector('#ck-'+i).addEventListener('change',e=>{seenV[i]=e.target.checked;document.querySelector('#v-'+i).classList.toggle('seen',e.target.checked);if(typeof onVidChange==='function')onVidChange()}));})();
+function vidRow(label){const L=VIDS.map((v,i)=>[v,i]).filter(x=>x[0].kind!=='clase');const n=L.filter(x=>seenV[x[1]]).length;return {name:label,ok:n,max:L.length,done:n===L.length,fails:L.filter(x=>!seenV[x[1]]).map(([v])=>(v.kind==='tarea'?'Tarea Lumio sin hacer: ':'Sin marcar: ')+v.t)}}
+
+function onVidChange(){}
+
+const res6={};let q6=0;
+$('#quiz').innerHTML=QUIZ.map((q,i)=>`<div class="qitem"><p class="qq">${i+1}. ${q[0]}</p><div class="opts">${q[1].map((o,j)=>`<button data-q="${i}" data-o="${j}">${o}</button>`).join('')}</div></div>`).join('');
+$$('#quiz .opts button').forEach(b=>b.onclick=()=>{
+  const q=QUIZ[+b.dataset.q],ok=+b.dataset.o===q[2];res6[b.dataset.q]=ok;
+  [...b.parentElement.children].forEach((x,j)=>{x.disabled=true;if(j===q[2])x.classList.add('r')});
+  if(ok)add(5);else b.classList.add('w');
+  if(++q6===QUIZ.length){const okN=Object.values(res6).filter(Boolean).length;const d=$('#diploma');d.hidden=false;
+    const lvl=okN>=7?LEVELS[0]:okN>=5?LEVELS[1]:LEVELS[2];
+    d.innerHTML=`${DIPLOMA_SVG}<h3>Diploma de ${lvl}</h3><p>Examen: ${okN} de ${QUIZ.length} · Total: <b>${pts}</b></p>`}
+  setTimeout(renderInforme);
+});
+
+/* ---------- Informe para el profe ---------- */
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function initInforme(){['alNombre','alCurso'].forEach(id=>{const el=$('#'+id);try{el.value=localStorage.getItem(STORE+id)||''}catch(e){}
+  el.addEventListener('input',()=>{try{localStorage.setItem(STORE+id,el.value)}catch(e){};renderInforme()})})}
+function renderInforme(){
+  const rows=informeRows(),nomRaw=$('#alNombre').value.trim(),nom=nomRaw||'(sin nombre)',cur=$('#alCurso').value.trim()||'(sin curso)';
+  let ok=0,max=0;rows.forEach(r=>{ok+=r.ok;max+=r.max});const all=rows.every(r=>r.done);
+  const d=new Date(),fecha=d.toLocaleDateString('es-ES')+' '+d.toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'});
+  let t=`INFORME: ${TITULO}\nAlumno/a: ${nom}\nCurso: ${cur}\nFecha: ${fecha}\nAciertos: ${ok}/${max}${all?'':' (sin terminar)'} · ${PUNTOS()}\n\n`;
+  rows.forEach(r=>{t+=`- ${r.name}: ${r.ok}/${r.max}${r.done?'':' (sin terminar)'}\n`;r.fails.forEach(f=>t+=`    · ${f}\n`)});
+  $('#informe').innerHTML=`<h3>Informe para tu profe</h3>
+   ${nomRaw?'':'<div class="feedback wrong"><span>Escribe tu nombre y curso arriba, en la ficha, antes de entregar.</span></div>'}
+   <div class="rwrap"><table class="rtable"><thead><tr><th>Misión</th><th>Aciertos</th><th>A repasar</th></tr></thead><tbody>${rows.map(r=>`<tr><td>${r.name}${r.done?'':' <span class="pend">pendiente</span>'}</td><td>${r.ok} / ${r.max}</td><td class="rf">${r.fails.length?r.fails.map(esc).join('<br>'):'—'}</td></tr>`).join('')}</tbody></table></div>
+   <div class="copybox" id="copybox">${esc(t)}</div>
+   <div class="cbar"><button class="btn primary" id="copyBtn">Copiar informe</button><span id="copyMsg" class="cmsg"></span></div>
+   <div class="tip">Pega el informe en un correo a tu profe con el asunto «${TITULO} – ${esc(nom)}», o donde te diga tu profe.</div>`;
+  $('#copyBtn').onclick=()=>{const sel=()=>{const r=document.createRange();r.selectNodeContents($('#copybox'));const s=getSelection();s.removeAllRanges();s.addRange(r);$('#copyMsg').textContent='Texto seleccionado: pulsa Ctrl + C para copiarlo.'};
+    try{navigator.clipboard.writeText(t).then(()=>{$('#copyMsg').textContent='¡Copiado! Pégalo con Ctrl + V.'},sel)}catch(e){sel()}};
+}
+
+const STORE='redes-',TITULO='Redes Sociales',PUNTOS=()=>'Tréboles: '+pts;
+initInforme();
+function informeRows(){
+  const cnt=o=>Object.values(o).filter(x=>x===true).length,ans=o=>Object.values(o).filter(x=>x!==undefined).length;
+  return [
+   {name:'1. ¿Cómo funciona?',ok:matched.size,max:TERMS.length,done:matched.size===TERMS.length,fails:fails1},
+   {name:'2. Edad y normas',ok:cnt(res2),max:TF.length,done:ans(res2)===TF.length,fails:fails2},
+   {name:'3. Mi huella digital',ok:cnt(res3),max:TL.length,done:ans(res3)===TL.length,fails:fails3},
+   {name:'4. ¿Me hace bien este muro?',ok:res4.filter(x=>x===true).length,max:FEED.length,done:res4.filter(x=>x!==undefined).length===FEED.length,fails:fails4},
+   vidRow('5. Vídeos y juegos'),
+   {name:'6. Examen final',ok:cnt(res6),max:QUIZ.length,done:ans(res6)===QUIZ.length,fails:QUIZ.filter((q,i)=>res6[i]===false).map(q=>'Falló: '+q[0])}
+  ];
+}
+const ids=['funciona','edad','huella','muro','videos','examen'];
+function show(t){
+  if(!ids.includes(t))t=ids[0];
+  ids.forEach(x=>$('#m-'+x).hidden=x!==t);
+  document.querySelector('.relato').hidden=t!==ids[0];
+  $$('#tabs button').forEach(b=>b.setAttribute('aria-selected',b.dataset.t===t));
+  if(location.hash!=='#'+t)history.replaceState(null,'','#'+t);
+  if(t==='examen')renderInforme();
+  scrollTo({top:0});
+}
+$$('#tabs button').forEach(b=>b.onclick=()=>show(b.dataset.t));
+addEventListener('hashchange',()=>show(location.hash.slice(1)));
+init();show(location.hash.slice(1));
+
+
+/* ---------- Valoración de indicadores y llave ---------- */
+const VAL_CFG={"pre": "RED", "i5": [["4.2.2", [2], "Identifica qué datos personales no debe dar en un anuncio, juego o formulario y explica qué huella digital deja al hacerlo.", "CD4 · CC2"], ["4.2.3", [3, 2], "Ante un caso de suplantación aplica el protocolo parar, comprobar y pedir ayuda, y pide permiso antes de publicar fotos o datos de otra persona.", "CD4 · CC2"]], "i6": [["4.2.1", [1, 2], "Configura un perfil seguro (cuenta privada, avatar, apodo, sin ubicación ni datos personales) y decide qué se puede publicar y qué no.", "CD4 · CC2"], ["4.2.2", [3], "Sabe cómo actuar ante el ciberacoso y la suplantación: no contesta, guarda pruebas, bloquea, denuncia y pide ayuda a un adulto; si lo ve, no lo difunde.", "CD4 · CC2"]], "vid": 4, "exam": 5};
+function valRows(){return typeof informeRows==='function'?informeRows():Object.values(R)}
+function valScore(rows,idx){let ok=0,max=0,att=false;idx.forEach(i=>{const r=rows[i];if(!r)return;ok+=r.ok;max+=r.max;if(r.ok>0||r.done)att=true});return att?Math.max(1,Math.round(5*ok/(max||1))):0}
+function valAll(){const rows=valRows();return {rows,s5:VAL_CFG.i5.map(x=>valScore(rows,x[1])),s6:VAL_CFG.i6.map(x=>valScore(rows,x[1]))}}
+function valComplete(rows){return rows.every((r,i)=>i===VAL_CFG.vid||r.done)}
+function valKey(v){const ex=VAL_CFG.exam!=null&&v.rows[VAL_CFG.exam]?v.rows[VAL_CFG.exam].ok:0;const raw=VAL_CFG.pre+'-'+v.s5.join('')+'-'+v.s6.join('')+'-'+ex;let h=0;for(let i=0;i<raw.length;i++)h=(h+raw.charCodeAt(i)*(i+7))%1296;return raw+'-'+h.toString(36).toUpperCase().padStart(2,'0')}
+function valCourse(){const c=(document.querySelector('#alCurso')||{}).value||'';return /6/.test(c)?'6':/5/.test(c)?'5':''}
+function valEsc(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
+function appendVal(){
+  const host=document.querySelector('#informe')||document.querySelector('#report');if(!host)return;
+  const old=host.querySelector('.valora');if(old)old.remove();
+  const v=valAll(),c=valCourse(),done=valComplete(v.rows),key=done?valKey(v):'';
+  const bar=n=>`<span class="vbar">${[1,2,3,4,5].map(i=>`<i class="${i<=n?'on':''}"></i>`).join('')}</span>`;
+  const tab=(k,list,sc)=>`<div><h4>${k}.º de Primaria</h4><table class="rtable"><thead><tr><th>Indicador</th><th>0-5</th></tr></thead><tbody>${list.map((x,i)=>`<tr><td><b>${x[0]}</b> ${valEsc(x[2])} <span style="color:var(--muted)">(${x[3]})</span></td><td><span class="vstar">${sc[i]}</span>${bar(sc[i])}</td></tr>`).join('')}</tbody></table></div>`;
+  const cols=(c!=='6'?tab(5,VAL_CFG.i5,v.s5):'')+(c!=='5'?tab(6,VAL_CFG.i6,v.s6):'');
+  const div=document.createElement('div');div.className='valora';
+  div.innerHTML=`<h3>Valoración de los indicadores de logro</h3><p style="font-size:.88rem;color:var(--muted)">Escala de 0 a 5: 0 = no realizado; 5 = realizado con éxito. Es una estimación automática a partir de las misiones relacionadas; tu profe la revisará.${c?'':' Escribe tu curso en la ficha para ver solo el tuyo.'}</p><div class="cols">${cols}</div>
+   <div class="llave">${done?`<b>🔑 ¡Has conseguido la llave de esta web!</b><code>${key}</code><span style="font-size:.88rem">Ya está guardada: vuelve al rincón Piensa de Rumbo a Europa y envía tus notas.</span><a href="../#piensa" style="align-self:flex-start;font-weight:700;color:var(--accent)">Volver al rincón Piensa · Pasaporte TIC ↗</a>`:`<b>🔒 Llave todavía cerrada</b><span style="font-size:.88rem">Termina todas las misiones${VAL_CFG.exam!=null?' y el examen final':''} (los vídeos no son obligatorios) para conseguir la llave de la siguiente parada.</span>`}</div>`;
+  const cb=host.querySelector('#copybox');
+  if(cb){host.insertBefore(div,cb.previousElementSibling&&cb.previousElementSibling.tagName==='H3'?cb.previousElementSibling:cb);
+    let t=cb.textContent.replace(/\nVALORACIÓN DE INDICADORES[\s\S]*$/,'');
+    t+='\nVALORACIÓN DE INDICADORES (0-5)\n'+(c!=='6'?VAL_CFG.i5.map((x,i)=>`  5.º ${x[0]}: ${v.s5[i]}`).join('\n')+'\n':'')+(c!=='5'?VAL_CFG.i6.map((x,i)=>`  6.º ${x[0]}: ${v.s6[i]}`).join('\n')+'\n':'')+'LLAVE: '+(key||'(sin conseguir)')+'\n';
+    cb.textContent=t;
+    const btn=host.querySelector('#copyBtn'),msg=host.querySelector('#copyMsg');
+    if(btn)btn.onclick=()=>{const sel=()=>{const r=document.createRange();r.selectNodeContents(cb);const s=getSelection();s.removeAllRanges();s.addRange(r);if(msg)msg.textContent='Texto seleccionado: pulsa Ctrl + C para copiarlo.'};try{navigator.clipboard.writeText(cb.textContent).then(()=>{if(msg)msg.textContent='¡Copiado! Pégalo con Ctrl + V.'},sel)}catch(e){sel()}};
+  }else host.appendChild(div);
+}
+(function(){
+  if(typeof renderInforme==='function'){const o=renderInforme;renderInforme=function(){o();appendVal()}}
+  else if(typeof renderReport==='function'){const o=renderReport;renderReport=function(){o();appendVal()}}
+})();
+</script>
+
+<script>
+/* Rumbo a Europa: rellena nombre y curso con los datos de la web y guarda la llave en el rincón Piensa */
+(function(){
+  try{
+    var a=(JSON.parse(localStorage.getItem("rumbo-a-europa-v1")||"{}")||{}).alumno||{};
+    [["alNombre",a.nombre],["alCurso",a.clase]].forEach(function(p){var el=document.getElementById(p[0]);if(el&&p[1]&&!el.value.trim()){el.value=p[1];el.dispatchEvent(new Event("input",{bubbles:true}));el.dispatchEvent(new Event("change",{bubbles:true}));}});
+  }catch(e){}
+  if(typeof valKey==="function"){
+    var orig=valKey;
+    valKey=function(v){var k=orig(v);try{var g=JSON.parse(localStorage.getItem("rumbo-piensa-llaves")||"{}")||{};var done=typeof valComplete==="function"?valComplete(v.rows):true;g[VAL_CFG.pre]={llave:k,completa:!!done,fecha:new Date().toISOString()};localStorage.setItem("rumbo-piensa-llaves",JSON.stringify(g));}catch(e){}return k;};
+  }
+})();
+</script>
+</body></html>

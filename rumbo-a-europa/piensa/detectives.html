@@ -1,0 +1,617 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Detectives de la Red</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@400;600;800&family=JetBrains+Mono:wght@500&display=swap">
+<style>
+/* Layout: cabecera tipo "placa de detective", pestañas de misiones, cada misión con ventanas de navegador simuladas */
+:root{
+  --bg:#eef5f4; --paper:#ffffff; --ink:#15302f; --muted:#4f6b69; --line:#cfe0dd;
+  --accent:#0f7d74; --accent-ink:#ffffff; --sun:#f6b821; --sun-ink:#3a2a00;
+  --ok:#1f8a4c; --ok-bg:#e1f4e8; --bad:#c43c2f; --bad-bg:#fbe5e2; --warn-bg:#fff4d6;
+  --chrome:#e3ebea; --chrome-2:#d3dfdd;
+  --f-display:"Fredoka","Trebuchet MS",system-ui,sans-serif;
+  --f-body:"Nunito",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"JetBrains Mono",ui-monospace,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0f1c1c; --paper:#172827; --ink:#e4f1ef; --muted:#9db8b5; --line:#2a4240;
+  --accent:#3cc2b5; --accent-ink:#06201e; --sun:#f6c544; --sun-ink:#2a1f00;
+  --ok:#5fd18e; --ok-bg:#163527; --bad:#ff8a7c; --bad-bg:#3a1d1a; --warn-bg:#3a3016;
+  --chrome:#22393a; --chrome-2:#2c4645; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0f1c1c; --paper:#172827; --ink:#e4f1ef; --muted:#9db8b5; --line:#2a4240;
+  --accent:#3cc2b5; --accent-ink:#06201e; --sun:#f6c544; --sun-ink:#2a1f00;
+  --ok:#5fd18e; --ok-bg:#163527; --bad:#ff8a7c; --bad-bg:#3a1d1a; --warn-bg:#3a3016;
+  --chrome:#22393a; --chrome-2:#2c4645; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:16px;line-height:1.5;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 48px}
+.wrap{max-width:1000px;margin:0 auto;display:flex;flex-direction:column;gap:22px}
+h1,h2,h3{font-family:var(--f-display);text-wrap:balance;margin:0;line-height:1.15}
+p{margin:0}
+header.hero{display:flex;gap:18px;align-items:center;flex-wrap:wrap}
+.badge{width:76px;height:76px;flex:none}
+.hero h1{font-size:clamp(1.9rem,5vw,2.8rem);color:var(--accent)}
+.hero p{color:var(--muted);max-width:60ch}
+.hero-text{flex:1;min-width:0;display:flex;flex-direction:column;gap:6px}
+.score{font-family:var(--f-display);background:var(--sun);color:var(--sun-ink);border-radius:999px;padding:8px 16px;font-weight:600;font-variant-numeric:tabular-nums;white-space:nowrap}
+nav.tabs{display:flex;gap:8px;flex-wrap:wrap}
+nav.tabs button{font:600 1rem var(--f-display);border:2px solid var(--line);background:var(--paper);color:var(--ink);
+  padding:10px 16px;border-radius:12px;cursor:pointer;display:flex;gap:8px;align-items:center}
+nav.tabs button .n{display:inline-grid;place-items:center;width:24px;height:24px;border-radius:50%;background:var(--chrome);font-size:.85rem}
+nav.tabs button[aria-selected="true"]{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+nav.tabs button[aria-selected="true"] .n{background:var(--accent-ink);color:var(--accent)}
+button:focus-visible,.hot:focus-visible{outline:3px solid var(--sun);outline-offset:2px}
+section.mission{display:flex;flex-direction:column;gap:16px}
+.intro{background:var(--paper);border:2px solid var(--line);border-radius:16px;padding:16px 18px;display:flex;flex-direction:column;gap:6px}
+.intro h2{font-size:1.5rem}
+.intro p{color:var(--muted);max-width:70ch}
+.label{font:700 .75rem var(--f-body);letter-spacing:.08em;text-transform:uppercase;color:var(--accent)}
+
+/* Navegador simulado */
+.browser{border:2px solid var(--chrome-2);border-radius:14px;overflow:hidden;background:var(--paper);box-shadow:0 6px 18px rgba(0,0,0,.08)}
+.bar{background:var(--chrome);padding:8px 10px;display:flex;gap:10px;align-items:center}
+.dots{display:flex;gap:5px;flex:none}.dots i{width:10px;height:10px;border-radius:50%;background:var(--chrome-2);display:block}
+.url{flex:1;min-width:0;background:var(--paper);border-radius:999px;padding:5px 12px;font:500 .85rem var(--f-mono);
+  display:flex;gap:6px;align-items:center;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.url .proto-s{color:var(--ok)}.url .proto-n{color:var(--bad)}
+.url span.rest{overflow:hidden;text-overflow:ellipsis}
+.lock{flex:none;width:14px;height:14px}
+.page{min-height:180px}
+
+/* Misión 1 */
+.case{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);gap:16px;align-items:start}
+@media (max-width:760px){.case{grid-template-columns:minmax(0,1fr)}}
+.case>*{min-width:0}
+.panel{background:var(--paper);border:2px solid var(--line);border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:12px}
+.panel h3{font-size:1.2rem}
+.choices{display:flex;gap:10px;flex-wrap:wrap}
+.btn{font:600 1rem var(--f-display);border:none;border-radius:12px;padding:10px 16px;cursor:pointer;background:var(--chrome);color:var(--ink)}
+.btn.ok{background:var(--ok-bg);color:var(--ok);border:2px solid var(--ok)}
+.btn.bad{background:var(--bad-bg);color:var(--bad);border:2px solid var(--bad)}
+.btn.primary{background:var(--accent);color:var(--accent-ink)}
+.btn:disabled{opacity:.55;cursor:default}
+.feedback{border-radius:12px;padding:12px 14px;display:flex;flex-direction:column;gap:6px}
+.feedback.right{background:var(--ok-bg)}.feedback.wrong{background:var(--bad-bg)}
+.feedback strong{font-family:var(--f-display);font-size:1.05rem}
+.feedback ul{margin:0;padding-left:20px}
+.progress{display:flex;gap:6px;flex-wrap:wrap}
+.progress i{width:28px;height:8px;border-radius:4px;background:var(--line);display:block}
+.progress i.done-ok{background:var(--ok)}.progress i.done-bad{background:var(--bad)}.progress i.now{background:var(--sun)}
+.tip{background:var(--warn-bg);border-radius:12px;padding:12px 14px;font-size:.95rem}
+
+/* Páginas ficticias */
+.site{padding:16px;display:flex;flex-direction:column;gap:10px;font-family:var(--f-body)}
+.site .top{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;padding:10px 12px;border-radius:10px;color:#fff}
+.site .logo{font:700 1.1rem var(--f-display)}
+.site .navl{font-size:.8rem;opacity:.9;display:flex;gap:10px;flex-wrap:wrap}
+.site .big{font:700 1.3rem var(--f-display)}
+.site .blink{animation:blink 1s steps(2) infinite}
+@keyframes blink{50%{opacity:.25}}
+@media (prefers-reduced-motion:reduce){.site .blink{animation:none}}
+.site .fake-input{border:1.5px solid #9aa;border-radius:6px;padding:6px 8px;font-size:.85rem;color:#556;background:#fff}
+.site .fbtn{display:inline-block;padding:8px 14px;border-radius:8px;font-weight:800;color:#fff;font-size:.9rem;align-self:flex-start}
+.site .row{display:flex;gap:10px;flex-wrap:wrap}
+.site .card{flex:1 1 130px;border-radius:10px;padding:10px;font-size:.85rem}
+.site small{font-size:.75rem;opacity:.8}
+
+/* Misión 2 hotspots */
+.hot{cursor:pointer;border-radius:8px;outline:2px dashed transparent;transition:outline-color .2s,background .2s;position:relative}
+.hot:hover{outline-color:var(--sun)}
+.hot.found{outline:3px solid var(--bad);background:rgba(196,60,47,.08)}
+.hot.found::after{content:attr(data-num);position:absolute;top:-10px;right:-10px;background:var(--bad);color:#fff;font:700 .8rem var(--f-display);
+  width:22px;height:22px;border-radius:50%;display:grid;place-items:center}
+.clues{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+.clues li{border:2px dashed var(--line);border-radius:12px;padding:10px 12px;color:var(--muted);font-size:.95rem}
+.clues li.found{border-style:solid;border-color:var(--bad);color:var(--ink);background:var(--bad-bg)}
+.clues li b{font-family:var(--f-display)}
+
+/* Misión 3 noticias */
+.news{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px}
+.article{background:var(--paper);border:2px solid var(--line);border-radius:16px;overflow:hidden;display:flex;flex-direction:column}
+.article .src{padding:8px 12px;font:600 .85rem var(--f-mono);background:var(--chrome);display:flex;gap:6px;align-items:center;overflow:hidden;white-space:nowrap}
+.article .img{height:120px;display:block;width:100%}
+.article .body{padding:12px 14px;display:flex;flex-direction:column;gap:8px;flex:1}
+.article h3{font-size:1.15rem}
+.article .meta{font-size:.8rem;color:var(--muted)}
+.article .ex{font-size:.92rem}
+.article .choices{margin-top:auto}
+
+/* Misión 4 */
+.rules{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px}
+.rule{background:var(--paper);border:2px solid var(--line);border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:6px}
+.rule .q{font:700 1.6rem var(--f-display);color:var(--accent)}
+.rule h3{font-size:1.05rem}
+.rule p{font-size:.93rem;color:var(--muted)}
+.quiz{display:flex;flex-direction:column;gap:12px}
+.qitem{background:var(--paper);border:2px solid var(--line);border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:10px}
+.qitem p.qq{font-weight:800}
+.qitem .opts{display:flex;flex-direction:column;gap:8px}
+.qitem .opts button{text-align:left;font:600 .98rem var(--f-body);background:var(--bg);color:var(--ink);border:2px solid var(--line);border-radius:10px;padding:9px 12px;cursor:pointer}
+.qitem .opts button.r{background:var(--ok-bg);border-color:var(--ok)}
+.qitem .opts button.w{background:var(--bad-bg);border-color:var(--bad)}
+.diploma{border:3px dashed var(--accent);border-radius:18px;padding:18px;background:var(--paper);text-align:center;display:flex;flex-direction:column;gap:8px;align-items:center}
+.diploma h3{font-size:1.5rem;color:var(--accent)}
+.ficha{display:flex;gap:12px;flex-wrap:wrap;background:var(--paper);border:2px solid var(--line);border-radius:14px;padding:12px 14px}
+.ficha label{display:flex;flex-direction:column;gap:3px;font-size:.78rem;font-weight:800;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;flex:1 1 180px;min-width:0}
+.ficha input{border:2px solid var(--line);border-radius:10px;padding:8px 10px;background:var(--bg);color:var(--ink);font:inherit;font-size:1rem;text-transform:none;letter-spacing:0;font-weight:400;width:100%}
+.ficha input:focus-visible{outline:3px solid var(--accent);outline-offset:1px}
+#informe{background:var(--paper);border:2px solid var(--line);border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:12px}
+#informe h3{font-size:1.35rem}
+.rwrap{overflow-x:auto}
+.rtable{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
+.rtable th,.rtable td{text-align:left;padding:8px 6px;border-bottom:1px solid var(--line);font-size:.93rem;vertical-align:top}
+.rtable th{font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.rtable .rf{font-size:.85rem;color:var(--muted)}
+.pend{font-size:.75rem;color:var(--muted);background:var(--bg);border-radius:999px;padding:1px 8px;white-space:nowrap}
+.copybox{font:500 .82rem var(--f-mono);background:var(--bg);border:2px dashed var(--line);border-radius:10px;padding:10px;white-space:pre-wrap;overflow-wrap:anywhere;max-height:260px;overflow:auto}
+.cbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.cmsg{font-size:.9rem;color:var(--muted)}
+.relato{background:var(--paper);border:2px solid var(--line);border-radius:18px;padding:18px;display:grid;grid-template-columns:120px minmax(0,1fr);gap:20px;align-items:start}
+@media (max-width:620px){.relato{grid-template-columns:minmax(0,1fr)}.relato .pini{width:96px}}
+.relato .pini{width:120px;height:auto;display:block}
+.relato .rt{display:flex;flex-direction:column;gap:10px;min-width:0}
+.relato .cap{font-size:.74rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--accent)}
+.relato h2{font-size:clamp(1.5rem,3.6vw,2rem);text-wrap:balance}
+.relato p{max-width:68ch;line-height:1.65}
+.relato[hidden]{display:none}
+.relato .nw{white-space:nowrap}
+.relato .dlg{padding-left:14px;border-left:3px solid var(--line)}
+.relato .reto{border:2px dashed var(--accent);border-radius:14px;padding:12px 16px;display:flex;flex-direction:column;gap:6px;margin-top:4px}
+.relato .reto b.t{font-size:.8rem;letter-spacing:.08em;text-transform:uppercase;color:var(--accent)}
+.relato .reto ul{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:4px}
+.vids{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:14px}
+.vid{background:var(--paper);border:2px solid var(--line);border-radius:16px;padding:14px;display:flex;flex-direction:column;gap:8px}
+.vid.seen{border-color:var(--ok)}
+.vid .src{font-weight:800;font-size:.7rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.vid h3{font-size:1.08rem}
+.vid .kindtag{align-self:flex-start;font-size:.72rem;font-weight:800;border-radius:999px;padding:2px 9px;background:var(--bg);color:var(--muted)}
+.vid a.go{display:inline-flex;gap:8px;align-items:center;align-self:flex-start;background:var(--accent);color:var(--accent-ink);text-decoration:none;font-weight:800;border-radius:999px;padding:7px 14px}
+.vid a.go svg{width:16px;height:16px}
+.vid .q{font-size:.92rem;background:var(--bg);border-radius:10px;padding:8px 10px}
+.vid label.ck{display:flex;gap:8px;align-items:center;font-weight:700;font-size:.92rem;cursor:pointer;margin-top:auto}
+.vid label.ck input{width:20px;height:20px;accent-color:var(--ok)}
+.vid.tarea{border-color:var(--accent);border-width:3px}
+.vid.tarea .kindtag{background:var(--accent);color:var(--accent-ink)}
+.vfilter{display:flex;gap:8px;flex-wrap:wrap}
+.indic{border:2px solid var(--line);border-radius:14px;padding:12px 16px;display:flex;flex-direction:column;gap:10px;margin-top:4px;background:var(--bg)}
+.indic>b.t{font-size:.8rem;letter-spacing:.08em;text-transform:uppercase;color:var(--accent)}
+.indic .cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px}
+.indic h4{margin:0;font-size:.95rem}
+.indic ul{margin:0;padding-left:0;list-style:none;display:flex;flex-direction:column;gap:6px;font-size:.88rem;line-height:1.45}
+.indic li{overflow-wrap:anywhere}
+.indic .crit{display:inline-block;font-weight:800;border:1.5px solid var(--accent);color:var(--accent);border-radius:6px;padding:0 5px;margin-right:4px;font-size:.78rem;font-variant-numeric:tabular-nums}
+.indic .do{color:var(--muted);font-size:.8rem}
+.valora{border:2px solid var(--accent);border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:10px;background:var(--paper)}
+.valora h3{font-size:1.2rem}
+.valora .cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px}
+.valora h4{margin:0 0 4px;font-size:.95rem}
+.valora td{font-size:.85rem}
+.vstar{font-weight:800;white-space:nowrap;font-variant-numeric:tabular-nums}
+.vbar{display:inline-flex;gap:2px;margin-left:6px;vertical-align:middle}.vbar i{width:8px;height:8px;border-radius:2px;background:var(--line);display:block}.vbar i.on{background:var(--ok)}
+.llave{border:2px dashed var(--accent);border-radius:12px;padding:12px;display:flex;flex-direction:column;gap:6px}
+.llave code{font:700 1.3rem var(--f-mono,monospace);letter-spacing:.06em;color:var(--accent);overflow-wrap:anywhere}
+footer{color:var(--muted);font-size:.85rem;text-align:center}
+</style>
+
+<div class="wrap">
+  <header class="hero">
+    <svg class="badge" viewBox="0 0 80 80" aria-hidden="true">
+      <circle cx="34" cy="34" r="24" fill="none" stroke="var(--accent)" stroke-width="7"/>
+      <line x1="52" y1="52" x2="72" y2="72" stroke="var(--accent)" stroke-width="9" stroke-linecap="round"/>
+      <rect x="25" y="32" width="18" height="14" rx="3" fill="var(--sun)"/>
+      <path d="M28 32v-4a6 6 0 0 1 12 0v4" fill="none" stroke="var(--sun)" stroke-width="3"/>
+    </svg>
+    <div class="hero-text">
+      <h1>Detectives de la Red</h1>
+      <p>Cuatro misiones para aprender a reconocer páginas web seguras y noticias falsas. Todas las webs que verás son inventadas para practicar.</p>
+    </div>
+    <div class="score" id="score">Puntos: 0</div>
+  </header>
+
+  <section class="relato" aria-labelledby="relato-t">
+    <svg class="pini" viewBox="0 0 120 150" aria-label="Pini, la mascota de Radio La Piña">
+  <path d="M60 14l6 12h-12z" fill="#5f8f3a"/>
+  <ellipse cx="60" cy="86" rx="36" ry="50" fill="#a5642f"/>
+  <g fill="none" stroke="#6e3a17" stroke-width="3" stroke-linecap="round">
+    <path d="M32 58q7 8 14 0q7 8 14 0q7 8 14 0q7 8 14 0"/>
+    <path d="M27 104q8 8 16 0q8 8 17 0q8 8 17 0q8 8 16 0"/>
+    <path d="M33 122q7 7 14 0q6 7 13 0q7 7 14 0q6 7 13 0"/>
+    <path d="M40 42q5 6 10 0q5 6 10 0q5 6 10 0q5 6 10 0"/>
+  </g>
+  <ellipse cx="48" cy="78" rx="8" ry="9" fill="#fff"/><ellipse cx="72" cy="78" rx="8" ry="9" fill="#fff"/>
+  <circle cx="50" cy="80" r="4" fill="#1d1d1d"/><circle cx="74" cy="80" r="4" fill="#1d1d1d"/>
+  <path d="M50 92q10 9 20 0" fill="none" stroke="#1d1d1d" stroke-width="3" stroke-linecap="round"/>
+  <path d="M22 76a38 42 0 0 1 76 0" fill="none" stroke="#2b2f3a" stroke-width="6"/>
+  <rect x="14" y="70" width="14" height="22" rx="5" fill="#e2553f"/><rect x="92" y="70" width="14" height="22" rx="5" fill="#e2553f"/>
+  <path d="M21 92q0 16 18 18" fill="none" stroke="#2b2f3a" stroke-width="3"/>
+  <rect x="38" y="104" width="12" height="9" rx="4" fill="#2b2f3a"/>
+</svg>
+    <div class="rt">
+      <span class="cap">Rumbo a Europa · Radio La Piña · Estonia</span>
+      <h2 id="relato-t">El bulo que llegó a la radio</h2>
+      <p>Es lunes y en Radio La Piña todo está preparado para grabar «Charlar por Charlar». Esta semana el programa viaja a <b>Estonia</b>, un pequeño país del norte de Europa donde casi todo se hace por internet: desde el ordenador se puede pedir cita en el médico, firmar documentos y hasta votar.</p>
+      <p>Pini, nuestra piña reportera, se está ajustando los cascos cuando suena el móvil del equipo. Es un mensaje: «¡URGENTE! Europa prohibirá los recreos a partir de enero. ¡Compártelo antes de que lo borren!». Un segundo después llega otro: «Has ganado un viaje gratis a Tallin. Pulsa aquí y escribe tus datos».</p>
+      <p class="dlg">—¡Hay que contarlo en el programa ya! —grita alguien.</p>
+      <p class="dlg">—Un momento —responde <span class="nw">Pini—</span>. En Estonia los niños aprenden desde pequeños a comprobar lo que leen en internet. Un buen periodista nunca da una noticia sin comprobarla.</p>
+      <p>Pini mira la dirección de la web: no tiene candado, el nombre está lleno de guiones raros y nadie firma la noticia. Busca en dos periódicos fiables y ninguno dice nada de los recreos. «Esto huele a bulo», concluye, «y lo del viaje, a trampa».</p>
+      <p>El equipo cambia la escaleta: en vez de difundir el bulo, el programa enseñará a cazarlos. Pero Pini necesita ayuda de detectives que sepan distinguir una web segura de una peligrosa y una noticia de un bulo. ¿Te apuntas?</p>
+      <div class="reto"><b class="t">Vuestro reto: superar las misiones</b>
+        <ul>
+        <li><b>Misión 1:</b> El candado</li>
+        <li><b>Misión 2:</b> Caza pistas</li>
+        <li><b>Misión 3:</b> ¿Noticia o bulo?</li>
+        <li><b>Misión 4:</b> Vídeos y juegos</li>
+        <li><b>Misión 5:</b> Examen e informe</li>
+        </ul>
+      </div>
+      <div class="indic"><b class="t">Indicadores de logro · Programación de TIAC</b>
+        <div class="cols">
+          <div><h4>5.º de Primaria</h4><ul><li><span class="crit">Crit. 1.1</span><b>1.1.3</b> Comprueba ese dato en una segunda web y explica cuál de las dos es más fiable (web institucional, autor, fecha). <span class="do">(CCL3 · CCL1)</span></li><li><span class="crit">Crit. 1.1</span><b>1.1.4</b> Distingue en una web el contenido, la publicidad y los anuncios trampa, no pulsa los enlaces engañosos y lee los iconos y las palabras en inglés del navegador y de OneDrive (candado, pestañas, actualizar, Download, Share) y explica qué hace cada uno. <span class="do">(CCL3 · CD1 · CP1)</span></li><li><span class="crit">Crit. 2.1</span><b>2.1.3</b> Reconoce una noticia falsa por sus pistas (titular exagerado, sin fuente, sin fecha) y decide no reenviarla. <span class="do">(CPSAA4 · CC1)</span></li><li><span class="crit">Crit. 4.1</span><b>4.1.3</b> Comprueba el candado y el «https» de una web antes de escribir datos y explica si es segura. <span class="do">(CD4)</span></li><li><span class="crit">Crit. 4.2</span><b>4.2.2</b> Identifica qué datos personales no debe dar en un anuncio, juego o formulario y explica qué huella digital deja al hacerlo. <span class="do">(CD4 · CC2)</span></li></ul></div>
+          <div><h4>6.º de Primaria</h4><ul><li><span class="crit">Crit. 1.1</span><b>1.1.3</b> Distingue una noticia fiable de un bulo (autor, fecha, fuentes, titular que asusta o mete prisa) y sabe que debe comprobarla en otro medio antes de compartirla. <span class="do">(CCL3 · CP1)</span></li><li><span class="crit">Crit. 4.1</span><b>4.1.3</b> Reconoce webs y mensajes trampa (sin https, nombre raro, prisa, premios, piden datos o códigos) y no da sus datos: cierra y avisa a un adulto. <span class="do">(CD4)</span></li></ul></div>
+        </div>
+      </div><!--/indic-->
+    </div>
+  </section>
+
+  <div class="ficha">
+    <label for="alNombre">Nombre y apellido<input id="alNombre" autocomplete="off" placeholder="Escribe tu nombre"></label>
+    <label for="alCurso">Curso y grupo<input id="alCurso" autocomplete="off" placeholder="Ej.: 5.º B"></label>
+  </div>
+
+  <nav class="tabs" role="tablist" id="tabs">
+    <button role="tab" data-t="candado" aria-selected="true"><span class="n">1</span>El candado</button>
+    <button role="tab" data-t="pistas" aria-selected="false"><span class="n">2</span>Caza pistas</button>
+    <button role="tab" data-t="bulos" aria-selected="false"><span class="n">3</span>¿Noticia o bulo?</button>
+    <button role="tab" data-t="videos" aria-selected="false"><span class="n">4</span>Vídeos y juegos</button>
+    <button role="tab" data-t="diploma" aria-selected="false"><span class="n">5</span>Examen e informe</button>
+  </nav>
+
+  <!-- MISIÓN 1 -->
+  <section class="mission" id="m-candado">
+    <div class="intro">
+      <span class="label">Misión 1 · ¿Es segura esta web?</span>
+      <h2>Fíjate en la barra de direcciones</h2>
+      <p>Una web con <b>https://</b> y un candado cifra los datos que envías. Pero ojo: el candado no lo es todo. También hay que leer bien el nombre de la web y lo que te pide.</p>
+    </div>
+    <div class="progress" id="p1"></div>
+    <div class="case">
+      <div id="browser1"></div>
+      <div class="panel" id="panel1"></div>
+    </div>
+  </section>
+
+  <!-- MISIÓN 2 -->
+  <section class="mission" id="m-pistas" hidden>
+    <div class="intro">
+      <span class="label">Misión 2 · Caza las 6 pistas</span>
+      <h2>Esta tienda online es una trampa</h2>
+      <p>Pulsa sobre cada cosa sospechosa de la página. Cuando encuentres las seis, habrás desenmascarado a «Jugetelandia».</p>
+    </div>
+    <div class="case">
+      <div class="browser">
+        <div class="bar"><div class="dots"><i></i><i></i><i></i></div>
+          <div class="url hot" tabindex="0" data-c="0"><svg class="lock" viewBox="0 0 16 16"><path d="M8 1 15 14H1Z" fill="var(--bad)"/><rect x="7.3" y="5" width="1.4" height="5" fill="#fff"/><rect x="7.3" y="11" width="1.4" height="1.4" fill="#fff"/></svg><span class="proto-n">http://</span><span class="rest">www.jugetelandia-ofertas.xyz/super-chollo</span></div>
+        </div>
+        <div class="site">
+          <div class="top" style="background:#e0218a">
+            <span class="logo hot" tabindex="0" data-c="1">JUGETELANDIA ★ ofisial</span>
+            <span class="navl"><span>Inicio</span><span>Chollos</span><span>Regalos</span></span>
+          </div>
+          <div class="big blink hot" tabindex="0" data-c="2" style="color:#d10000">¡¡SOLO QUEDAN 4 MINUTOS!! ⏰ 03:59</div>
+          <div class="row">
+            <div class="card" style="background:#fff0f7;color:#333">
+              <b>Consola PixelStation 9 + 20 juegos</b><br>
+              <span style="text-decoration:line-through">499 €</span>
+              <span class="hot" tabindex="0" data-c="3" style="font:700 1.4rem var(--f-display);color:#d10000;padding:0 4px">¡¡5 €!!</span>
+            </div>
+            <div class="card" style="background:#f3f3ff;color:#333">
+              <b>Para recibirlo, rellena:</b>
+              <div class="hot" tabindex="0" data-c="4" style="display:flex;flex-direction:column;gap:5px;padding:4px;margin-top:4px">
+                <span class="fake-input">Nombre y apellidos</span>
+                <span class="fake-input">Contraseña de tu correo</span>
+                <span class="fake-input">Número de la tarjeta de tus padres</span>
+              </div>
+            </div>
+          </div>
+          <span class="fbtn" style="background:#22a34a">¡¡¡LO QUIERO YA!!!</span>
+          <small class="hot" tabindex="0" data-c="5" style="color:#666;padding:4px">© Jugetelandia. Sin dirección, sin teléfono, sin aviso legal. Pagos solo por transferencia a una cuenta extranjera.</small>
+        </div>
+      </div>
+      <div class="panel">
+        <h3>Pistas encontradas: <span id="found">0</span> / 6</h3>
+        <ul class="clues" id="clues"></ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- MISIÓN 3 -->
+  <section class="mission" id="m-bulos" hidden>
+    <div class="intro">
+      <span class="label">Misión 3 · ¿Noticia fiable o bulo?</span>
+      <h2>Lee cada titular como un detective</h2>
+      <p>Mira quién lo publica, si hay fecha y autor, si cita fuentes y si el titular intenta asustarte o enfadarte. Los periódicos y webs son inventados.</p>
+    </div>
+    <div class="news" id="news"></div>
+  </section>
+
+
+  <section class="mission" id="m-videos" hidden>
+    <div class="intro"><span class="label">Misión 4 · Vídeos y juegos</span>
+      <h2>Mira, piensa y juega</h2>
+      <p>Abre cada vídeo o juego (se abre en una pestaña nueva), míralo con tu profe y responde en tu cuaderno a la pregunta. Marca la casilla al terminar: cuenta para tu informe.</p></div>
+    <div class="vids" id="vids"></div>
+  </section>
+
+  <!-- MISIÓN 4 -->
+  <section class="mission" id="m-diploma" hidden>
+    <div class="intro">
+      <span class="label">Misión 5 · Las 5 preguntas del detective</span>
+      <h2>Antes de pulsar o compartir, pregúntate…</h2>
+    </div>
+    <div class="rules">
+      <div class="rule"><span class="q">1</span><h3>¿Tiene candado y https?</h3><p>Si vas a escribir datos y pone http:// o un aviso, no sigas.</p></div>
+      <div class="rule"><span class="q">2</span><h3>¿El nombre está bien escrito?</h3><p>Letras cambiadas, guiones raros o terminaciones extrañas (.xyz, .top) son señales de alarma.</p></div>
+      <div class="rule"><span class="q">3</span><h3>¿Quién lo dice?</h3><p>Busca autor, fecha y fuentes. Si nadie firma, desconfía.</p></div>
+      <div class="rule"><span class="q">4</span><h3>¿Me mete prisa o miedo?</h3><p>«¡Compártelo ya!», «¡Últimos minutos!». Las prisas sirven para que no pienses.</p></div>
+      <div class="rule"><span class="q">5</span><h3>¿Lo cuentan otros medios?</h3><p>Compara con otra fuente fiable y pregunta a un adulto antes de compartir.</p></div>
+    </div>
+    <div class="quiz" id="quiz"></div>
+    <div class="diploma" id="diploma" hidden></div>
+    <div id="informe"></div>
+  </section>
+
+  <footer>Actividad educativa. Todas las webs, marcas, periódicos y personas que aparecen son ficticios.</footer>
+</div>
+
+<script>
+const $=s=>document.querySelector(s);
+let points=0;
+const addPts=n=>{points+=n;$('#score').textContent='Puntos: '+points};
+
+const LOCK_OK='<svg class="lock" viewBox="0 0 16 16"><rect x="3" y="7" width="10" height="8" rx="2" fill="var(--ok)"/><path d="M5 7V5a3 3 0 0 1 6 0v2" fill="none" stroke="var(--ok)" stroke-width="2"/></svg>';
+const LOCK_BAD='<svg class="lock" viewBox="0 0 16 16"><path d="M8 1 15 14H1Z" fill="var(--bad)"/><rect x="7.3" y="5" width="1.4" height="5" fill="#fff"/><rect x="7.3" y="11" width="1.4" height="1.4" fill="#fff"/></svg>';
+function browser(secure,url,inner){
+  return `<div class="browser"><div class="bar"><div class="dots"><i></i><i></i><i></i></div>
+  <div class="url">${secure?LOCK_OK:LOCK_BAD}<span class="${secure?'proto-s':'proto-n'}">${secure?'https://':'http://'}</span><span class="rest">${url}</span>${secure?'':'<span style="color:var(--bad);font-size:.75rem">No seguro</span>'}</div></div><div class="page">${inner}</div></div>`;
+}
+
+/* ---------- MISIÓN 1 ---------- */
+const cases=[
+ {s:true,url:'www.bibliopinares.es/catalogo',safe:true,
+  page:`<div class="site"><div class="top" style="background:#2d6a8f"><span class="logo">📚 Biblioteca Pinares</span><span class="navl"><span>Catálogo</span><span>Horario</span><span>Contacto</span></span></div>
+  <div class="big" style="color:#2d6a8f">Busca tu próximo libro</div><span class="fake-input">Título o autor…</span><small style="color:#333">Calle del Pinar 12 · Tel. 983 000 000 · Aviso legal y privacidad</small></div>`,
+  why:['Empieza por https:// y tiene candado.','El nombre de la web es claro y está bien escrito.','Tiene dirección, teléfono y aviso legal.','Solo te pide lo necesario: qué libro buscas.']},
+ {s:false,url:'premios-consola-gratis.xyz/ganador',safe:false,
+  page:`<div class="site" style="background:#fffbe0"><div class="big blink" style="color:#d10000;text-align:center">🎉 ¡¡FELICIDADES!! ERES EL VISITANTE 1.000.000 🎉</div>
+  <p style="color:#333;text-align:center">Has ganado una consola. Escribe tu dirección y el móvil de tus padres para recibirla.</p>
+  <span class="fake-input">Dirección de casa</span><span class="fake-input">Móvil</span><span class="fbtn" style="background:#ff7a00;align-self:center">RECLAMAR PREMIO</span></div>`,
+  why:['Usa http:// sin candado: los datos viajan sin proteger.','Nadie regala consolas por visitar una web.','Termina en .xyz, una terminación muy usada en webs trampa.','Pide datos personales a cambio de un premio.']},
+ {s:true,url:'www.bancoamigo-verificacion-urgente.top/login',safe:false,
+  page:`<div class="site"><div class="top" style="background:#1d3f8f"><span class="logo">Banco Amig0</span></div>
+  <p style="color:#c00;font-weight:800">⚠ Su cuenta será BLOQUEADA en 24 horas si no verifica sus datos.</p>
+  <span class="fake-input">Usuario</span><span class="fake-input">Contraseña</span><span class="fake-input">PIN de la tarjeta</span><span class="fbtn" style="background:#1d3f8f">Verificar ahora</span></div>`,
+  why:['¡Tiene candado y https, pero es una trampa! El candado solo dice que la conexión está cifrada, no que la web sea honrada.','El nombre es raro: «verificacion-urgente» y termina en .top.','En el logo pone «Amig0» con un cero.','Te mete miedo y prisa, y pide el PIN. Un banco nunca pide el PIN.']},
+ {s:true,url:'www.museodelaciencia-cyl.es/visitas',safe:true,
+  page:`<div class="site"><div class="top" style="background:#5b3c99"><span class="logo">🔭 Museo de la Ciencia CyL</span><span class="navl"><span>Exposiciones</span><span>Colegios</span></span></div>
+  <div class="big" style="color:#5b3c99">Reserva la visita de tu clase</div><div class="row"><div class="card" style="background:#f1ecfb;color:#333"><b>Planetario</b><br>Martes y jueves · 10:00</div><div class="card" style="background:#f1ecfb;color:#333"><b>Taller de robots</b><br>Viernes · 11:30</div></div><small style="color:#333">Contacto: reservas@museodelaciencia-cyl.es · Política de privacidad</small></div>`,
+  why:['https:// y candado.','Nombre coherente con lo que ofrece.','Información clara, horarios y contacto.','No te pide contraseñas ni dinero para mirar.']},
+ {s:false,url:'www.cromosfutbol-intercambio.com/foro',safe:false,
+  page:`<div class="site"><div class="top" style="background:#2f8a3a"><span class="logo">⚽ Cromos Fútbol Foro</span></div>
+  <p style="color:#333">Regístrate para cambiar cromos con otros niños.</p><span class="fake-input">Nombre de usuario</span><span class="fake-input">Contraseña</span><span class="fake-input">Colegio y curso</span><span class="fbtn" style="background:#2f8a3a">Registrarme</span></div>`,
+  why:['Usa http:// y el navegador avisa «No seguro»: tu contraseña viajaría sin cifrar.','Pide tu colegio y curso: es información personal que no debes dar.','Aunque parezca divertida, no escribas datos en una web sin candado.']},
+ {s:true,url:'www.eltiempo-castilla.es/mojados',safe:true,
+  page:`<div class="site"><div class="top" style="background:#1f86c9"><span class="logo">☀️ El Tiempo Castilla</span><span class="navl"><span>Hoy</span><span>Semana</span><span>Radar</span></span></div>
+  <div class="big" style="color:#1f86c9">Mojados: 14 °C, nubes y claros</div><div class="row"><div class="card" style="background:#e6f3fb;color:#333">Mañana<br><b>16 °C</b></div><div class="card" style="background:#e6f3fb;color:#333">Jueves<br><b>11 °C 🌧</b></div><div class="card" style="background:#e6f3fb;color:#333">Viernes<br><b>13 °C</b></div></div></div>`,
+  why:['https:// con candado.','Solo muestra información, no te pide nada.','Nombre de web sencillo y bien escrito.']}
+];
+let c1=0;const res1=[],fails1=[];
+function render1(){
+  const p=$('#p1');p.innerHTML=cases.map((_,i)=>`<i class="${res1[i]===true?'done-ok':res1[i]===false?'done-bad':i===c1?'now':''}"></i>`).join('');
+  if(c1>=cases.length){
+    const ok=res1.filter(Boolean).length;
+    $('#browser1').innerHTML=browser(true,'detectives-de-la-red.es/mision1-completada',`<div class="site"><div class="big" style="color:var(--accent)">¡Misión 1 completada!</div><p>Has acertado ${ok} de ${cases.length}.</p></div>`);
+    $('#panel1').innerHTML=`<h3>Recuerda</h3><div class="tip">El candado es necesario, pero no suficiente. Mira también el nombre de la web y qué datos te pide.</div><div class="choices"><button class="btn primary" id="go2">Ir a la misión 2</button><button class="btn" id="re1">Repetir</button></div>`;
+    $('#go2').onclick=()=>show('pistas');$('#re1').onclick=()=>{c1=0;res1.length=0;fails1.length=0;render1()};
+    return;
+  }
+  const k=cases[c1];
+  $('#browser1').innerHTML=browser(k.s,k.url,k.page);
+  $('#panel1').innerHTML=`<span class="label">Web ${c1+1} de ${cases.length}</span><h3>¿Escribirías tus datos en esta web?</h3>
+   <div class="choices"><button class="btn ok" data-a="1">✔ Es segura</button><button class="btn bad" data-a="0">✖ Es peligrosa</button></div><div id="fb1"></div>`;
+  $('#panel1').querySelectorAll('[data-a]').forEach(b=>b.onclick=()=>{
+    const guess=b.dataset.a==='1',right=guess===k.safe;res1[c1]=right;if(right)addPts(10);fails1[c1]=right?null:`${k.s?'https://':'http://'}${k.url}: dijo «${guess?'segura':'peligrosa'}» y era ${k.safe?'segura':'peligrosa'}`;
+    $('#panel1').querySelectorAll('[data-a]').forEach(x=>x.disabled=true);
+    $('#fb1').innerHTML=`<div class="feedback ${right?'right':'wrong'}"><strong>${right?'¡Bien visto!':'¡Cuidado!'} Esta web es ${k.safe?'segura':'peligrosa'}.</strong><ul>${k.why.map(w=>`<li>${w}</li>`).join('')}</ul></div>
+     <div class="choices" style="margin-top:10px"><button class="btn primary" id="next1">Siguiente web →</button></div>`;
+    $('#next1').onclick=()=>{c1++;render1()};
+    render1Progress();
+  });
+}
+function render1Progress(){$('#p1').innerHTML=cases.map((_,i)=>`<i class="${res1[i]===true?'done-ok':res1[i]===false?'done-bad':i===c1?'now':''}"></i>`).join('')}
+
+/* ---------- MISIÓN 2 ---------- */
+const clues=[
+ ['La dirección','Empieza por http:// (sin candado) y termina en .xyz.'],
+ ['Faltas de ortografía','«Jugetelandia» y «ofisial»: las webs serias cuidan la ortografía.'],
+ ['Te mete prisa','Una cuenta atrás parpadeando sirve para que compres sin pensar.'],
+ ['Precio imposible','Una consola de 499 € por 5 €: demasiado bueno para ser verdad.'],
+ ['Pide datos privados','Nunca escribas la contraseña de tu correo ni datos de tarjetas.'],
+ ['Nadie da la cara','Sin dirección, teléfono ni aviso legal, y pagos raros.']
+];
+const got=new Set();
+function render2(){
+  $('#clues').innerHTML=clues.map((c,i)=>got.has(i)?`<li class="found"><b>${i+1}. ${c[0]}.</b> ${c[1]}</li>`:`<li>${i+1}. ¿?</li>`).join('');
+  $('#found').textContent=got.size;
+  if(got.size===clues.length)$('#clues').insertAdjacentHTML('afterend','<div class="tip" id="done2"><b>¡Tienda desenmascarada!</b> Cuando una web junta varias de estas pistas, cierra la pestaña y avisa a un adulto. <button class="btn primary" style="margin-top:8px" onclick="show(\'bulos\')">Ir a la misión 3</button></div>');
+}
+document.querySelectorAll('#m-pistas .hot').forEach(h=>{
+  const act=()=>{const i=+h.dataset.c;if(got.has(i))return;got.add(i);h.classList.add('found');h.dataset.num=i+1;addPts(5);render2()};
+  h.addEventListener('click',act);h.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();act()}});
+});
+
+/* ---------- MISIÓN 3 ---------- */
+function art(kind,a,b){
+  const g={
+    whale:`<svg class="img" viewBox="0 0 300 120" preserveAspectRatio="xMidYMid slice"><rect width="300" height="120" fill="#bfe3f2"/><rect y="80" width="300" height="40" fill="#4a90b8"/><ellipse cx="150" cy="78" rx="70" ry="22" fill="#5a6b7c"/><path d="M215 72l30-18-6 26z" fill="#5a6b7c"/><circle cx="110" cy="72" r="3" fill="#fff"/><path d="M140 52c-6-14 6-18 6-4M150 50c6-14 18-8 6 2" stroke="#fff" stroke-width="3" fill="none"/><text x="12" y="22" font-size="13" font-weight="800" fill="#c00" font-family="Arial">¡¡FOTO REAL!!</text></svg>`,
+    lib:`<svg class="img" viewBox="0 0 300 120" preserveAspectRatio="xMidYMid slice"><rect width="300" height="120" fill="#f4ead8"/><rect x="30" y="30" width="240" height="70" fill="#8a5a3b"/>${[0,1,2,3,4,5,6,7,8,9,10].map(i=>`<rect x="${38+i*21}" y="${38+(i%3)*4}" width="16" height="${54-(i%3)*4}" fill="${['#2d6a8f','#c4513a','#e2b13c','#3d8a55'][i%4]}"/>`).join('')}</svg>`,
+    choc:`<svg class="img" viewBox="0 0 300 120" preserveAspectRatio="xMidYMid slice"><rect width="300" height="120" fill="#ffe1ec"/><rect x="95" y="25" width="110" height="75" rx="6" fill="#6b3a1f"/>${[0,1,2].map(r=>[0,1,2,3].map(c=>`<rect x="${101+c*26}" y="${31+r*22}" width="22" height="18" rx="3" fill="#7d4728"/>`).join('')).join('')}<text x="150" y="116" text-anchor="middle" font-size="11" font-weight="800" fill="#c00" font-family="Arial">¡LOS MÉDICOS LO ODIAN!</text></svg>`,
+    sat:`<svg class="img" viewBox="0 0 300 120" preserveAspectRatio="xMidYMid slice"><rect width="300" height="120" fill="#16213a"/>${[20,60,110,170,230,270,40,200].map((x,i)=>`<circle cx="${x}" cy="${15+i*12%90}" r="1.5" fill="#fff"/>`).join('')}<rect x="130" y="50" width="40" height="22" fill="#c9ced8"/><rect x="80" y="54" width="44" height="14" fill="#2d6ec9"/><rect x="176" y="54" width="44" height="14" fill="#2d6ec9"/><circle cx="150" cy="140" r="60" fill="#3a7bd5"/></svg>`,
+    phone:`<svg class="img" viewBox="0 0 300 120" preserveAspectRatio="xMidYMid slice"><rect width="300" height="120" fill="#2b2b2b"/><rect x="120" y="12" width="60" height="100" rx="10" fill="#111" stroke="#666" stroke-width="3"/><path d="M150 40l-16 30h12l-4 22 18-32h-12z" fill="#ffcf2e"/><text x="12" y="22" font-size="13" font-weight="800" fill="#ff5c5c" font-family="Arial">URGENTE</text></svg>`,
+    school:`<svg class="img" viewBox="0 0 300 120" preserveAspectRatio="xMidYMid slice"><rect width="300" height="120" fill="#e8f4e4"/><rect x="90" y="45" width="120" height="60" fill="#e9c46a"/><path d="M80 48l70-30 70 30z" fill="#c4513a"/><rect x="138" y="75" width="24" height="30" fill="#6b4f2a"/><rect x="104" y="58" width="18" height="14" fill="#bfe3f2"/><rect x="178" y="58" width="18" height="14" fill="#bfe3f2"/><rect y="105" width="300" height="15" fill="#7cbf6a"/></svg>`
+  };return g[kind];
+}
+const news=[
+ {src:'noticiasYAAA.blogspot-total.info',s:false,img:'whale',t:'¡¡UNA BALLENA GIGANTE NADA POR EL RÍO PISUERGA!! COMPÁRTELO ANTES DE QUE LO BORREN',meta:'Sin autor · Sin fecha',ex:'Vecinos dicen que la han visto. La foto lo demuestra todo.',fake:true,
+  why:['Las ballenas viven en el mar; el Pisuerga es un río.','No hay autor ni fecha.','«Compártelo antes de que lo borren» busca que no pienses.','La «foto real» es un dibujo.']},
+ {src:'www.diariodelpinar.es',s:true,img:'lib',t:'La biblioteca municipal amplía su horario los sábados por la tarde',meta:'Por Laura Gómez · 2 de noviembre de 2026',ex:'El ayuntamiento confirma que desde el 7 de noviembre abrirá de 16:00 a 20:00. Fuente: nota del ayuntamiento.',fake:false,
+  why:['Hay autora, fecha y fuente.','La noticia es normal, sin exageraciones.','La web tiene https y un nombre claro.']},
+ {src:'salud-milagro-ya.top',s:false,img:'choc',t:'Científicos descubren que comer 3 tabletas de chocolate al día te hace más listo',meta:'Publicado por "Admin"',ex:'Un estudio secreto que nadie quiere que conozcas. ¡Los médicos lo odian!',fake:true,
+  why:['«Estudio secreto»: no dice qué científicos ni dónde.','Frases como «los médicos lo odian» son típicas de bulos.','Una afirmación increíble necesita pruebas muy claras.','Web .top sin autor real.']},
+ {src:'www.cienciajoven.es',s:true,img:'sat',t:'Un satélite europeo envía nuevas imágenes del deshielo en el Ártico',meta:'Por Andrés Martín · 30 de octubre de 2026',ex:'Las imágenes han sido publicadas por la agencia espacial y analizadas por dos universidades.',fake:false,
+  why:['Cita de dónde salen los datos.','Tiene autor y fecha.','El titular informa sin asustar.']},
+ {src:'cadena-whatsapp (reenviado muchas veces)',s:false,img:'phone',t:'URGENTE: Mañana todos los móviles explotarán si no reenvías este mensaje a 10 personas',meta:'Reenviado muchas veces',ex:'Lo ha dicho el primo de un amigo que trabaja en una empresa de móviles.',fake:true,
+  why:['Las cadenas «reenvía a 10 personas» son bulos clásicos.','La fuente es «el primo de un amigo»: nadie concreto.','Busca asustarte para que lo reenvíes.']},
+ {src:'www.mojadosaldia.es',s:true,img:'school',t:'El colegio estrena un huerto escolar con la ayuda de las familias',meta:'Por Redacción · 28 de octubre de 2026',ex:'El alumnado de 5.º y 6.º se encargará del riego. El centro publicó fotos en su web oficial.',fake:false,
+  why:['Es una noticia local verificable.','Indica fecha y dónde comprobarla.','No pide que la compartas ni exagera.']}
+];
+function render3(){
+  $('#news').innerHTML=news.map((n,i)=>`<article class="article"><div class="src">${n.s?LOCK_OK:LOCK_BAD}<span style="overflow:hidden;text-overflow:ellipsis">${n.src}</span></div>${art(n.img)}
+  <div class="body"><h3>${n.t}</h3><span class="meta">${n.meta}</span><p class="ex">${n.ex}</p>
+  <div class="choices" id="c3-${i}"><button class="btn ok" data-i="${i}" data-f="0">Fiable</button><button class="btn bad" data-i="${i}" data-f="1">Bulo</button></div><div id="f3-${i}"></div></div></article>`).join('');
+  $('#news').querySelectorAll('button').forEach(b=>b.onclick=()=>{
+    const n=news[+b.dataset.i],right=(b.dataset.f==='1')===n.fake;if(right)addPts(10);res3[b.dataset.i]=right;
+    b.parentElement.querySelectorAll('button').forEach(x=>x.disabled=true);
+    $('#f3-'+b.dataset.i).innerHTML=`<div class="feedback ${right?'right':'wrong'}"><strong>${right?'¡Correcto!':'¡Uy!'} Es ${n.fake?'un bulo':'fiable'}.</strong><ul>${n.why.map(w=>`<li>${w}</li>`).join('')}</ul></div>`;
+  });
+}
+
+/* ---------- MISIÓN 4 ---------- */
+const quiz=[
+ ['¿Qué significa la «s» de https?',['Que la web es súper divertida','Que la conexión es segura (cifrada)','Que la web es de España'],1],
+ ['Una web tiene candado pero se llama «bancoamig0-urgente.top». ¿Qué haces?',['Escribo mi contraseña, tiene candado','La cierro: el nombre es sospechoso','Le pido a un amigo que la pruebe'],1],
+ ['Te llega: «¡Reenvía esto a 10 amigos o te pasará algo malo!»',['Lo reenvío por si acaso','Lo borro y no lo comparto','Lo reenvío solo a 5'],1],
+ ['¿Cuál de estas pistas indica que una noticia puede ser fiable?',['Tiene autor, fecha y cita fuentes','Usa muchas mayúsculas y exclamaciones','Dice que «nadie quiere que lo sepas»'],0],
+ ['Una web te pide la contraseña de tu correo para darte un premio.',['Se la doy, el premio mola','Nunca la doy y aviso a un adulto','Doy una contraseña parecida'],1]
+];
+let qDone=0,qOk=0;
+function render4(){
+  $('#quiz').innerHTML=quiz.map((q,i)=>`<div class="qitem"><p class="qq">${i+1}. ${q[0]}</p><div class="opts">${q[1].map((o,j)=>`<button data-q="${i}" data-o="${j}">${o}</button>`).join('')}</div></div>`).join('');
+  $('#quiz').querySelectorAll('button').forEach(b=>b.onclick=()=>{
+    const q=quiz[+b.dataset.q],ok=+b.dataset.o===q[2];res4[b.dataset.q]=ok;setTimeout(renderInforme);
+    b.parentElement.querySelectorAll('button').forEach((x,j)=>{x.disabled=true;if(j===q[2])x.classList.add('r')});
+    if(!ok)b.classList.add('w');else{qOk++;addPts(10)}
+    qDone++;if(qDone===quiz.length)diploma();
+  });
+}
+function diploma(){
+  const d=$('#diploma');d.hidden=false;
+  const lvl=points>=150?'Detective experta/o':points>=100?'Detective en prácticas':'Aprendiz de detective';
+  d.innerHTML=`<svg width="60" height="60" viewBox="0 0 80 80" aria-hidden="true"><circle cx="40" cy="40" r="34" fill="var(--sun)"/><path d="M26 41l9 9 19-20" stroke="var(--sun-ink)" stroke-width="7" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+  <h3>Diploma de ${lvl}</h3><p>Examen final: ${qOk} de ${quiz.length} · Puntos totales: <b>${points}</b></p><p style="color:var(--muted)">Escribe tu nombre en el cuaderno y enséñale tu puntuación a tu profe.</p>`;
+}
+
+const STORE='detectives-',TITULO='Detectives de la Red',PUNTOS=()=>'Puntos: '+points;
+const res3={},res4={};
+function informeRows(){const r=informeRows0();r.splice(r.length-1,0,vidRow('4. Vídeos y juegos'));return r}
+function informeRows0(){
+  const cnt=o=>Object.values(o).filter(x=>x===true).length,ans=o=>Object.values(o).filter(x=>x!==undefined).length;
+  return [
+   {name:'1. El candado',ok:res1.filter(x=>x===true).length,max:cases.length,done:res1.filter(x=>x!==undefined).length===cases.length,fails:fails1.filter(Boolean)},
+   {name:'2. Caza pistas',ok:got.size,max:clues.length,done:got.size===clues.length,fails:clues.filter((c,i)=>!got.has(i)).map(c=>'Pista sin encontrar: '+c[0])},
+   {name:'3. ¿Noticia o bulo?',ok:cnt(res3),max:news.length,done:ans(res3)===news.length,fails:news.filter((n,i)=>res3[i]===false).map(n=>`«${n.t.slice(0,55)}…»: era ${n.fake?'un bulo':'fiable'}`)},
+   {name:'5. Examen final',ok:cnt(res4),max:quiz.length,done:ans(res4)===quiz.length,fails:quiz.filter((q,i)=>res4[i]===false).map(q=>'Falló: '+q[0])}
+  ];
+}
+const VIDS=[{"src": "Lumio · tarea con evaluación", "t": "Uso responsable de la tecnología: primer móvil, ciberbullying, fake news y privacidad", "url": "https://lum.io/student/assign/30d9503e-d04c-484d-a197-406e4aaeeec9", "q": "Inicia sesión con tu cuenta del centro, haz la tarea y completa la evaluación del final.", "kind": "tarea"}, {"src": "Lumio · tarea con evaluación", "t": "Ajustes de privacidad", "url": "https://lum.io/student/assign/954ec93f-9f8e-4be4-b97e-b4ab334bbfea", "q": "Inicia sesión con tu cuenta del centro, haz la tarea y completa la evaluación del final.", "kind": "tarea"}, {"src": "OSI · INCIBE", "t": "¿Qué significa el candado junto a la dirección web?", "url": "https://www.youtube.com/watch?v=vcXSQHUmaKE", "q": "¿Qué te asegura el candado y qué NO te asegura?", "kind": "video"}, {"src": "Smile and Learn", "t": "¿Qué son las fake news? Consejos para reconocerlas", "url": "https://www.youtube.com/watch?v=qMRm4UE1gOc", "q": "Escribe tres consejos del vídeo para reconocer una noticia falsa.", "kind": "video"}, {"src": "IS4K · Internet Segura for Kids", "t": "Aprende a reconocer fake news", "url": "https://www.youtube.com/watch?v=SRFHgUX2sF0", "q": "¿Por qué alguien inventaría una noticia falsa?", "kind": "video"}, {"src": "Smile and Learn", "t": "Privacidad online para niños", "url": "https://www.youtube.com/watch?v=rHDTJQKW2y8", "q": "¿Qué datos tuyos nunca deberías compartir en internet?", "kind": "video"}, {"src": "Smile and Learn", "t": "Uso responsable de la tecnología: primer móvil, ciberbullying, fake news y privacidad", "url": "https://www.youtube.com/watch?v=tBObvkx_nOg", "q": "Elige una de las partes del vídeo y escribe una norma para tu clase.", "kind": "video"}, {"src": "Google · Sé genial en Internet", "t": "Juego Interland", "url": "https://beinternetawesome.withgoogle.com/es_es/interland", "q": "Juega a los cuatro mundos de Interland y apunta cuál te costó más.", "kind": "game"}, {"src": "INCIBE · OSI", "t": "Juego CyberScouts", "url": "https://cyberscouts.osi.es/", "q": "Juega a CyberScouts y apunta el reto que te resultó más difícil.", "kind": "game"}, {"src": "Lumio · clase en directo", "t": "Entra en la clase de Lumio (ID 835883)", "url": "https://www.lumioclass.com/link/835883", "q": "Úsalo cuando tu profe abra la clase en directo en la pizarra.", "kind": "clase"}];
+const seenV={};
+(function(){const PLAY='<svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z" fill="currentColor"/></svg>';
+ const lab={video:'Vídeo',game:'Juego',lumio:'Lumio',tarea:'⭐ Tarea obligatoria con evaluación',clase:'Clase Lumio'},btn={video:PLAY+' Ver vídeo',game:'🎮 Jugar',lumio:'📒 Abrir en Lumio',tarea:'📒 Abrir la tarea',clase:'🏫 Entrar en la clase'},ckl={game:'He jugado',tarea:'He hecho la tarea y la evaluación',clase:'He entrado en la clase'};
+ document.querySelector('#vids').innerHTML=VIDS.map((v,i)=>`<div class="vid ${v.kind==='tarea'?'tarea':''}" id="v-${i}"><span class="src">${v.src}</span><span class="kindtag">${lab[v.kind]}</span><h3>${v.t}</h3><a class="go" href="${v.url}" target="_blank" rel="noopener">${btn[v.kind]}</a><p class="q"><b>Piensa:</b> ${v.q}</p><label class="ck" for="ck-${i}"><input type="checkbox" id="ck-${i}">${ckl[v.kind]||'Lo he visto'}</label></div>`).join('');
+ VIDS.forEach((v,i)=>document.querySelector('#ck-'+i).addEventListener('change',e=>{seenV[i]=e.target.checked;document.querySelector('#v-'+i).classList.toggle('seen',e.target.checked);if(typeof onVidChange==='function')onVidChange()}));})();
+function vidRow(label){const L=VIDS.map((v,i)=>[v,i]).filter(x=>x[0].kind!=='clase');const n=L.filter(x=>seenV[x[1]]).length;return {name:label,ok:n,max:L.length,done:n===L.length,fails:L.filter(x=>!seenV[x[1]]).map(([v])=>(v.kind==='tarea'?'Tarea Lumio sin hacer: ':'Sin marcar: ')+v.t)}}
+/* ---------- Informe para el profe ---------- */
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+['alNombre','alCurso'].forEach(id=>{const el=$('#'+id);try{el.value=localStorage.getItem(STORE+id)||''}catch(e){}
+  el.addEventListener('input',()=>{try{localStorage.setItem(STORE+id,el.value)}catch(e){};renderInforme()})});
+function renderInforme(){
+  const rows=informeRows(),nomRaw=$('#alNombre').value.trim(),nom=nomRaw||'(sin nombre)',cur=$('#alCurso').value.trim()||'(sin curso)';
+  let ok=0,max=0;rows.forEach(r=>{ok+=r.ok;max+=r.max});const all=rows.every(r=>r.done);
+  const d=new Date(),fecha=d.toLocaleDateString('es-ES')+' '+d.toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'});
+  let t=`INFORME: ${TITULO}\nAlumno/a: ${nom}\nCurso: ${cur}\nFecha: ${fecha}\nAciertos: ${ok}/${max}${all?'':' (sin terminar)'} · ${PUNTOS()}\n\n`;
+  rows.forEach(r=>{t+=`- ${r.name}: ${r.ok}/${r.max}${r.done?'':' (sin terminar)'}\n`;r.fails.forEach(f=>t+=`    · ${f}\n`)});
+  $('#informe').innerHTML=`<h3>Informe para tu profe</h3>
+   ${nomRaw?'':'<div class="feedback wrong"><span>Escribe tu nombre y curso arriba, en la ficha, antes de entregar.</span></div>'}
+   <div class="rwrap"><table class="rtable"><thead><tr><th>Misión</th><th>Aciertos</th><th>A repasar</th></tr></thead><tbody>${rows.map(r=>`<tr><td>${r.name}${r.done?'':' <span class="pend">pendiente</span>'}</td><td>${r.ok} / ${r.max}</td><td class="rf">${r.fails.length?r.fails.map(esc).join('<br>'):'—'}</td></tr>`).join('')}</tbody></table></div>
+   <div class="copybox" id="copybox">${esc(t)}</div>
+   <div class="cbar"><button class="btn primary" id="copyBtn">Copiar informe</button><span id="copyMsg" class="cmsg"></span></div>
+   <div class="tip">Pega el informe en un correo a tu profe con el asunto «${TITULO} – ${esc(nom)}», o donde te diga tu profe.</div>`;
+  $('#copyBtn').onclick=()=>{const sel=()=>{const r=document.createRange();r.selectNodeContents($('#copybox'));const s=getSelection();s.removeAllRanges();s.addRange(r);$('#copyMsg').textContent='Texto seleccionado: pulsa Ctrl + C para copiarlo.'};
+    try{navigator.clipboard.writeText(t).then(()=>{$('#copyMsg').textContent='¡Copiado! Pégalo con Ctrl + V.'},sel)}catch(e){sel()}};
+}
+
+/* ---------- Pestañas ---------- */
+const ids=['candado','pistas','bulos','videos','diploma'];
+function show(t){
+  if(!ids.includes(t))t='candado';
+  ids.forEach(x=>$('#m-'+x).hidden=x!==t);
+  document.querySelector('.relato').hidden=t!==ids[0];
+  document.querySelectorAll('#tabs button').forEach(b=>b.setAttribute('aria-selected',b.dataset.t===t));
+  if(location.hash!=='#'+t)history.replaceState(null,'','#'+t);
+  if(t==='diploma')renderInforme();
+  window.scrollTo({top:0});
+}
+document.querySelectorAll('#tabs button').forEach(b=>b.onclick=()=>show(b.dataset.t));
+addEventListener('hashchange',()=>show(location.hash.slice(1)));
+render1();render2();render3();render4();
+show(location.hash.slice(1));
+
+
+/* ---------- Valoración de indicadores y llave ---------- */
+const VAL_CFG={"pre": "DET", "i5": [["1.1.3", [2], "Comprueba ese dato en una segunda web y explica cuál de las dos es más fiable (web institucional, autor, fecha).", "CCL3 · CCL1"], ["1.1.4", [1], "Distingue en una web el contenido, la publicidad y los anuncios trampa, no pulsa los enlaces engañosos y lee los iconos y las palabras en inglés del navegador y de OneDrive (candado, pestañas, actualizar, Download, Share) y explica qué hace cada uno.", "CCL3 · CD1 · CP1"], ["2.1.3", [2], "Reconoce una noticia falsa por sus pistas (titular exagerado, sin fuente, sin fecha) y decide no reenviarla.", "CPSAA4 · CC1"], ["4.1.3", [0], "Comprueba el candado y el «https» de una web antes de escribir datos y explica si es segura.", "CD4"], ["4.2.2", [1], "Identifica qué datos personales no debe dar en un anuncio, juego o formulario y explica qué huella digital deja al hacerlo.", "CD4 · CC2"]], "i6": [["1.1.3", [2], "Distingue una noticia fiable de un bulo (autor, fecha, fuentes, titular que asusta o mete prisa) y sabe que debe comprobarla en otro medio antes de compartirla.", "CCL3 · CP1"], ["4.1.3", [0, 1], "Reconoce webs y mensajes trampa (sin https, nombre raro, prisa, premios, piden datos o códigos) y no da sus datos: cierra y avisa a un adulto.", "CD4"]], "vid": 3, "exam": 4};
+function valRows(){return typeof informeRows==='function'?informeRows():Object.values(R)}
+function valScore(rows,idx){let ok=0,max=0,att=false;idx.forEach(i=>{const r=rows[i];if(!r)return;ok+=r.ok;max+=r.max;if(r.ok>0||r.done)att=true});return att?Math.max(1,Math.round(5*ok/(max||1))):0}
+function valAll(){const rows=valRows();return {rows,s5:VAL_CFG.i5.map(x=>valScore(rows,x[1])),s6:VAL_CFG.i6.map(x=>valScore(rows,x[1]))}}
+function valComplete(rows){return rows.every((r,i)=>i===VAL_CFG.vid||r.done)}
+function valKey(v){const ex=VAL_CFG.exam!=null&&v.rows[VAL_CFG.exam]?v.rows[VAL_CFG.exam].ok:0;const raw=VAL_CFG.pre+'-'+v.s5.join('')+'-'+v.s6.join('')+'-'+ex;let h=0;for(let i=0;i<raw.length;i++)h=(h+raw.charCodeAt(i)*(i+7))%1296;return raw+'-'+h.toString(36).toUpperCase().padStart(2,'0')}
+function valCourse(){const c=(document.querySelector('#alCurso')||{}).value||'';return /6/.test(c)?'6':/5/.test(c)?'5':''}
+function valEsc(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
+function appendVal(){
+  const host=document.querySelector('#informe')||document.querySelector('#report');if(!host)return;
+  const old=host.querySelector('.valora');if(old)old.remove();
+  const v=valAll(),c=valCourse(),done=valComplete(v.rows),key=done?valKey(v):'';
+  const bar=n=>`<span class="vbar">${[1,2,3,4,5].map(i=>`<i class="${i<=n?'on':''}"></i>`).join('')}</span>`;
+  const tab=(k,list,sc)=>`<div><h4>${k}.º de Primaria</h4><table class="rtable"><thead><tr><th>Indicador</th><th>0-5</th></tr></thead><tbody>${list.map((x,i)=>`<tr><td><b>${x[0]}</b> ${valEsc(x[2])} <span style="color:var(--muted)">(${x[3]})</span></td><td><span class="vstar">${sc[i]}</span>${bar(sc[i])}</td></tr>`).join('')}</tbody></table></div>`;
+  const cols=(c!=='6'?tab(5,VAL_CFG.i5,v.s5):'')+(c!=='5'?tab(6,VAL_CFG.i6,v.s6):'');
+  const div=document.createElement('div');div.className='valora';
+  div.innerHTML=`<h3>Valoración de los indicadores de logro</h3><p style="font-size:.88rem;color:var(--muted)">Escala de 0 a 5: 0 = no realizado; 5 = realizado con éxito. Es una estimación automática a partir de las misiones relacionadas; tu profe la revisará.${c?'':' Escribe tu curso en la ficha para ver solo el tuyo.'}</p><div class="cols">${cols}</div>
+   <div class="llave">${done?`<b>🔑 ¡Has conseguido la llave de esta web!</b><code>${key}</code><span style="font-size:.88rem">Ya está guardada: vuelve al rincón Piensa de Rumbo a Europa y envía tus notas.</span><a href="../#piensa" style="align-self:flex-start;font-weight:700;color:var(--accent)">Volver al rincón Piensa · Pasaporte TIC ↗</a>`:`<b>🔒 Llave todavía cerrada</b><span style="font-size:.88rem">Termina todas las misiones${VAL_CFG.exam!=null?' y el examen final':''} (los vídeos no son obligatorios) para conseguir la llave de la siguiente parada.</span>`}</div>`;
+  const cb=host.querySelector('#copybox');
+  if(cb){host.insertBefore(div,cb.previousElementSibling&&cb.previousElementSibling.tagName==='H3'?cb.previousElementSibling:cb);
+    let t=cb.textContent.replace(/\nVALORACIÓN DE INDICADORES[\s\S]*$/,'');
+    t+='\nVALORACIÓN DE INDICADORES (0-5)\n'+(c!=='6'?VAL_CFG.i5.map((x,i)=>`  5.º ${x[0]}: ${v.s5[i]}`).join('\n')+'\n':'')+(c!=='5'?VAL_CFG.i6.map((x,i)=>`  6.º ${x[0]}: ${v.s6[i]}`).join('\n')+'\n':'')+'LLAVE: '+(key||'(sin conseguir)')+'\n';
+    cb.textContent=t;
+    const btn=host.querySelector('#copyBtn'),msg=host.querySelector('#copyMsg');
+    if(btn)btn.onclick=()=>{const sel=()=>{const r=document.createRange();r.selectNodeContents(cb);const s=getSelection();s.removeAllRanges();s.addRange(r);if(msg)msg.textContent='Texto seleccionado: pulsa Ctrl + C para copiarlo.'};try{navigator.clipboard.writeText(cb.textContent).then(()=>{if(msg)msg.textContent='¡Copiado! Pégalo con Ctrl + V.'},sel)}catch(e){sel()}};
+  }else host.appendChild(div);
+}
+(function(){
+  if(typeof renderInforme==='function'){const o=renderInforme;renderInforme=function(){o();appendVal()}}
+  else if(typeof renderReport==='function'){const o=renderReport;renderReport=function(){o();appendVal()}}
+})();
+</script>
+
+<script>
+/* Rumbo a Europa: rellena nombre y curso con los datos de la web y guarda la llave en el rincón Piensa */
+(function(){
+  try{
+    var a=(JSON.parse(localStorage.getItem("rumbo-a-europa-v1")||"{}")||{}).alumno||{};
+    [["alNombre",a.nombre],["alCurso",a.clase]].forEach(function(p){var el=document.getElementById(p[0]);if(el&&p[1]&&!el.value.trim()){el.value=p[1];el.dispatchEvent(new Event("input",{bubbles:true}));el.dispatchEvent(new Event("change",{bubbles:true}));}});
+  }catch(e){}
+  if(typeof valKey==="function"){
+    var orig=valKey;
+    valKey=function(v){var k=orig(v);try{var g=JSON.parse(localStorage.getItem("rumbo-piensa-llaves")||"{}")||{};var done=typeof valComplete==="function"?valComplete(v.rows):true;g[VAL_CFG.pre]={llave:k,completa:!!done,fecha:new Date().toISOString()};localStorage.setItem("rumbo-piensa-llaves",JSON.stringify(g));}catch(e){}return k;};
+  }
+})();
+</script>
+</body></html>

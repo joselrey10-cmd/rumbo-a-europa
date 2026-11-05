@@ -1,0 +1,618 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>La Bandeja Trampa</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lilita+One&family=Figtree:wght@400;600;800&family=JetBrains+Mono:wght@500&display=swap">
+<style>
+/* Layout: cliente de correo de la radio (lista + lectura) y redacción de noticiero; azul azulejo y amarillo tranvía de Lisboa */
+:root{
+  --bg:#eef3fa; --paper:#ffffff; --ink:#152238; --muted:#526079; --line:#d2dcec;
+  --accent:#1f4e9c; --accent-ink:#ffffff; --tram:#f2b705; --tram-ink:#2b2000;
+  --ok:#17834a; --ok-bg:#ddf2e6; --bad:#c43c2f; --bad-bg:#fbe4e1; --soft:#e6edf7; --sel:#fff2c4;
+  --f-display:"Lilita One","Trebuchet MS",system-ui,sans-serif;
+  --f-body:"Figtree",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"JetBrains Mono",ui-monospace,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0d1524; --paper:#152036; --ink:#e6edf8; --muted:#9fb0cb; --line:#28385a;
+  --accent:#7fa8ec; --accent-ink:#0b1630; --tram:#f6c93a; --tram-ink:#2b2000;
+  --ok:#5fd18e; --ok-bg:#163527; --bad:#ff8a7c; --bad-bg:#3a1d1a; --soft:#1d2a44; --sel:#3d3418; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0d1524; --paper:#152036; --ink:#e6edf8; --muted:#9fb0cb; --line:#28385a;
+  --accent:#7fa8ec; --accent-ink:#0b1630; --tram:#f6c93a; --tram-ink:#2b2000;
+  --ok:#5fd18e; --ok-bg:#163527; --bad:#ff8a7c; --bad-bg:#3a1d1a; --soft:#1d2a44; --sel:#3d3418; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:16px;line-height:1.55;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 48px}
+.wrap{max-width:1060px;margin:0 auto;display:flex;flex-direction:column;gap:20px}
+h1,h2,h3{font-family:var(--f-display);font-weight:400;text-wrap:balance;margin:0;line-height:1.08;letter-spacing:.01em}
+p{margin:0}
+button,input,select,textarea{font-family:inherit;font-size:inherit}
+button:focus-visible,[tabindex]:focus-visible,input:focus-visible,textarea:focus-visible{outline:3px solid var(--tram);outline-offset:2px}
+
+header.hero{display:flex;gap:16px;align-items:center;flex-wrap:wrap}
+.tile{width:80px;height:80px;flex:none}
+.hero-text{flex:1;min-width:0;display:flex;flex-direction:column;gap:4px}
+.hero h1{font-size:clamp(2.2rem,6vw,3.4rem);color:var(--accent)}
+.hero p{color:var(--muted);max-width:64ch}
+.score{font-family:var(--f-display);background:var(--tram);color:var(--tram-ink);border-radius:999px;padding:8px 18px;font-variant-numeric:tabular-nums;white-space:nowrap;font-size:1.1rem}
+
+nav.tabs{display:flex;gap:6px;flex-wrap:wrap}
+nav.tabs button{font:800 .96rem var(--f-body);border:2px solid var(--line);background:var(--paper);color:var(--ink);padding:8px 12px;border-radius:12px;cursor:pointer;display:flex;gap:8px;align-items:center}
+nav.tabs .n{display:inline-grid;place-items:center;width:24px;height:24px;border-radius:6px;background:var(--soft);font-size:.85rem}
+nav.tabs button[aria-selected="true"]{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+nav.tabs button[aria-selected="true"] .n{background:var(--tram);color:var(--tram-ink)}
+
+section.mission{display:flex;flex-direction:column;gap:16px}
+.intro{background:var(--paper);border:2px solid var(--line);border-radius:16px;padding:16px 18px;display:flex;flex-direction:column;gap:6px}
+.intro h2{font-size:1.7rem}
+.intro p{color:var(--muted);max-width:74ch}
+.label{font:800 .74rem var(--f-body);letter-spacing:.1em;text-transform:uppercase;color:var(--accent)}
+.grid2{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);gap:16px;align-items:start}
+@media (max-width:820px){.grid2{grid-template-columns:minmax(0,1fr)}}
+.grid2>*{min-width:0}
+.panel{background:var(--paper);border:2px solid var(--line);border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:12px}
+.panel h3{font-size:1.35rem}
+.btn{font:800 .98rem var(--f-body);border:2px solid var(--line);border-radius:12px;padding:8px 14px;cursor:pointer;background:var(--soft);color:var(--ink)}
+.btn.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.btn.ok{background:var(--ok-bg);color:var(--ok);border-color:var(--ok)}
+.btn.bad{background:var(--bad-bg);color:var(--bad);border-color:var(--bad)}
+.btn:disabled{opacity:.5;cursor:default}
+.choices{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.feedback{border-radius:12px;padding:10px 14px;display:flex;flex-direction:column;gap:5px}
+.feedback.right{background:var(--ok-bg)}.feedback.wrong{background:var(--bad-bg)}
+.feedback strong{font-family:var(--f-display);font-weight:400;font-size:1.15rem}
+.feedback ul{margin:0;padding-left:20px}
+.tip{background:var(--soft);border-radius:12px;padding:10px 14px;font-size:.95rem}
+
+/* Cliente de correo */
+.mailapp{border:2px solid var(--line);border-radius:14px;overflow:hidden;background:var(--paper);display:flex;flex-direction:column}
+.mailapp .top{background:var(--accent);color:var(--accent-ink);padding:8px 12px;display:flex;justify-content:space-between;align-items:center;font-weight:800}
+.mailapp .cols{display:grid;grid-template-columns:minmax(0,.9fr) minmax(0,1.4fr);min-height:380px}
+@media (max-width:560px){.mailapp .cols{grid-template-columns:minmax(0,1fr)}.inbox{max-height:240px;overflow:auto;border-right:none!important;border-bottom:1px solid var(--line)}}
+.inbox{border-right:1px solid var(--line);display:flex;flex-direction:column}
+.row{display:flex;flex-direction:column;gap:1px;padding:9px 11px;border-bottom:1px solid var(--line);cursor:pointer;text-align:left;background:none;border-left:4px solid transparent;color:var(--ink);width:100%}
+.row:hover{background:var(--soft)}
+.row.open{background:var(--sel);border-left-color:var(--tram)}
+.row.unread .who{font-weight:800}
+.row .who{font-size:.9rem;display:flex;justify-content:space-between;gap:6px}
+.row .sub{font-size:.85rem;color:var(--muted);overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.row .mark{font-size:.72rem;font-weight:800;border-radius:999px;padding:0 7px}
+.row .mark.ok{background:var(--ok-bg);color:var(--ok)}.row .mark.ko{background:var(--bad-bg);color:var(--bad)}
+.reader{padding:14px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.reader .subj{font:800 1.1rem var(--f-body)}
+.sender{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:.92rem}
+.reveal{border:1.5px dashed var(--accent);background:none;color:var(--accent);border-radius:8px;padding:3px 8px;cursor:pointer;font:600 .8rem var(--f-body)}
+.addr{font:500 .8rem var(--f-mono);background:var(--soft);border-radius:6px;padding:2px 6px;overflow-wrap:anywhere}
+.addr.badaddr{background:var(--bad-bg);color:var(--bad)}
+.mbody{font-size:.95rem;display:flex;flex-direction:column;gap:8px;overflow-wrap:anywhere}
+.mlink{color:#2d6fd6;text-decoration:underline;cursor:pointer;background:none;border:none;padding:0;font:inherit;text-align:left}
+.realurl{font:500 .78rem var(--f-mono);background:var(--soft);border-radius:6px;padding:4px 8px;overflow-wrap:anywhere}
+.att{display:inline-flex;gap:6px;align-items:center;border:1.5px solid var(--line);border-radius:8px;padding:4px 9px;font:500 .82rem var(--f-mono);align-self:flex-start}
+.empty{color:var(--muted);text-align:center;padding:40px 10px}
+
+/* Caza pistas */
+.hot{cursor:pointer;border-radius:6px;outline:2px dashed transparent;outline-offset:1px;position:relative;transition:outline-color .15s}
+.hot:hover{outline-color:var(--tram)}
+.hot.found{outline:3px solid var(--bad);background:color-mix(in srgb,var(--bad-bg) 80%,transparent)}
+.hot.found::after{content:attr(data-num);position:absolute;top:-10px;right:-10px;background:var(--bad);color:#fff;font:800 .75rem var(--f-body);width:20px;height:20px;border-radius:50%;display:grid;place-items:center}
+.clues{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:7px}
+.clues li{border:2px dashed var(--line);border-radius:10px;padding:8px 10px;color:var(--muted);font-size:.93rem}
+.clues li.found{border-style:solid;border-color:var(--bad);color:var(--ink);background:var(--bad-bg)}
+
+/* Noticias */
+.feed{display:grid;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));gap:16px}
+.post{background:var(--paper);border:2px solid var(--line);border-radius:16px;overflow:hidden;display:flex;flex-direction:column}
+.post .ph{display:flex;gap:8px;align-items:center;padding:10px 12px;font-size:.88rem}
+.post .ph .av{width:32px;height:32px;border-radius:50%;display:grid;place-items:center;color:#fff;font-weight:800;flex:none}
+.post .pic{display:block;width:100%;height:140px}
+.post .bd{padding:10px 12px;display:flex;flex-direction:column;gap:8px;flex:1}
+.post .hl{font:800 1.05rem var(--f-body)}
+.post .meta{font-size:.78rem;color:var(--muted)}
+.post .stats{font-size:.8rem;color:var(--muted)}
+.flags{display:flex;gap:6px;flex-wrap:wrap}
+.flag{border:1.5px solid var(--line);background:var(--bg);color:var(--ink);border-radius:999px;padding:3px 10px;font-size:.8rem;cursor:pointer}
+.flag[aria-pressed="true"]{background:var(--tram);color:var(--tram-ink);border-color:var(--tram);font-weight:800}
+.post .choices{margin-top:auto}
+
+/* Foto trucada y titulares */
+.photos{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px}
+.photo{border:3px solid var(--line);border-radius:14px;overflow:hidden;background:var(--paper);cursor:pointer;padding:0;display:flex;flex-direction:column;text-align:left;color:var(--ink)}
+.photo svg{display:block;width:100%;height:auto}
+.photo span{padding:8px 10px;font-weight:800}
+.photo.r{border-color:var(--ok)}.photo.w{border-color:var(--bad)}
+.hlcard{background:var(--paper);border:2px solid var(--line);border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:8px}
+.hlcard .orig{font:800 1.1rem var(--f-body);color:var(--bad)}
+.hlcard textarea{width:100%;min-height:64px;border:2px solid var(--line);border-radius:10px;padding:8px 10px;background:var(--bg);color:var(--ink);resize:vertical}
+.check{display:flex;flex-direction:column;gap:4px;font-size:.88rem}
+.check span.on{color:var(--ok);font-weight:800}
+
+.opts{display:flex;flex-direction:column;gap:8px}
+.opts button{text-align:left;font-size:.95rem;background:var(--bg);color:var(--ink);border:2px solid var(--line);border-radius:12px;padding:9px 12px;cursor:pointer}
+.opts button.r{background:var(--ok-bg);border-color:var(--ok)}.opts button.w{background:var(--bad-bg);border-color:var(--bad)}
+.quiz{display:flex;flex-direction:column;gap:12px}
+.qitem{background:var(--paper);border:2px solid var(--line);border-radius:16px;padding:14px;display:flex;flex-direction:column;gap:10px}
+.qitem .qq{font-weight:800}
+.diploma{border:3px dashed var(--accent);border-radius:20px;padding:20px;background:var(--paper);text-align:center;display:flex;flex-direction:column;gap:8px;align-items:center}
+.diploma h3{font-size:1.7rem;color:var(--accent)}
+.relato{background:var(--paper);border:2px solid var(--line);border-radius:18px;padding:18px;display:grid;grid-template-columns:120px minmax(0,1fr);gap:20px;align-items:start}
+@media (max-width:620px){.relato{grid-template-columns:minmax(0,1fr)}.relato .pini{width:96px}}
+.relato .pini{width:120px;height:auto;display:block}
+.relato .rt{display:flex;flex-direction:column;gap:10px;min-width:0}
+.relato .cap{font-size:.74rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--accent)}
+.relato h2{font-size:clamp(1.5rem,3.6vw,2rem);text-wrap:balance}
+.relato p{max-width:68ch;line-height:1.65}
+.relato .dlg{padding-left:14px;border-left:3px solid var(--line)}
+.relato .reto{border:2px dashed var(--accent);border-radius:14px;padding:12px 16px;display:flex;flex-direction:column;gap:6px;margin-top:4px}
+.relato .reto b.t{font-size:.8rem;letter-spacing:.08em;text-transform:uppercase;color:var(--accent)}
+.relato .reto ul{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:4px}
+.relato[hidden]{display:none}
+.relato .nw{white-space:nowrap}
+.ficha{display:flex;gap:12px;flex-wrap:wrap;background:var(--paper);border:2px solid var(--line);border-radius:14px;padding:12px 14px}
+.ficha label{display:flex;flex-direction:column;gap:3px;font-size:.78rem;font-weight:800;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;flex:1 1 180px;min-width:0}
+.ficha input{border:2px solid var(--line);border-radius:10px;padding:8px 10px;background:var(--bg);color:var(--ink);font:inherit;font-size:1rem;text-transform:none;letter-spacing:0;font-weight:400;width:100%}
+.ficha input:focus-visible{outline:3px solid var(--accent);outline-offset:1px}
+#informe{background:var(--paper);border:2px solid var(--line);border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:12px}
+#informe h3{font-size:1.35rem}
+.rwrap{overflow-x:auto}
+.rtable{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
+.rtable th,.rtable td{text-align:left;padding:8px 6px;border-bottom:1px solid var(--line);font-size:.93rem;vertical-align:top}
+.rtable th{font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.rtable .rf{font-size:.85rem;color:var(--muted)}
+.pend{font-size:.75rem;color:var(--muted);background:var(--bg);border-radius:999px;padding:1px 8px;white-space:nowrap}
+.copybox{font:500 .82rem var(--f-mono);background:var(--bg);border:2px dashed var(--line);border-radius:10px;padding:10px;white-space:pre-wrap;overflow-wrap:anywhere;max-height:260px;overflow:auto}
+.cbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.cmsg{font-size:.9rem;color:var(--muted)}
+
+.vids{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:14px}
+.vid{background:var(--paper);border:2px solid var(--line);border-radius:16px;padding:14px;display:flex;flex-direction:column;gap:8px}
+.vid.seen{border-color:var(--ok)}
+.vid .src{font-weight:800;font-size:.7rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.vid h3{font-size:1.08rem}
+.vid .kindtag{align-self:flex-start;font-size:.72rem;font-weight:800;border-radius:999px;padding:2px 9px;background:var(--bg);color:var(--muted)}
+.vid a.go{display:inline-flex;gap:8px;align-items:center;align-self:flex-start;background:var(--accent);color:var(--accent-ink);text-decoration:none;font-weight:800;border-radius:999px;padding:7px 14px}
+.vid a.go svg{width:16px;height:16px}
+.vid .q{font-size:.92rem;background:var(--bg);border-radius:10px;padding:8px 10px}
+.vid label.ck{display:flex;gap:8px;align-items:center;font-weight:700;font-size:.92rem;cursor:pointer;margin-top:auto}
+.vid label.ck input{width:20px;height:20px;accent-color:var(--ok)}
+.vid.tarea{border-color:var(--accent);border-width:3px}
+.vid.tarea .kindtag{background:var(--accent);color:var(--accent-ink)}
+.vfilter{display:flex;gap:8px;flex-wrap:wrap}
+
+.indic{border:2px solid var(--line);border-radius:14px;padding:12px 16px;display:flex;flex-direction:column;gap:10px;margin-top:4px;background:var(--bg)}
+.indic>b.t{font-size:.8rem;letter-spacing:.08em;text-transform:uppercase;color:var(--accent)}
+.indic .cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px}
+.indic h4{margin:0;font-size:.95rem}
+.indic ul{margin:0;padding-left:0;list-style:none;display:flex;flex-direction:column;gap:6px;font-size:.88rem;line-height:1.45}
+.indic li{overflow-wrap:anywhere}
+.indic .crit{display:inline-block;font-weight:800;border:1.5px solid var(--accent);color:var(--accent);border-radius:6px;padding:0 5px;margin-right:4px;font-size:.78rem;font-variant-numeric:tabular-nums}
+.indic .do{color:var(--muted);font-size:.8rem}
+.valora{border:2px solid var(--accent);border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:10px;background:var(--paper)}
+.valora h3{font-size:1.2rem}
+.valora .cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px}
+.valora h4{margin:0 0 4px;font-size:.95rem}
+.valora td{font-size:.85rem}
+.vstar{font-weight:800;white-space:nowrap;font-variant-numeric:tabular-nums}
+.vbar{display:inline-flex;gap:2px;margin-left:6px;vertical-align:middle}.vbar i{width:8px;height:8px;border-radius:2px;background:var(--line);display:block}.vbar i.on{background:var(--ok)}
+.llave{border:2px dashed var(--accent);border-radius:12px;padding:12px;display:flex;flex-direction:column;gap:6px}
+.llave code{font:700 1.3rem var(--f-mono,monospace);letter-spacing:.06em;color:var(--accent);overflow-wrap:anywhere}
+footer{color:var(--muted);font-size:.85rem;text-align:center}
+</style>
+
+<div class="wrap">
+  <header class="hero">
+    <svg class="tile" viewBox="0 0 80 80" aria-hidden="true">
+      <rect width="80" height="80" rx="10" fill="var(--accent)"/>
+      <path d="M40 8l32 32-32 32L8 40z" fill="none" stroke="var(--accent-ink)" stroke-width="3" opacity=".5"/>
+      <rect x="18" y="26" width="44" height="30" rx="4" fill="var(--accent-ink)"/>
+      <path d="M18 28l22 16 22-16" fill="none" stroke="var(--accent)" stroke-width="3"/>
+      <path d="M52 48c6 0 8 6 3 9l-6 4" fill="none" stroke="var(--tram)" stroke-width="4" stroke-linecap="round"/>
+    </svg>
+    <div class="hero-text">
+      <h1>La Bandeja Trampa</h1>
+      <p>Aprende a separar los correos buenos de los correos trampa y las noticias de verdad de los bulos. Todos los correos, cuentas, webs y medios son inventados.</p>
+    </div>
+    <div class="score" id="score">Sellos: 0</div>
+  </header>
+
+  <section class="relato" aria-labelledby="relato-t">
+    <svg class="pini" viewBox="0 0 120 150" aria-label="Pini, la mascota de Radio La Piña">
+  <path d="M60 14l6 12h-12z" fill="#5f8f3a"/>
+  <ellipse cx="60" cy="86" rx="36" ry="50" fill="#a5642f"/>
+  <g fill="none" stroke="#6e3a17" stroke-width="3" stroke-linecap="round">
+    <path d="M32 58q7 8 14 0q7 8 14 0q7 8 14 0q7 8 14 0"/>
+    <path d="M27 104q8 8 16 0q8 8 17 0q8 8 17 0q8 8 16 0"/>
+    <path d="M33 122q7 7 14 0q6 7 13 0q7 7 14 0q6 7 13 0"/>
+    <path d="M40 42q5 6 10 0q5 6 10 0q5 6 10 0q5 6 10 0"/>
+  </g>
+  <ellipse cx="48" cy="78" rx="8" ry="9" fill="#fff"/><ellipse cx="72" cy="78" rx="8" ry="9" fill="#fff"/>
+  <circle cx="50" cy="80" r="4" fill="#1d1d1d"/><circle cx="74" cy="80" r="4" fill="#1d1d1d"/>
+  <path d="M50 92q10 9 20 0" fill="none" stroke="#1d1d1d" stroke-width="3" stroke-linecap="round"/>
+  <path d="M22 76a38 42 0 0 1 76 0" fill="none" stroke="#2b2f3a" stroke-width="6"/>
+  <rect x="14" y="70" width="14" height="22" rx="5" fill="#e2553f"/><rect x="92" y="70" width="14" height="22" rx="5" fill="#e2553f"/>
+  <path d="M21 92q0 16 18 18" fill="none" stroke="#2b2f3a" stroke-width="3"/>
+  <rect x="38" y="104" width="12" height="9" rx="4" fill="#2b2f3a"/>
+</svg>
+    <div class="rt">
+      <span class="cap">Rumbo a Europa · Radio La Piña · Portugal</span>
+      <h2 id="relato-t">La bandeja trampa de Lisboa</h2>
+      <p>Radio La Piña prepara su programa sobre <b>Portugal</b> junto a una clase de Oporto. Cada mañana, el equipo abre la bandeja de entrada de la radio para leer los correos de los oyentes y del cole portugués.</p>
+      <p>Pero hoy la bandeja está llena de cosas raras: un premio de 5.000 € que nadie ha pedido, un aviso de que el buzón está lleno, un archivo para «proteger la cuenta»… y hasta un correo de «la profe Ana» que pide tarjetas regalo en secreto.</p>
+      <p class="dlg">—Esta bandeja es una trampa —dice <span class="nw">Pini—</span>. Hay que mirar quién escribe de verdad, adónde llevan los enlaces y qué nos piden.</p>
+      <p>Por si fuera poco, en las redes corre una foto de un tiburón nadando por una calle de Lisboa, y una publicación asegura que los famosos tranvías amarillos desaparecerán mañana. Varios compañeros quieren contarlo ya en el programa.</p>
+      <p class="dlg">—Un momento —responde <span class="nw">Pini—</span>. En la radio solo contamos lo que hemos comprobado. Antes de emitir, separaremos los correos buenos de los malos y las noticias de los bulos.</p>
+      <p><i>Obrigado</i> por ayudar: la redacción de Radio La Piña te necesita.</p>
+      <div class="reto"><b class="t">Vuestro reto: superar las misiones</b>
+        <ul>
+        <li><b>Misión 1:</b> La bandeja trampa</li>
+        <li><b>Misión 2:</b> Caza las pistas</li>
+        <li><b>Misión 3:</b> ¿Noticia o bulo?</li>
+        <li><b>Misión 4:</b> Redacción de la verdad</li>
+        <li><b>Misión 5:</b> Vídeos y juegos</li>
+        <li><b>Misión 6:</b> Examen e informe</li>
+        </ul>
+      </div>
+      <div class="indic"><b class="t">Indicadores de logro · Programación de TIAC</b>
+        <div class="cols">
+          <div><h4>5.º de Primaria</h4><ul><li><span class="crit">Crit. 1.1</span><b>1.1.3</b> Comprueba ese dato en una segunda web y explica cuál de las dos es más fiable (web institucional, autor, fecha). <span class="do">(CCL3 · CCL1)</span></li><li><span class="crit">Crit. 2.1</span><b>2.1.3</b> Reconoce una noticia falsa por sus pistas (titular exagerado, sin fuente, sin fecha) y decide no reenviarla. <span class="do">(CPSAA4 · CC1)</span></li><li><span class="crit">Crit. 4.1</span><b>4.1.4</b> Clasifica en la «bandeja trampa» del Cartero digital los correos legítimos, el spam y el phishing, y señala las pistas (remitente, enlace, urgencia, adjunto). <span class="do">(CD4)</span></li><li><span class="crit">Crit. 4.3</span><b>4.3.3</b> Nombra amenazas que llegan en correos trampa (virus, troyano, spyware, adware) y una medida para proteger el equipo (no abrir adjuntos, antivirus, no instalar programas desconocidos). <span class="do">(CD4 · CD5)</span></li></ul></div>
+          <div><h4>6.º de Primaria</h4><ul><li><span class="crit">Crit. 1.1</span><b>1.1.2</b> Comprueba un dato en una segunda web fiable antes de usarlo, también cuando el dato lo ha dado una IA. <span class="do">(CD1 · CCL3)</span></li><li><span class="crit">Crit. 1.1</span><b>1.1.3</b> Distingue una noticia fiable de un bulo (autor, fecha, fuentes, titular que asusta o mete prisa) y sabe que debe comprobarla en otro medio antes de compartirla. <span class="do">(CCL3 · CP1)</span></li><li><span class="crit">Crit. 4.1</span><b>4.1.3</b> Reconoce webs y mensajes trampa (sin https, nombre raro, prisa, premios, piden datos o códigos) y no da sus datos: cierra y avisa a un adulto. <span class="do">(CD4)</span></li></ul></div>
+        </div>
+      </div><!--/indic-->
+    </div>
+  </section>
+
+  <div class="ficha">
+    <label for="alNombre">Nombre y apellido<input id="alNombre" autocomplete="off" placeholder="Escribe tu nombre"></label>
+    <label for="alCurso">Curso y grupo<input id="alCurso" autocomplete="off" placeholder="Ej.: 5.º B"></label>
+  </div>
+
+  <nav class="tabs" role="tablist" id="tabs">
+    <button role="tab" data-t="bandeja" aria-selected="true"><span class="n">1</span>La bandeja trampa</button>
+    <button role="tab" data-t="pistas" aria-selected="false"><span class="n">2</span>Caza las pistas</button>
+    <button role="tab" data-t="bulos" aria-selected="false"><span class="n">3</span>¿Noticia o bulo?</button>
+    <button role="tab" data-t="redaccion" aria-selected="false"><span class="n">4</span>Redacción de la verdad</button>
+    <button role="tab" data-t="videos" aria-selected="false"><span class="n">5</span>Vídeos y juegos</button>
+    <button role="tab" data-t="examen" aria-selected="false"><span class="n">6</span>Examen e informe</button>
+  </nav>
+
+  <!-- MISIÓN 1 -->
+  <section class="mission" id="m-bandeja">
+    <div class="intro"><span class="label">Misión 1 · Correos buenos y correos trampa</span>
+      <h2>Limpia la bandeja de Radio La Piña</h2>
+      <p>Abre cada correo. Usa la lupa: pulsa <b>«Ver dirección real»</b> para descubrir quién lo envía de verdad y pulsa los enlaces para ver <b>adónde llevan</b> (aquí no se abre nada). Luego decide: ¿bueno o trampa?</p></div>
+    <div class="grid2">
+      <div class="mailapp">
+        <div class="top"><span>✉ radio@cole-ejemplo.es · Bandeja de entrada</span><span id="left1"></span></div>
+        <div class="cols"><div class="inbox" id="inbox"></div><div class="reader" id="reader"><p class="empty">Elige un correo de la lista para leerlo.</p></div></div>
+      </div>
+      <div class="panel" id="p1"><h3>Tu veredicto</h3><p style="color:var(--muted)">Abre un correo para empezar.</p></div>
+    </div>
+  </section>
+
+  <!-- MISIÓN 2 -->
+  <section class="mission" id="m-pistas" hidden>
+    <div class="intro"><span class="label">Misión 2 · Caza las 7 pistas</span>
+      <h2>Este correo es una trampa. ¿Dónde están las pistas?</h2>
+      <p>Pulsa cada parte sospechosa del correo. Cuando encuentres las siete, habrás desmontado la trampa.</p></div>
+    <div class="grid2">
+      <div class="mailapp">
+        <div class="top"><span>✉ Correo abierto</span><span>⚠</span></div>
+        <div class="reader">
+          <div class="subj hot" tabindex="0" data-c="0">URGENTE!!! Tu cuenta de Radio La Piña sera BLOQUEADA hoy</div>
+          <div class="sender">De: <b>Soporte Radio La Piña</b> <span class="addr badaddr hot" tabindex="0" data-c="1">alerta@radio-lapina-seguridad.com.ru</span></div>
+          <div class="mbody">
+            <p class="hot" tabindex="0" data-c="2">Estimado usuario:</p>
+            <p class="hot" tabindex="0" data-c="3">Hemos detectado actividad estraña. Si no verificas tus datos en las proximas 2 horas, perderas todos tus programas.</p>
+            <p>Pulsa aquí: <span class="hot" tabindex="0" data-c="4" style="color:#2d6fd6;text-decoration:underline">www.radiolapina.es/verificar</span> <span class="realurl">El enlace lleva a: http://radio-lapina-login.xyz</span></p>
+            <p class="hot" tabindex="0" data-c="5">Escribe tu usuario, tu contraseña y el número de la tarjeta de tus padres para confirmar que eres tú.</p>
+            <span class="att hot" tabindex="0" data-c="6">📎 verificacion_cuenta.zip.exe</span>
+          </div>
+        </div>
+      </div>
+      <div class="panel"><h3>Pistas: <span id="found2">0</span> / 7</h3><ul class="clues" id="clues2"></ul></div>
+    </div>
+  </section>
+
+  <!-- MISIÓN 3 -->
+  <section class="mission" id="m-bulos" hidden>
+    <div class="intro"><span class="label">Misión 3 · Fake news</span>
+      <h2>¿Noticia o bulo? Usa el detector</h2>
+      <p>Una <b>fake news</b> o bulo es una noticia inventada que se hace pasar por real, a veces para engañar, para ganar dinero con las visitas o para enfadarnos. En cada publicación, marca las <b>señales de alarma</b> que veas y después decide.</p></div>
+    <div class="tip"><b>Detector de bulos:</b> ¿Quién lo publica? ¿Tiene fecha y autor? ¿Cita fuentes? ¿Lo cuentan otros medios serios? ¿Usa mayúsculas y prisa? ¿Me hace sentir miedo o rabia? ¿La foto puede estar trucada?</div>
+    <div class="feed" id="feed"></div>
+  </section>
+
+  <!-- MISIÓN 4 -->
+  <section class="mission" id="m-redaccion" hidden>
+    <div class="intro"><span class="label">Misión 4 · Redacción de la verdad</span>
+      <h2>Trabaja como periodista de Radio La Piña</h2>
+      <p>Un buen periodista comprueba las imágenes y escribe titulares que informan sin engañar.</p></div>
+    <div class="panel">
+      <h3>A · ¿Qué foto está trucada?</h3>
+      <p style="color:var(--muted)">Esta foto se hizo viral con el texto «¡Un tiburón nada por una calle de Lisboa tras la tormenta!». Una de las dos es la original. Pulsa la que está trucada.</p>
+      <div class="photos" id="photos"></div>
+      <div id="fbPh"></div>
+    </div>
+    <div class="panel">
+      <h3>B · Arregla los titulares</h3>
+      <p style="color:var(--muted)">Reescribe cada titular exagerado para que sea claro y objetivo. El detector comprobará tu titular, y tu profe lo verá en el informe.</p>
+      <div id="hls" style="display:flex;flex-direction:column;gap:12px"></div>
+    </div>
+  </section>
+
+
+  <section class="mission" id="m-videos" hidden>
+    <div class="intro"><span class="label">Misión 5 · Vídeos y juegos</span>
+      <h2>Mira, piensa y juega</h2>
+      <p>Abre cada vídeo o juego (se abre en una pestaña nueva), míralo con tu profe y responde en tu cuaderno a la pregunta. Marca la casilla al terminar: cuenta para tu informe.</p></div>
+    <div class="vids" id="vids"></div>
+  </section>
+
+
+  <!-- MISIÓN 6 -->
+  <section class="mission" id="m-examen" hidden>
+    <div class="intro"><span class="label">Misión 6 · Examen final</span>
+      <h2>¿Tu bandeja está limpia?</h2>
+      <p>Responde a las ocho preguntas. Al final verás tu diploma y el informe para tu profe.</p></div>
+    <div class="quiz" id="quiz"></div>
+    <div class="diploma" id="diploma" hidden></div>
+    <div id="informe"></div>
+  </section>
+
+  <footer>Actividad educativa. Correos, cuentas, medios y webs de los ejemplos son ficticios. Vídeos y juegos enlazados de Smile and Learn, INCIBE, IS4K, Google y Lumio.</footer>
+</div>
+
+<script>
+const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
+let pts=0;const add=n=>{pts+=n;$('#score').textContent='Sellos: '+pts};
+const keyAct=(el,fn)=>{el.addEventListener('click',fn);el.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();fn(e)}})};
+
+/* ---------- MISIÓN 1 ---------- */
+const MAILS=[
+ {name:'Escola Básica do Porto',addr:'radio@escola-porto-exemplo.pt',subj:'Olá! El guion de nuestro programa conjunto',time:'09:12',
+  body:['¡Olá, amigos de Radio La Piña!','Os enviamos el guion del programa que grabaremos juntos el día 20. Decidnos si queréis cambiar algo.','Um abraço,<br>Clase de 5.º de Oporto'],att:'guion_programa_conjunto.pdf',good:true,
+  why:['La dirección real coincide con el nombre del cole y termina en .pt (Portugal).','Esperabais este correo: es el programa conjunto.','El adjunto es un PDF, un formato habitual y seguro de abrir.']},
+ {name:'Premios Radio Europa',addr:'ganadores@premios-radio-europa.win',subj:'🏆 ¡¡HABÉIS GANADO 5.000 €!! Reclamad el premio YA',time:'09:30',
+  body:['Felicidades, vuestra radio ha sido elegida la MEJOR DE EUROPA.','Para recibir el dinero solo tenéis que pulsar aquí:'],link:['Reclamar premio','http://premios-radio-europa.win/cobrar'],good:false,
+  why:['No os habéis presentado a ningún premio.','Te mete prisa: «YA».','La dirección termina en .win y el enlace no tiene candado.','Si suena demasiado bien para ser verdad, es una trampa.']},
+ {name:'Ana (profe)',addr:'profe.ana@cole-ejemplo.es',subj:'Ensayo del jueves',time:'10:05',
+  body:['Hola, equipo:','El jueves ensayamos a las 12:00 en la biblioteca. Traed los guiones.','Un saludo,<br>Ana'],good:true,
+  why:['La dirección real es la del cole.','No pide datos ni dinero, ni tiene enlaces raros.','Lo que dice encaja con lo que estáis haciendo.']},
+ {name:'Servicio de Correo',addr:'no-reply@buzon-lleno-aviso.top',subj:'Tu buzón está lleno. Tus correos se borrarán',time:'10:47',
+  body:['Su buzón ha superado el limite. Para no perder sus mensajes, inicie sesión aquí:'],link:['Ampliar buzón gratis','http://buzon-lleno-aviso.top/login'],good:false,
+  why:['El nombre parece oficial, pero la dirección real es rara y termina en .top.','Te asusta con que perderás tus correos.','El enlace pide iniciar sesión en una web desconocida.','Tiene faltas de ortografía («limite»).']},
+ {name:'Biblioteca Pinares',addr:'avisos@bibliopinares.es',subj:'Nuevos libros de Portugal en la biblioteca',time:'11:20',
+  body:['¡Hola! Para vuestro programa sobre Portugal, hemos preparado una mesa con libros y cuentos portugueses.','Podéis consultar el catálogo en nuestra web:'],link:['Ver catálogo','https://www.bibliopinares.es/catalogo/portugal'],good:true,
+  why:['La dirección real y el enlace son de la misma biblioteca y el enlace usa https.','No te pide datos personales.','La información es útil y encaja con vuestro programa.']},
+ {name:'Profe Ana',addr:'profe.ana.cole@correo-gratis-ejemplo.net',subj:'Favor rápido',time:'12:02',
+  body:['Hola, estoy en una reunión y no puedo hablar.','Necesito que me compres 3 tarjetas regalo de 20 € y me envíes los códigos por aquí. Te lo devuelvo mañana. No se lo digas a nadie, es una sorpresa.'],good:false,
+  why:['Es suplantación de identidad: el nombre es «Profe Ana», pero la dirección real NO es la del cole.','Pide dinero en tarjetas regalo y que lo mantengas en secreto.','Tu profe nunca te pediría algo así. Compruébalo hablando con ella en persona.']},
+ {name:'Piñagram',addr:'seguridad@pinagram-cuentas.com',subj:'Alguien ha entrado en tu cuenta desde Rusia',time:'12:40',
+  body:['Hemos detectado un inicio de sesión sospechoso. Si no has sido tú, descarga y abre el archivo adjunto para proteger tu cuenta.'],att:'proteger_cuenta.exe',good:false,
+  why:['Te asusta para que actúes sin pensar.','Pide abrir un archivo .exe: es un programa que podría ser un virus.','Las redes sociales no envían programas para proteger tu cuenta.']},
+ {name:'Ayuntamiento de Mojados',addr:'cultura@mojados-ejemplo.es',subj:'Invitación: Semana de Europa en la casa de cultura',time:'13:15',
+  body:['Estimados alumnos de Radio La Piña:','Os invitamos a presentar vuestro programa en la Semana de Europa, el 9 de mayo. Vuestra profe tiene toda la información.','Concejalía de Cultura'],good:true,
+  why:['La dirección real corresponde al ayuntamiento.','No te pide nada: te remite a tu profe.','La fecha tiene sentido: el 9 de mayo es el Día de Europa.']}
+];
+const ver1={};let open1=null;const fails1=[];
+function rInbox(){
+  $('#inbox').innerHTML=MAILS.map((m,i)=>`<button class="row ${ver1[i]===undefined?'unread':''} ${open1===i?'open':''}" data-i="${i}"><span class="who"><span>${m.name}</span><span>${ver1[i]===undefined?m.time:`<span class="mark ${ver1[i].ok?'ok':'ko'}">${ver1[i].g?'Bueno':'Trampa'}</span>`}</span></span><span class="sub">${m.subj}</span></button>`).join('');
+  $$('#inbox .row').forEach(b=>b.onclick=()=>{open1=+b.dataset.i;rInbox();rReader()});
+  const left=MAILS.length-Object.keys(ver1).length;$('#left1').textContent=left?`${left} sin revisar`:'¡Todo revisado!';
+}
+function rReader(){
+  const m=MAILS[open1];
+  $('#reader').innerHTML=`<div class="subj">${m.subj}</div>
+   <div class="sender">De: <b>${m.name}</b> <button class="reveal" id="rv">🔍 Ver dirección real</button><span class="addr" id="ra" hidden>${m.addr}</span></div>
+   <div class="mbody">${m.body.map(p=>`<p>${p}</p>`).join('')}
+   ${m.link?`<p><button class="mlink" id="ml">${m.link[0]}</button></p><span class="realurl" id="ru" hidden>El enlace lleva a: ${m.link[1]}</span>`:''}
+   ${m.att?`<span class="att">📎 ${m.att}</span>`:''}</div>`;
+  $('#rv').onclick=()=>{$('#ra').hidden=false;$('#rv').hidden=true};
+  if(m.link)$('#ml').onclick=()=>{$('#ru').hidden=false};
+  p1();
+}
+function p1(){
+  const m=MAILS[open1],v=ver1[open1];
+  if(v){$('#p1').innerHTML=`<h3>${m.good?'Correo bueno ✔':'Correo trampa ✖'}</h3><div class="feedback ${v.ok?'right':'wrong'}"><strong>${v.ok?'¡Bien clasificado!':'¡Ojo!'}</strong><ul>${m.why.map(w=>`<li>${w}</li>`).join('')}</ul></div>${next1()}`;bindNext1();return}
+  $('#p1').innerHTML=`<span class="label">Correo de «${m.name}»</span><h3>¿Es un correo bueno o una trampa?</h3><div class="choices"><button class="btn ok" data-g="1">✔ Bueno</button><button class="btn bad" data-g="0">✖ Trampa</button></div>`;
+  $$('#p1 [data-g]').forEach(b=>b.onclick=()=>{const g=b.dataset.g==='1',ok=g===m.good;ver1[open1]={g,ok};if(ok)add(5);else fails1.push(`Correo «${m.subj}»: dijo ${g?'bueno':'trampa'} y era ${m.good?'bueno':'trampa'}`);rInbox();p1()});
+}
+function next1(){const n=MAILS.findIndex((_,i)=>ver1[i]===undefined);return n<0?`<div class="tip"><b>¡Bandeja limpia!</b> ${Object.values(ver1).filter(v=>v.ok).length} de ${MAILS.length} bien clasificados. Mira siempre la dirección real y adónde llevan los enlaces.</div><button class="btn primary" onclick="show('pistas')">Ir a la misión 2</button>`:`<button class="btn primary" id="nx1" data-n="${n}">Abrir el siguiente correo →</button>`}
+function bindNext1(){const b=$('#nx1');if(b)b.onclick=()=>{open1=+b.dataset.n;rInbox();rReader()}}
+
+/* ---------- MISIÓN 2 ---------- */
+const CL2=[['Asunto alarmista','Mayúsculas, exclamaciones y amenazas para que actúes deprisa.'],['Dirección falsa','El nombre dice «Radio La Piña», pero la dirección es de otra web y termina en .ru.'],['Saludo genérico','«Estimado usuario»: quien te conoce te llama por tu nombre.'],['Faltas y prisa','«estraña», «sera», «proximas» y un plazo de 2 horas.'],['Enlace engañoso','El texto parece una web conocida, pero lleva a otra dirección .xyz sin candado.'],['Pide datos privados','Nadie de confianza te pide contraseñas ni tarjetas por correo.'],['Adjunto peligroso','Un «.zip.exe» es un programa disfrazado que puede ser un virus.']];
+const got2=new Set();
+function r2(){$('#clues2').innerHTML=CL2.map((c,i)=>got2.has(i)?`<li class="found"><b>${i+1}. ${c[0]}.</b> ${c[1]}</li>`:`<li>${i+1}. ¿?</li>`).join('')+(got2.size===CL2.length?'<li class="found" style="border-color:var(--ok);background:var(--ok-bg)"><b>¡Trampa desmontada!</b> Ante un correo así: no respondas, no pulses, no descargues y avisa a un adulto.</li>':'');$('#found2').textContent=got2.size}
+$$('#m-pistas .hot').forEach(h=>keyAct(h,()=>{const i=+h.dataset.c;if(got2.has(i))return;got2.add(i);h.classList.add('found');h.dataset.num=i+1;add(3);r2()}));
+
+/* ---------- MISIÓN 3 ---------- */
+const FLAGS=['Sin autor ni fecha','No cita fuentes','Mayúsculas y prisa','Busca miedo o rabia','Foto sospechosa','Web o cuenta rara'];
+const PIC3={
+ tram:'<svg class="pic" viewBox="0 0 300 140" preserveAspectRatio="xMidYMid slice"><rect width="300" height="140" fill="#cfe6f7"/><rect y="105" width="300" height="35" fill="#9aa4ad"/><rect x="70" y="50" width="160" height="58" rx="10" fill="#f2b705"/><rect x="82" y="60" width="30" height="22" fill="#cfe6f7"/><rect x="120" y="60" width="30" height="22" fill="#cfe6f7"/><rect x="158" y="60" width="30" height="22" fill="#cfe6f7"/><rect x="196" y="60" width="24" height="22" fill="#cfe6f7"/><circle cx="105" cy="110" r="8" fill="#333"/><circle cx="195" cy="110" r="8" fill="#333"/><text x="150" y="30" text-anchor="middle" font-size="16" font-weight="900" fill="#c00" font-family="Arial">¡¡ADIÓS PARA SIEMPRE!!</text></svg>',
+ sardina:'<svg class="pic" viewBox="0 0 300 140" preserveAspectRatio="xMidYMid slice"><rect width="300" height="140" fill="#fff3d6"/><ellipse cx="150" cy="75" rx="80" ry="22" fill="#8fa3b5"/><path d="M228 75l30-20v40z" fill="#8fa3b5"/><circle cx="92" cy="70" r="5" fill="#222"/><text x="150" y="128" text-anchor="middle" font-size="12" font-weight="800" fill="#7a5a00" font-family="Arial">Festas de Lisboa · junio</text></svg>',
+ nube:'<svg class="pic" viewBox="0 0 300 140" preserveAspectRatio="xMidYMid slice"><rect width="300" height="140" fill="#2b2b3a"/><path d="M150 20l-25 50h20l-15 50 40-65h-22l18-35z" fill="#ffd400"/><text x="150" y="132" text-anchor="middle" font-size="13" font-weight="900" fill="#ff6b6b" font-family="Arial">MIEDO · URGENTE · COMPARTE</text></svg>',
+ libro:'<svg class="pic" viewBox="0 0 300 140" preserveAspectRatio="xMidYMid slice"><rect width="300" height="140" fill="#e6f1e2"/><path d="M80 40h70v70H80z" fill="#2d6a8f"/><path d="M150 40h70v70h-70z" fill="#3d8a55"/><path d="M150 40v70" stroke="#fff" stroke-width="3"/><text x="150" y="130" text-anchor="middle" font-size="12" font-weight="700" fill="#2d5a2d" font-family="Arial">Feria del Libro · Biblioteca</text></svg>',
+ cole:'<svg class="pic" viewBox="0 0 300 140" preserveAspectRatio="xMidYMid slice"><rect width="300" height="140" fill="#fde2d6"/><rect x="95" y="45" width="110" height="65" fill="#e9c46a"/><path d="M85 48l65-28 65 28z" fill="#c4513a"/><text x="150" y="132" text-anchor="middle" font-size="13" font-weight="900" fill="#c00" font-family="Arial">¡¡SIN VACACIONES!!</text></svg>',
+ robot:'<svg class="pic" viewBox="0 0 300 140" preserveAspectRatio="xMidYMid slice"><rect width="300" height="140" fill="#e7e3fb"/><rect x="120" y="35" width="60" height="50" rx="10" fill="#7b6fd6"/><circle cx="138" cy="58" r="7" fill="#fff"/><circle cx="162" cy="58" r="7" fill="#fff"/><rect x="128" y="88" width="44" height="30" rx="6" fill="#5c51b8"/><text x="150" y="134" text-anchor="middle" font-size="11" font-weight="700" fill="#3c3290" font-family="Arial">Concurso escolar de robótica</text></svg>'
+};
+const NEWS=[
+ {who:'@NoticiasYAAA_oficial',col:'#c43c2f',pic:'tram',hl:'¡¡LOS TRANVÍAS AMARILLOS DE LISBOA DESAPARECEN MAÑANA!! COMPÁRTELO ANTES DE QUE LO BORREN',meta:'Sin fecha · Sin autor',stats:'🔁 18.400 · ❤ 52.000',fake:true,flags:[0,1,2,5],
+  why:['No dice quién lo cuenta ni de dónde sale la información.','«Compártelo antes de que lo borren» busca que lo difundas sin pensar.','Ningún medio serio publica algo así. Muchas veces compartido no significa verdadero.']},
+ {who:'Diario de Lisboa Joven (diariolisboajoven.pt)',col:'#1f4e9c',pic:'sardina',hl:'Lisboa celebra en junio sus fiestas populares con sardinas, música y desfiles',meta:'Por Inês Costa · 2 de junio de 2026 · Fuente: Ayuntamiento de Lisboa',stats:'🔁 120 · ❤ 860',fake:false,flags:[],
+  why:['Tiene autora, fecha y fuente.','Es un medio con web propia y nombre claro.','El titular informa sin exagerar.']},
+ {who:'Cadena Alerta Total',col:'#555',pic:'nube',hl:'URGENTE: Una tormenta solar apagará todos los móviles del mundo durante 3 días. Reenvía a 10 contactos',meta:'Reenviado muchas veces',stats:'Reenviado muchas veces',fake:true,flags:[0,1,2,3],
+  why:['Las cadenas «reenvía a 10 contactos» son bulos clásicos.','Busca darte miedo.','No cita a ningún científico ni organismo que lo confirme.']},
+ {who:'Biblioteca Pinares (@bibliopinares)',col:'#2d6a8f',pic:'libro',hl:'La Feria del Libro llega a la biblioteca del 20 al 25 de abril',meta:'Publicado el 10 de abril de 2026 · Más información en bibliopinares.es',stats:'🔁 34 · ❤ 210',fake:false,flags:[],
+  why:['Es la cuenta de la biblioteca, que conoces.','Da fechas concretas y dónde comprobarlo.','No pide que lo compartas ni da miedo.']},
+ {who:'cole-noticias-falsas.blogspot.top',col:'#e08a1e',pic:'cole',hl:'¡¡ESCÁNDALO!! El Gobierno elimina las vacaciones de verano para los niños desde este año',meta:'Por «Redacción» · Sin fecha',stats:'🔁 9.100 · 😡 30.000',fake:true,flags:[0,1,2,3,5],
+  why:['Busca enfadarte para que lo compartas.','Una noticia así la contarían todos los medios serios.','La web es rara y nadie firma la noticia.']},
+ {who:'Mojados al Día (mojadosaldia.es)',col:'#2fb59a',pic:'robot',hl:'Un equipo de 6.º gana el concurso provincial de robótica escolar',meta:'Por Redacción · 28 de octubre de 2026 · Fuente: Dirección Provincial de Educación',stats:'🔁 56 · ❤ 400',fake:false,flags:[],
+  why:['Indica fecha y la fuente oficial.','Es una noticia local verificable.','El titular es concreto y no exagera.']}
+];
+const res3={};const fails3=[];
+$('#feed').innerHTML=NEWS.map((n,i)=>`<article class="post"><div class="ph"><span class="av" style="background:${n.col}">${n.who.replace(/[^A-Za-zÁÉÍÓÚ]/,'')[0]}</span><b style="overflow-wrap:anywhere;min-width:0">${n.who}</b></div>${PIC3[n.pic]}
+ <div class="bd"><p class="hl">${n.hl}</p><span class="meta">${n.meta}</span><span class="stats">${n.stats}</span>
+ <span class="label" style="color:var(--muted)">Señales de alarma que veo</span><div class="flags">${FLAGS.map((f,j)=>`<button class="flag" aria-pressed="false" data-n="${i}" data-f="${j}">${f}</button>`).join('')}</div>
+ <div class="choices"><button class="btn ok" data-n="${i}" data-v="0">Noticia fiable</button><button class="btn bad" data-n="${i}" data-v="1">Es un bulo</button></div><div id="f3-${i}"></div></div></article>`).join('');
+$$('#feed .flag').forEach(f=>f.onclick=()=>{if(res3[f.dataset.n]!==undefined)return;f.setAttribute('aria-pressed',f.getAttribute('aria-pressed')==='true'?'false':'true')});
+$$('#feed .btn[data-v]').forEach(b=>b.onclick=()=>{
+  const i=+b.dataset.n,n=NEWS[i],ok=(b.dataset.v==='1')===n.fake;res3[i]=ok;if(ok)add(6);else fails3.push(`«${n.hl.slice(0,50)}…»: era ${n.fake?'un bulo':'fiable'}`);
+  b.parentElement.querySelectorAll('button').forEach(x=>x.disabled=true);
+  const mine=$$(`#feed .flag[data-n="${i}"]`).filter(f=>f.getAttribute('aria-pressed')==='true').map(f=>+f.dataset.f);
+  const hit=n.flags.filter(f=>mine.includes(f)).length,extra=mine.filter(f=>!n.flags.includes(f)).length;
+  $$(`#feed .flag[data-n="${i}"]`).forEach(f=>f.disabled=true);
+  const flagTxt=n.fake?`Has visto ${hit} de ${n.flags.length} señales de alarma (${n.flags.map(f=>FLAGS[f]).join(', ')}).`:(mine.length?`Has marcado ${mine.length} señales, pero esta noticia no tenía ninguna.`:'No tenía señales de alarma y no has marcado ninguna. ¡Bien!');
+  $('#f3-'+i).innerHTML=`<div class="feedback ${ok?'right':'wrong'}"><strong>${ok?'¡Correcto!':'¡Uy!'} ${n.fake?'Es un bulo.':'Es fiable.'}</strong><span>${flagTxt}</span><ul>${n.why.map(w=>`<li>${w}</li>`).join('')}</ul></div>`;
+});
+
+/* ---------- MISIÓN 4 ---------- */
+const street=(shark)=>`<svg viewBox="0 0 300 170"><rect width="300" height="170" fill="#9bb7c9"/><rect x="0" y="20" width="70" height="100" fill="#e9d8b5"/><rect x="230" y="10" width="70" height="110" fill="#f0c9a8"/>${[0,1,2].map(r=>`<rect x="12" y="${32+r*28}" width="16" height="18" fill="#4a6a8a"/><rect x="40" y="${32+r*28}" width="16" height="18" fill="#4a6a8a"/><rect x="244" y="${24+r*28}" width="16" height="18" fill="#4a6a8a"/><rect x="272" y="${24+r*28}" width="16" height="18" fill="#4a6a8a"/>`).join('')}<rect x="70" y="60" width="160" height="60" fill="#b9c6cf"/><rect y="112" width="300" height="58" fill="#5f88a6" opacity=".9"/><path d="M0 118q25-6 50 0t50 0 50 0 50 0 50 0 50 0" fill="none" stroke="#cfe3f0" stroke-width="2"/>${shark?'<path d="M140 132l16-30 8 30z" fill="#4d5a66"/><ellipse cx="160" cy="140" rx="40" ry="9" fill="#4d5a66" opacity=".85"/><path d="M196 140l14-10v20z" fill="#4d5a66"/>':''}<circle cx="110" cy="128" r="4" fill="#f2b705"/></svg>`;
+const order=Math.random()<.5?[true,false]:[false,true];let phDone=false,phOk=null;
+$('#photos').innerHTML=order.map((sh,i)=>`<button class="photo" data-s="${sh?1:0}">${street(sh)}<span>Foto ${i?'B':'A'}</span></button>`).join('');
+$$('#photos .photo').forEach(b=>b.onclick=()=>{if(phDone)return;phDone=true;phOk=b.dataset.s==='1';if(phOk)add(6);
+  $$('#photos .photo').forEach(x=>x.classList.add(x.dataset.s==='1'?'w':'r'));
+  $('#fbPh').innerHTML=`<div class="feedback ${phOk?'right':'wrong'}"><strong>${phOk?'¡Bien visto!':'Era la otra.'} La foto con el tiburón está trucada.</strong><span>Alguien pegó un tiburón en una foto real de una calle inundada. Pistas: el tiburón no deja ondas en el agua, no encaja con la luz de la foto y ningún medio serio lo contó. Puedes buscar la foto original con la búsqueda inversa de imágenes de tu buscador, con ayuda de un adulto.</span></div>`});
+const HL=[
+ {o:'¡¡INCREÍBLE!! Lo que pasó en el recreo te dejará SIN PALABRAS 😱😱',hint:'Di qué pasó, dónde y cuándo.'},
+ {o:'DESASTRE TOTAL: la lluvia DESTROZA el huerto del cole',hint:'Cuenta el hecho sin exagerar: ¿qué daños hubo de verdad?'},
+ {o:'Los científicos lo confirman: comer chocolate te hace un GENIO',hint:'Si no hay un estudio concreto, el titular no puede afirmarlo.'}
+];
+const hlTxt={};
+$('#hls').innerHTML=HL.map((h,i)=>`<div class="hlcard"><span class="label">Titular ${i+1}</span><p class="orig">${h.o}</p><label for="hl-${i}" style="font-size:.88rem;font-weight:800">Tu titular objetivo <span style="font-weight:400;color:var(--muted)">(${h.hint})</span></label><textarea id="hl-${i}" maxlength="140" placeholder="Escribe aquí tu titular"></textarea><div class="check" id="hc-${i}"></div></div>`).join('');
+function checkHl(t){const r=[[!/[A-ZÁÉÍÓÚÑ]{4,}/.test(t),'Sin palabras enteras en MAYÚSCULAS'],[!/[!¡]{1}/.test(t),'Sin exclamaciones'],[!/\p{Extended_Pictographic}/u.test(t),'Sin emojis'],[t.trim().split(/\s+/).length>=5,'Al menos 5 palabras'],[!/(incre[ií]ble|sin palabras|desastre|esc[aá]ndalo|genio|total)/i.test(t),'Sin palabras exageradas']];return r}
+HL.forEach((h,i)=>{const ta=$('#hl-'+i);const upd=()=>{hlTxt[i]=ta.value.trim();const r=checkHl(ta.value);$('#hc-'+i).innerHTML=ta.value.trim()?r.map(x=>`<span class="${x[0]?'on':''}">${x[0]?'✔':'○'} ${x[1]}</span>`).join(''):''};ta.addEventListener('input',upd);ta.addEventListener('change',()=>{if(typeof renderInforme==='function')renderInforme()})});
+const hlOk=()=>HL.filter((h,i)=>hlTxt[i]&&checkHl(hlTxt[i]).every(x=>x[0])).length;
+
+const VIDS=[{"src": "Lumio · tarea con evaluación", "t": "Uso responsable de la tecnología: primer móvil, ciberbullying, fake news y privacidad", "url": "https://lum.io/student/assign/30d9503e-d04c-484d-a197-406e4aaeeec9", "q": "Inicia sesión con tu cuenta del centro, haz la tarea y completa la evaluación del final.", "kind": "tarea"}, {"src": "Smile and Learn", "t": "¿Qué son las fake news? Consejos para reconocerlas", "url": "https://www.youtube.com/watch?v=qMRm4UE1gOc", "q": "Escribe tres consejos del vídeo para reconocer una noticia falsa.", "kind": "video"}, {"src": "IS4K · Internet Segura for Kids", "t": "Aprende a reconocer fake news", "url": "https://www.youtube.com/watch?v=SRFHgUX2sF0", "q": "¿Por qué alguien inventaría una noticia falsa?", "kind": "video"}, {"src": "INCIBE", "t": "¿Qué es el phishing?", "url": "https://www.youtube.com/watch?v=uhzV5-iFb5E", "q": "¿Qué pistas te ayudan a descubrir un correo de phishing? Nombra tres.", "kind": "video"}, {"src": "Smile and Learn", "t": "Correos electrónicos para niños: características y partes", "url": "https://www.youtube.com/watch?v=Kdn81wnb0gY", "q": "¿Qué partes del correo aparecen en el vídeo? ¿Cuál se te olvida más?", "kind": "video"}, {"src": "Smile and Learn", "t": "Uso responsable de la tecnología: primer móvil, ciberbullying, fake news y privacidad", "url": "https://www.youtube.com/watch?v=tBObvkx_nOg", "q": "Elige una de las partes del vídeo y escribe una norma para tu clase.", "kind": "video"}, {"src": "Lumio · recurso de clase (INCIBE)", "t": "Phishing y suplantación de identidad", "url": "https://lum.io/share/4810468e-88cb-4ada-9303-88bbcd376a6c", "q": "Repasa la presentación con tu profe y haz la actividad de rellenar huecos.", "kind": "lumio"}, {"src": "Google · Sé genial en Internet", "t": "Juego Interland", "url": "https://beinternetawesome.withgoogle.com/es_es/interland", "q": "Juega a los cuatro mundos de Interland y apunta cuál te costó más.", "kind": "game"}, {"src": "INCIBE · OSI", "t": "Juego CyberScouts", "url": "https://cyberscouts.osi.es/", "q": "Juega a CyberScouts y apunta el reto que te resultó más difícil.", "kind": "game"}, {"src": "Lumio · clase en directo", "t": "Entra en la clase de Lumio (ID 835883)", "url": "https://www.lumioclass.com/link/835883", "q": "Úsalo cuando tu profe abra la clase en directo en la pizarra.", "kind": "clase"}];
+const seenV={};
+(function(){const PLAY='<svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z" fill="currentColor"/></svg>';
+ const lab={video:'Vídeo',game:'Juego',lumio:'Lumio',tarea:'⭐ Tarea obligatoria con evaluación',clase:'Clase Lumio'},btn={video:PLAY+' Ver vídeo',game:'🎮 Jugar',lumio:'📒 Abrir en Lumio',tarea:'📒 Abrir la tarea',clase:'🏫 Entrar en la clase'},ckl={game:'He jugado',tarea:'He hecho la tarea y la evaluación',clase:'He entrado en la clase'};
+ document.querySelector('#vids').innerHTML=VIDS.map((v,i)=>`<div class="vid ${v.kind==='tarea'?'tarea':''}" id="v-${i}"><span class="src">${v.src}</span><span class="kindtag">${lab[v.kind]}</span><h3>${v.t}</h3><a class="go" href="${v.url}" target="_blank" rel="noopener">${btn[v.kind]}</a><p class="q"><b>Piensa:</b> ${v.q}</p><label class="ck" for="ck-${i}"><input type="checkbox" id="ck-${i}">${ckl[v.kind]||'Lo he visto'}</label></div>`).join('');
+ VIDS.forEach((v,i)=>document.querySelector('#ck-'+i).addEventListener('change',e=>{seenV[i]=e.target.checked;document.querySelector('#v-'+i).classList.toggle('seen',e.target.checked);if(typeof onVidChange==='function')onVidChange()}));})();
+function vidRow(label){const L=VIDS.map((v,i)=>[v,i]).filter(x=>x[0].kind!=='clase');const n=L.filter(x=>seenV[x[1]]).length;return {name:label,ok:n,max:L.length,done:n===L.length,fails:L.filter(x=>!seenV[x[1]]).map(([v])=>(v.kind==='tarea'?'Tarea Lumio sin hacer: ':'Sin marcar: ')+v.t)}}
+
+function onVidChange(){}
+
+/* ---------- MISIÓN 6 ---------- */
+const QUIZ=[
+ ['Un correo dice ser de tu profe, pero la dirección real es profe.ana.cole@correo-gratis-ejemplo.net. ¿Qué es?',['Un correo normal','Suplantación de identidad: compruebo hablando con mi profe','Un correo con faltas'],1],
+ ['¿Cómo sabes adónde lleva de verdad un enlace?',['Leyendo el texto azul del enlace','Pasando el ratón por encima (o manteniéndolo pulsado) sin abrirlo','Pulsándolo para probar'],1],
+ ['¿Qué archivo adjunto es más peligroso?',['trabajo.pdf','foto.jpg','premio.zip.exe'],2],
+ ['¿Qué es una fake news?',['Una noticia antigua','Una noticia inventada que se hace pasar por real','Una noticia en inglés'],1],
+ ['Una publicación tiene 50.000 «me gusta». ¿Es verdad?',['Sí, la ha visto mucha gente','No necesariamente: compruebo quién lo dice y si otros medios lo cuentan','Solo si tiene foto'],1],
+ ['¿Qué titular es más objetivo?',['¡¡NO VAS A CREER lo que pasó en Lisboa!!','Lisboa celebra en junio sus fiestas populares','DESASTRE: Lisboa, sin tranvías'],1],
+ ['Recibes «¡Habéis ganado 5.000 €! Pulsa aquí YA». ¿Qué haces?',['Lo pulso rápido antes de que caduque','No lo pulso, no respondo y aviso a un adulto','Lo reenvío a mis amigos'],1],
+ ['Antes de compartir una noticia, lo más importante es…',['Comprobar la fuente y si es verdad','Que tenga una foto bonita','Ser el primero en compartirla'],0]
+];
+const res6={};let q6=0;
+$('#quiz').innerHTML=QUIZ.map((q,i)=>`<div class="qitem"><p class="qq">${i+1}. ${q[0]}</p><div class="opts">${q[1].map((o,j)=>`<button data-q="${i}" data-o="${j}">${o}</button>`).join('')}</div></div>`).join('');
+$$('#quiz .opts button').forEach(b=>b.onclick=()=>{
+  const q=QUIZ[+b.dataset.q],ok=+b.dataset.o===q[2];res6[b.dataset.q]=ok;
+  [...b.parentElement.children].forEach((x,j)=>{x.disabled=true;if(j===q[2])x.classList.add('r')});
+  if(ok)add(5);else b.classList.add('w');
+  if(++q6===QUIZ.length){const okN=Object.values(res6).filter(Boolean).length;const d=$('#diploma');d.hidden=false;
+    const lvl=okN>=7?'Guardián/a de la Bandeja':okN>=5?'Cartero/a detective':'Aprendiz de detective';
+    d.innerHTML=`<svg width="70" height="70" viewBox="0 0 80 80" aria-hidden="true"><rect width="80" height="80" rx="10" fill="var(--tram)"/><path d="M22 41l12 12 25-26" fill="none" stroke="var(--tram-ink)" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/></svg><h3>Diploma de ${lvl}</h3><p>Examen: ${okN} de ${QUIZ.length} · Sellos totales: <b>${pts}</b></p>`}
+  setTimeout(renderInforme);
+});
+
+/* ---------- Informe para el profe ---------- */
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function initInforme(){['alNombre','alCurso'].forEach(id=>{const el=$('#'+id);try{el.value=localStorage.getItem(STORE+id)||''}catch(e){}
+  el.addEventListener('input',()=>{try{localStorage.setItem(STORE+id,el.value)}catch(e){};renderInforme()})})}
+function renderInforme(){
+  const rows=informeRows(),nomRaw=$('#alNombre').value.trim(),nom=nomRaw||'(sin nombre)',cur=$('#alCurso').value.trim()||'(sin curso)';
+  let ok=0,max=0;rows.forEach(r=>{ok+=r.ok;max+=r.max});const all=rows.every(r=>r.done);
+  const d=new Date(),fecha=d.toLocaleDateString('es-ES')+' '+d.toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'});
+  let t=`INFORME: ${TITULO}\nAlumno/a: ${nom}\nCurso: ${cur}\nFecha: ${fecha}\nAciertos: ${ok}/${max}${all?'':' (sin terminar)'} · ${PUNTOS()}\n\n`;
+  rows.forEach(r=>{t+=`- ${r.name}: ${r.ok}/${r.max}${r.done?'':' (sin terminar)'}\n`;r.fails.forEach(f=>t+=`    · ${f}\n`)});
+  $('#informe').innerHTML=`<h3>Informe para tu profe</h3>
+   ${nomRaw?'':'<div class="feedback wrong"><span>Escribe tu nombre y curso arriba, en la ficha, antes de entregar.</span></div>'}
+   <div class="rwrap"><table class="rtable"><thead><tr><th>Misión</th><th>Aciertos</th><th>A repasar</th></tr></thead><tbody>${rows.map(r=>`<tr><td>${r.name}${r.done?'':' <span class="pend">pendiente</span>'}</td><td>${r.ok} / ${r.max}</td><td class="rf">${r.fails.length?r.fails.map(esc).join('<br>'):'—'}</td></tr>`).join('')}</tbody></table></div>
+   <div class="copybox" id="copybox">${esc(t)}</div>
+   <div class="cbar"><button class="btn primary" id="copyBtn">Copiar informe</button><span id="copyMsg" class="cmsg"></span></div>
+   <div class="tip">Pega el informe en un correo a tu profe con el asunto «${TITULO} – ${esc(nom)}», o donde te diga tu profe.</div>`;
+  $('#copyBtn').onclick=()=>{const sel=()=>{const r=document.createRange();r.selectNodeContents($('#copybox'));const s=getSelection();s.removeAllRanges();s.addRange(r);$('#copyMsg').textContent='Texto seleccionado: pulsa Ctrl + C para copiarlo.'};
+    try{navigator.clipboard.writeText(t).then(()=>{$('#copyMsg').textContent='¡Copiado! Pégalo con Ctrl + V.'},sel)}catch(e){sel()}};
+}
+
+const STORE='bandeja-',TITULO='La Bandeja Trampa',PUNTOS=()=>'Sellos: '+pts;
+initInforme();
+function informeRows(){
+  const cnt=o=>Object.values(o).filter(x=>x===true).length,ans=o=>Object.values(o).filter(x=>x!==undefined).length;
+  const v1=Object.values(ver1);
+  const hlF=HL.map((h,i)=>hlTxt[i]?`Titular ${i+1}: «${hlTxt[i]}»${checkHl(hlTxt[i]).every(x=>x[0])?'':' (mejorable)'}`:`Titular ${i+1}: sin escribir`);
+  return [
+   {name:'1. La bandeja trampa',ok:v1.filter(v=>v.ok).length,max:MAILS.length,done:v1.length===MAILS.length,fails:fails1},
+   {name:'2. Caza las pistas',ok:got2.size,max:CL2.length,done:got2.size===CL2.length,fails:CL2.filter((c,i)=>!got2.has(i)).map(c=>'Pista sin encontrar: '+c[0])},
+   {name:'3. ¿Noticia o bulo?',ok:cnt(res3),max:NEWS.length,done:ans(res3)===NEWS.length,fails:fails3},
+   {name:'4. Redacción de la verdad',ok:(phOk?1:0)+hlOk(),max:1+HL.length,done:phDone&&HL.every((h,i)=>hlTxt[i]),fails:(phDone&&!phOk?['Eligió la foto original como trucada']:phDone?[]:['Foto trucada: sin responder']).concat(hlF)},
+   vidRow('5. Vídeos y juegos'),
+   {name:'6. Examen final',ok:cnt(res6),max:QUIZ.length,done:ans(res6)===QUIZ.length,fails:QUIZ.filter((q,i)=>res6[i]===false).map(q=>'Falló: '+q[0])}
+  ];
+}
+
+/* ---------- Pestañas ---------- */
+const ids=['bandeja','pistas','bulos','redaccion','videos','examen'];
+function show(t){
+  if(!ids.includes(t))t='bandeja';
+  ids.forEach(x=>$('#m-'+x).hidden=x!==t);
+  document.querySelector('.relato').hidden=t!==ids[0];
+  $$('#tabs button').forEach(b=>b.setAttribute('aria-selected',b.dataset.t===t));
+  if(location.hash!=='#'+t)history.replaceState(null,'','#'+t);
+  if(t==='examen')renderInforme();
+  scrollTo({top:0});
+}
+$$('#tabs button').forEach(b=>b.onclick=()=>show(b.dataset.t));
+addEventListener('hashchange',()=>show(location.hash.slice(1)));
+rInbox();r2();show(location.hash.slice(1));
+
+
+/* ---------- Valoración de indicadores y llave ---------- */
+const VAL_CFG={"pre": "BAN", "i5": [["1.1.3", [2], "Comprueba ese dato en una segunda web y explica cuál de las dos es más fiable (web institucional, autor, fecha).", "CCL3 · CCL1"], ["2.1.3", [2, 3], "Reconoce una noticia falsa por sus pistas (titular exagerado, sin fuente, sin fecha) y decide no reenviarla.", "CPSAA4 · CC1"], ["4.1.4", [0, 1], "Clasifica en la «bandeja trampa» del Cartero digital los correos legítimos, el spam y el phishing, y señala las pistas (remitente, enlace, urgencia, adjunto).", "CD4"], ["4.3.3", [1], "Nombra amenazas que llegan en correos trampa (virus, troyano, spyware, adware) y una medida para proteger el equipo (no abrir adjuntos, antivirus, no instalar programas desconocidos).", "CD4 · CD5"]], "i6": [["1.1.2", [2], "Comprueba un dato en una segunda web fiable antes de usarlo, también cuando el dato lo ha dado una IA.", "CD1 · CCL3"], ["1.1.3", [2, 3], "Distingue una noticia fiable de un bulo (autor, fecha, fuentes, titular que asusta o mete prisa) y sabe que debe comprobarla en otro medio antes de compartirla.", "CCL3 · CP1"], ["4.1.3", [0, 1], "Reconoce webs y mensajes trampa (sin https, nombre raro, prisa, premios, piden datos o códigos) y no da sus datos: cierra y avisa a un adulto.", "CD4"]], "vid": 4, "exam": 5};
+function valRows(){return typeof informeRows==='function'?informeRows():Object.values(R)}
+function valScore(rows,idx){let ok=0,max=0,att=false;idx.forEach(i=>{const r=rows[i];if(!r)return;ok+=r.ok;max+=r.max;if(r.ok>0||r.done)att=true});return att?Math.max(1,Math.round(5*ok/(max||1))):0}
+function valAll(){const rows=valRows();return {rows,s5:VAL_CFG.i5.map(x=>valScore(rows,x[1])),s6:VAL_CFG.i6.map(x=>valScore(rows,x[1]))}}
+function valComplete(rows){return rows.every((r,i)=>i===VAL_CFG.vid||r.done)}
+function valKey(v){const ex=VAL_CFG.exam!=null&&v.rows[VAL_CFG.exam]?v.rows[VAL_CFG.exam].ok:0;const raw=VAL_CFG.pre+'-'+v.s5.join('')+'-'+v.s6.join('')+'-'+ex;let h=0;for(let i=0;i<raw.length;i++)h=(h+raw.charCodeAt(i)*(i+7))%1296;return raw+'-'+h.toString(36).toUpperCase().padStart(2,'0')}
+function valCourse(){const c=(document.querySelector('#alCurso')||{}).value||'';return /6/.test(c)?'6':/5/.test(c)?'5':''}
+function valEsc(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
+function appendVal(){
+  const host=document.querySelector('#informe')||document.querySelector('#report');if(!host)return;
+  const old=host.querySelector('.valora');if(old)old.remove();
+  const v=valAll(),c=valCourse(),done=valComplete(v.rows),key=done?valKey(v):'';
+  const bar=n=>`<span class="vbar">${[1,2,3,4,5].map(i=>`<i class="${i<=n?'on':''}"></i>`).join('')}</span>`;
+  const tab=(k,list,sc)=>`<div><h4>${k}.º de Primaria</h4><table class="rtable"><thead><tr><th>Indicador</th><th>0-5</th></tr></thead><tbody>${list.map((x,i)=>`<tr><td><b>${x[0]}</b> ${valEsc(x[2])} <span style="color:var(--muted)">(${x[3]})</span></td><td><span class="vstar">${sc[i]}</span>${bar(sc[i])}</td></tr>`).join('')}</tbody></table></div>`;
+  const cols=(c!=='6'?tab(5,VAL_CFG.i5,v.s5):'')+(c!=='5'?tab(6,VAL_CFG.i6,v.s6):'');
+  const div=document.createElement('div');div.className='valora';
+  div.innerHTML=`<h3>Valoración de los indicadores de logro</h3><p style="font-size:.88rem;color:var(--muted)">Escala de 0 a 5: 0 = no realizado; 5 = realizado con éxito. Es una estimación automática a partir de las misiones relacionadas; tu profe la revisará.${c?'':' Escribe tu curso en la ficha para ver solo el tuyo.'}</p><div class="cols">${cols}</div>
+   <div class="llave">${done?`<b>🔑 ¡Has conseguido la llave de esta web!</b><code>${key}</code><span style="font-size:.88rem">Ya está guardada: vuelve al rincón Piensa de Rumbo a Europa y envía tus notas.</span><a href="../#piensa" style="align-self:flex-start;font-weight:700;color:var(--accent)">Volver al rincón Piensa · Pasaporte TIC ↗</a>`:`<b>🔒 Llave todavía cerrada</b><span style="font-size:.88rem">Termina todas las misiones${VAL_CFG.exam!=null?' y el examen final':''} (los vídeos no son obligatorios) para conseguir la llave de la siguiente parada.</span>`}</div>`;
+  const cb=host.querySelector('#copybox');
+  if(cb){host.insertBefore(div,cb.previousElementSibling&&cb.previousElementSibling.tagName==='H3'?cb.previousElementSibling:cb);
+    let t=cb.textContent.replace(/\nVALORACIÓN DE INDICADORES[\s\S]*$/,'');
+    t+='\nVALORACIÓN DE INDICADORES (0-5)\n'+(c!=='6'?VAL_CFG.i5.map((x,i)=>`  5.º ${x[0]}: ${v.s5[i]}`).join('\n')+'\n':'')+(c!=='5'?VAL_CFG.i6.map((x,i)=>`  6.º ${x[0]}: ${v.s6[i]}`).join('\n')+'\n':'')+'LLAVE: '+(key||'(sin conseguir)')+'\n';
+    cb.textContent=t;
+    const btn=host.querySelector('#copyBtn'),msg=host.querySelector('#copyMsg');
+    if(btn)btn.onclick=()=>{const sel=()=>{const r=document.createRange();r.selectNodeContents(cb);const s=getSelection();s.removeAllRanges();s.addRange(r);if(msg)msg.textContent='Texto seleccionado: pulsa Ctrl + C para copiarlo.'};try{navigator.clipboard.writeText(cb.textContent).then(()=>{if(msg)msg.textContent='¡Copiado! Pégalo con Ctrl + V.'},sel)}catch(e){sel()}};
+  }else host.appendChild(div);
+}
+(function(){
+  if(typeof renderInforme==='function'){const o=renderInforme;renderInforme=function(){o();appendVal()}}
+  else if(typeof renderReport==='function'){const o=renderReport;renderReport=function(){o();appendVal()}}
+})();
+</script>
+
+<script>
+/* Rumbo a Europa: rellena nombre y curso con los datos de la web y guarda la llave en el rincón Piensa */
+(function(){
+  try{
+    var a=(JSON.parse(localStorage.getItem("rumbo-a-europa-v1")||"{}")||{}).alumno||{};
+    [["alNombre",a.nombre],["alCurso",a.clase]].forEach(function(p){var el=document.getElementById(p[0]);if(el&&p[1]&&!el.value.trim()){el.value=p[1];el.dispatchEvent(new Event("input",{bubbles:true}));el.dispatchEvent(new Event("change",{bubbles:true}));}});
+  }catch(e){}
+  if(typeof valKey==="function"){
+    var orig=valKey;
+    valKey=function(v){var k=orig(v);try{var g=JSON.parse(localStorage.getItem("rumbo-piensa-llaves")||"{}")||{};var done=typeof valComplete==="function"?valComplete(v.rows):true;g[VAL_CFG.pre]={llave:k,completa:!!done,fecha:new Date().toISOString()};localStorage.setItem("rumbo-piensa-llaves",JSON.stringify(g));}catch(e){}return k;};
+  }
+})();
+</script>
+</body></html>

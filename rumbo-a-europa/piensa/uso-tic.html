@@ -1,0 +1,499 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Uso Responsable de las TIC</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@400;700;800&family=JetBrains+Mono:wght@500&display=swap">
+<style>
+/* Layout: móvil y equilibrio día-noche como emblema; semáforo, reloj de 24 h, pacto familiar y pantallas con truco */
+:root{
+  --bg:#f4f6f1; --paper:#ffffff; --ink:#1e2620; --muted:#59645b; --line:#d7ddd4; --accent:#c8102e; --accent-ink:#ffffff; --tram:#2f8f5b; --tram-ink:#ffffff; --ok:#1d8a52; --ok-bg:#e0f3e8; --bad:#c43c2f; --bad-bg:#fbe5e2; --soft:#e9ede6; --sel:#fff0c9;
+  --f-display:"Fredoka","Trebuchet MS",system-ui,sans-serif; --f-body:"Nunito",system-ui,-apple-system,"Segoe UI",sans-serif; --f-mono:"JetBrains Mono",ui-monospace,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){ --bg:#121612; --paper:#1b211c; --ink:#e7ede6; --muted:#a3b0a5; --line:#2f3a31; --accent:#ff6b7f; --accent-ink:#2a0509; --tram:#5fd08f; --tram-ink:#062a16; --ok:#5fd18e; --ok-bg:#163527; --bad:#ff8a7c; --bad-bg:#3a1d1a; --soft:#232b24; --sel:#3d3418; color-scheme:dark}}
+:root[data-theme="dark"]{ --bg:#121612; --paper:#1b211c; --ink:#e7ede6; --muted:#a3b0a5; --line:#2f3a31; --accent:#ff6b7f; --accent-ink:#2a0509; --tram:#5fd08f; --tram-ink:#062a16; --ok:#5fd18e; --ok-bg:#163527; --bad:#ff8a7c; --bad-bg:#3a1d1a; --soft:#232b24; --sel:#3d3418; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:16px;line-height:1.55;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 48px}
+.wrap{max-width:1060px;margin:0 auto;display:flex;flex-direction:column;gap:20px}
+h1,h2,h3{font-family:var(--f-display);font-weight:400;text-wrap:balance;margin:0;line-height:1.08;letter-spacing:.01em}
+p{margin:0}
+button,input,select,textarea{font-family:inherit;font-size:inherit}
+button:focus-visible,[tabindex]:focus-visible,input:focus-visible,textarea:focus-visible{outline:3px solid var(--tram);outline-offset:2px}
+
+header.hero{display:flex;gap:16px;align-items:center;flex-wrap:wrap}
+.tile{width:80px;height:80px;flex:none}
+.hero-text{flex:1;min-width:0;display:flex;flex-direction:column;gap:4px}
+.hero h1{font-size:clamp(2.2rem,6vw,3.4rem);color:var(--accent)}
+.hero p{color:var(--muted);max-width:64ch}
+.score{font-family:var(--f-display);background:var(--tram);color:var(--tram-ink);border-radius:999px;padding:8px 18px;font-variant-numeric:tabular-nums;white-space:nowrap;font-size:1.1rem}
+
+nav.tabs{display:flex;gap:6px;flex-wrap:wrap}
+nav.tabs button{font:800 .96rem var(--f-body);border:2px solid var(--line);background:var(--paper);color:var(--ink);padding:8px 12px;border-radius:12px;cursor:pointer;display:flex;gap:8px;align-items:center}
+nav.tabs .n{display:inline-grid;place-items:center;width:24px;height:24px;border-radius:6px;background:var(--soft);font-size:.85rem}
+nav.tabs button[aria-selected="true"]{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+nav.tabs button[aria-selected="true"] .n{background:var(--tram);color:var(--tram-ink)}
+
+section.mission{display:flex;flex-direction:column;gap:16px}
+.intro{background:var(--paper);border:2px solid var(--line);border-radius:16px;padding:16px 18px;display:flex;flex-direction:column;gap:6px}
+.intro h2{font-size:1.7rem}
+.intro p{color:var(--muted);max-width:74ch}
+.label{font:800 .74rem var(--f-body);letter-spacing:.1em;text-transform:uppercase;color:var(--accent)}
+.grid2{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);gap:16px;align-items:start}
+@media (max-width:820px){.grid2{grid-template-columns:minmax(0,1fr)}}
+.grid2>*{min-width:0}
+.panel{background:var(--paper);border:2px solid var(--line);border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:12px}
+.panel h3{font-size:1.35rem}
+.btn{font:800 .98rem var(--f-body);border:2px solid var(--line);border-radius:12px;padding:8px 14px;cursor:pointer;background:var(--soft);color:var(--ink)}
+.btn.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.btn.ok{background:var(--ok-bg);color:var(--ok);border-color:var(--ok)}
+.btn.bad{background:var(--bad-bg);color:var(--bad);border-color:var(--bad)}
+.btn:disabled{opacity:.5;cursor:default}
+.choices{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.feedback{border-radius:12px;padding:10px 14px;display:flex;flex-direction:column;gap:5px}
+.feedback.right{background:var(--ok-bg)}.feedback.wrong{background:var(--bad-bg)}
+.feedback strong{font-family:var(--f-display);font-weight:400;font-size:1.15rem}
+.feedback ul{margin:0;padding-left:20px}
+.tip{background:var(--soft);border-radius:12px;padding:10px 14px;font-size:.95rem}
+
+.opts{display:flex;flex-direction:column;gap:8px}
+.opts button{text-align:left;font-size:.95rem;background:var(--bg);color:var(--ink);border:2px solid var(--line);border-radius:12px;padding:9px 12px;cursor:pointer}
+.opts button.r{background:var(--ok-bg);border-color:var(--ok)}.opts button.w{background:var(--bad-bg);border-color:var(--bad)}
+.quiz{display:flex;flex-direction:column;gap:12px}
+.qitem{background:var(--paper);border:2px solid var(--line);border-radius:16px;padding:14px;display:flex;flex-direction:column;gap:10px}
+.qitem .qq{font-weight:800}
+.diploma{border:3px dashed var(--accent);border-radius:20px;padding:20px;background:var(--paper);text-align:center;display:flex;flex-direction:column;gap:8px;align-items:center}
+.diploma h3{font-size:1.7rem;color:var(--accent)}
+.bars{display:flex;gap:4px;flex-wrap:wrap}.bars i{width:24px;height:8px;border-radius:4px;background:var(--line);display:block}
+.bars i.ok{background:var(--ok)}.bars i.ko{background:var(--bad)}.bars i.now{background:var(--tram)}
+
+
+h1,h2,h3{font-weight:700}
+.acts{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}
+.act{background:var(--paper);border:2px solid var(--line);border-radius:16px;padding:14px;display:flex;flex-direction:column;gap:10px}
+.act p.s{font-weight:700}
+.sem{display:flex;gap:6px;flex-wrap:wrap;margin-top:auto}
+.sem button{flex:1 1 80px;border:2px solid var(--line);background:var(--bg);color:var(--ink);border-radius:999px;padding:7px 8px;cursor:pointer;font-weight:800;font-size:.85rem}
+.sem button.r{outline:3px solid var(--ok);outline-offset:1px}.sem button.w{outline:3px solid var(--bad);outline-offset:1px}
+.dot{display:inline-block;width:12px;height:12px;border-radius:50%;margin-right:4px;vertical-align:-1px}
+.planner{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px}
+@media (max-width:760px){.planner{grid-template-columns:minmax(0,1fr)}}
+.slot{display:grid;grid-template-columns:150px minmax(0,1fr) 54px;gap:10px;align-items:center;padding:6px 0;border-bottom:1px solid var(--line)}
+@media (max-width:460px){.slot{grid-template-columns:minmax(0,1fr) 54px}.slot input{grid-column:1/-1}}
+.slot label{font-weight:700;font-size:.92rem}
+.slot input{width:100%;accent-color:var(--accent)}
+.slot output{font-variant-numeric:tabular-nums;font-weight:800;text-align:right}
+.clock{display:block;width:100%;max-width:260px;margin:0 auto}
+.legend{display:flex;flex-wrap:wrap;gap:8px;font-size:.82rem;justify-content:center}
+.pact{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:10px}
+.prule{text-align:left;border:2px solid var(--line);background:var(--paper);color:var(--ink);border-radius:12px;padding:10px 12px;cursor:pointer;font-size:.95rem;display:flex;gap:10px;align-items:flex-start}
+.prule .bx{width:22px;height:22px;border-radius:6px;border:2px solid var(--muted);flex:none;display:grid;place-items:center;font-weight:900;font-size:.8rem}
+.prule[aria-pressed="true"]{border-color:var(--accent);background:var(--sel)}
+.prule[aria-pressed="true"] .bx{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.prule.r{border-color:var(--ok);background:var(--ok-bg)}.prule.w{border-color:var(--bad);background:var(--bad-bg)}
+.contract{border:3px double var(--ink);border-radius:14px;padding:18px;background:var(--paper);display:flex;flex-direction:column;gap:8px}
+.contract h3{font-size:1.4rem}
+.contract ol{margin:0;padding-left:22px;display:flex;flex-direction:column;gap:4px}
+.sig{display:flex;gap:24px;flex-wrap:wrap;margin-top:10px;font-size:.9rem;color:var(--muted)}
+.sig span{border-top:1.5px solid var(--muted);padding-top:4px;min-width:140px}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px}
+.card{background:var(--paper);border:2px solid var(--line);border-radius:16px;overflow:hidden;display:flex;flex-direction:column}
+.card .scr{background:#20232b;color:#fff;padding:12px;display:flex;flex-direction:column;gap:6px;min-height:120px}
+.card .scr .tag{align-self:flex-start;background:#ffcf33;color:#2a2000;border-radius:6px;padding:1px 7px;font-size:.72rem;font-weight:800}
+.card .scr b{font-size:1rem}
+.card .scr small{opacity:.8}
+.card .bd{padding:12px;display:flex;flex-direction:column;gap:10px;flex:1}
+
+.relato{background:var(--paper);border:2px solid var(--line);border-radius:18px;padding:18px;display:grid;grid-template-columns:120px minmax(0,1fr);gap:20px;align-items:start}
+@media (max-width:620px){.relato{grid-template-columns:minmax(0,1fr)}.relato .pini{width:96px}}
+.relato .pini{width:120px;height:auto;display:block}
+.relato .rt{display:flex;flex-direction:column;gap:10px;min-width:0}
+.relato .cap{font-size:.74rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--accent)}
+.relato h2{font-size:clamp(1.5rem,3.6vw,2rem);text-wrap:balance}
+.relato p{max-width:68ch;line-height:1.65}
+.relato .dlg{padding-left:14px;border-left:3px solid var(--line)}
+.relato .reto{border:2px dashed var(--accent);border-radius:14px;padding:12px 16px;display:flex;flex-direction:column;gap:6px;margin-top:4px}
+.relato .reto b.t{font-size:.8rem;letter-spacing:.08em;text-transform:uppercase;color:var(--accent)}
+.relato .reto ul{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:4px}
+.relato[hidden]{display:none}
+.relato .nw{white-space:nowrap}
+.ficha{display:flex;gap:12px;flex-wrap:wrap;background:var(--paper);border:2px solid var(--line);border-radius:14px;padding:12px 14px}
+.ficha label{display:flex;flex-direction:column;gap:3px;font-size:.78rem;font-weight:800;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;flex:1 1 180px;min-width:0}
+.ficha input{border:2px solid var(--line);border-radius:10px;padding:8px 10px;background:var(--bg);color:var(--ink);font:inherit;font-size:1rem;text-transform:none;letter-spacing:0;font-weight:400;width:100%}
+.ficha input:focus-visible{outline:3px solid var(--accent);outline-offset:1px}
+#informe{background:var(--paper);border:2px solid var(--line);border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:12px}
+#informe h3{font-size:1.35rem}
+.rwrap{overflow-x:auto}
+.rtable{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
+.rtable th,.rtable td{text-align:left;padding:8px 6px;border-bottom:1px solid var(--line);font-size:.93rem;vertical-align:top}
+.rtable th{font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.rtable .rf{font-size:.85rem;color:var(--muted)}
+.pend{font-size:.75rem;color:var(--muted);background:var(--bg);border-radius:999px;padding:1px 8px;white-space:nowrap}
+.copybox{font:500 .82rem var(--f-mono);background:var(--bg);border:2px dashed var(--line);border-radius:10px;padding:10px;white-space:pre-wrap;overflow-wrap:anywhere;max-height:260px;overflow:auto}
+.cbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.cmsg{font-size:.9rem;color:var(--muted)}
+
+.vids{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:14px}
+.vid{background:var(--paper);border:2px solid var(--line);border-radius:16px;padding:14px;display:flex;flex-direction:column;gap:8px}
+.vid.seen{border-color:var(--ok)}
+.vid .src{font-weight:800;font-size:.7rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.vid h3{font-size:1.08rem}
+.vid .kindtag{align-self:flex-start;font-size:.72rem;font-weight:800;border-radius:999px;padding:2px 9px;background:var(--bg);color:var(--muted)}
+.vid a.go{display:inline-flex;gap:8px;align-items:center;align-self:flex-start;background:var(--accent);color:var(--accent-ink);text-decoration:none;font-weight:800;border-radius:999px;padding:7px 14px}
+.vid a.go svg{width:16px;height:16px}
+.vid .q{font-size:.92rem;background:var(--bg);border-radius:10px;padding:8px 10px}
+.vid label.ck{display:flex;gap:8px;align-items:center;font-weight:700;font-size:.92rem;cursor:pointer;margin-top:auto}
+.vid label.ck input{width:20px;height:20px;accent-color:var(--ok)}
+.vid.tarea{border-color:var(--accent);border-width:3px}
+.vid.tarea .kindtag{background:var(--accent);color:var(--accent-ink)}
+.vfilter{display:flex;gap:8px;flex-wrap:wrap}
+
+.indic{border:2px solid var(--line);border-radius:14px;padding:12px 16px;display:flex;flex-direction:column;gap:10px;margin-top:4px;background:var(--bg)}
+.indic>b.t{font-size:.8rem;letter-spacing:.08em;text-transform:uppercase;color:var(--accent)}
+.indic .cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px}
+.indic h4{margin:0;font-size:.95rem}
+.indic ul{margin:0;padding-left:0;list-style:none;display:flex;flex-direction:column;gap:6px;font-size:.88rem;line-height:1.45}
+.indic li{overflow-wrap:anywhere}
+.indic .crit{display:inline-block;font-weight:800;border:1.5px solid var(--accent);color:var(--accent);border-radius:6px;padding:0 5px;margin-right:4px;font-size:.78rem;font-variant-numeric:tabular-nums}
+.indic .do{color:var(--muted);font-size:.8rem}
+.valora{border:2px solid var(--accent);border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:10px;background:var(--paper)}
+.valora h3{font-size:1.2rem}
+.valora .cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px}
+.valora h4{margin:0 0 4px;font-size:.95rem}
+.valora td{font-size:.85rem}
+.vstar{font-weight:800;white-space:nowrap;font-variant-numeric:tabular-nums}
+.vbar{display:inline-flex;gap:2px;margin-left:6px;vertical-align:middle}.vbar i{width:8px;height:8px;border-radius:2px;background:var(--line);display:block}.vbar i.on{background:var(--ok)}
+.llave{border:2px dashed var(--accent);border-radius:12px;padding:12px;display:flex;flex-direction:column;gap:6px}
+.llave code{font:700 1.3rem var(--f-mono,monospace);letter-spacing:.06em;color:var(--accent);overflow-wrap:anywhere}
+footer{color:var(--muted);font-size:.85rem;text-align:center}
+</style>
+
+<div class="wrap">
+  <header class="hero">
+    <svg width="80" height="80" viewBox="0 0 80 80" aria-hidden="true" style="flex:none"><circle cx="40" cy="40" r="36" fill="var(--soft)"/><path d="M40 6a34 34 0 0 1 0 68z" fill="var(--tram)"/><rect x="26" y="18" width="28" height="44" rx="6" fill="var(--ink)"/><rect x="29" y="23" width="22" height="32" rx="2" fill="var(--paper)"/><path d="M33 39l5 5 9-10" fill="none" stroke="var(--accent)" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    <div class="hero-text">
+      <h1>Uso Responsable de las TIC</h1>
+      <p>Pantallas sí, pero con cabeza: tiempo de uso, sueño, primer móvil, publicidad, influencers e inteligencia artificial. Todos los ejemplos, apps y personas son inventados.</p>
+    </div>
+    <div class="score" id="score">Hojas: 0</div>
+  </header>
+
+  <section class="relato" aria-labelledby="relato-t">
+    <svg class="pini" viewBox="0 0 120 150" aria-label="Pini, la mascota de Radio La Piña">
+  <path d="M60 14l6 12h-12z" fill="#5f8f3a"/>
+  <ellipse cx="60" cy="86" rx="36" ry="50" fill="#a5642f"/>
+  <g fill="none" stroke="#6e3a17" stroke-width="3" stroke-linecap="round">
+    <path d="M32 58q7 8 14 0q7 8 14 0q7 8 14 0q7 8 14 0"/>
+    <path d="M27 104q8 8 16 0q8 8 17 0q8 8 17 0q8 8 16 0"/>
+    <path d="M33 122q7 7 14 0q6 7 13 0q7 7 14 0q6 7 13 0"/>
+    <path d="M40 42q5 6 10 0q5 6 10 0q5 6 10 0q5 6 10 0"/>
+  </g>
+  <ellipse cx="48" cy="78" rx="8" ry="9" fill="#fff"/><ellipse cx="72" cy="78" rx="8" ry="9" fill="#fff"/>
+  <circle cx="50" cy="80" r="4" fill="#1d1d1d"/><circle cx="74" cy="80" r="4" fill="#1d1d1d"/>
+  <path d="M50 92q10 9 20 0" fill="none" stroke="#1d1d1d" stroke-width="3" stroke-linecap="round"/>
+  <path d="M22 76a38 42 0 0 1 76 0" fill="none" stroke="#2b2f3a" stroke-width="6"/>
+  <rect x="14" y="70" width="14" height="22" rx="5" fill="#e2553f"/><rect x="92" y="70" width="14" height="22" rx="5" fill="#e2553f"/>
+  <path d="M21 92q0 16 18 18" fill="none" stroke="#2b2f3a" stroke-width="3"/>
+  <rect x="38" y="104" width="12" height="9" rx="4" fill="#2b2f3a"/>
+</svg>
+    <div class="rt">
+      <span class="cap">Rumbo a Europa · Radio La Piña · Dinamarca</span>
+      <h2 id="relato-t">Hugo y el móvil que no dormía</h2>
+      <p>Esta semana Radio La Piña viaja a <b>Dinamarca</b>, el país del <i>hygge</i>: una palabra danesa que significa disfrutar de momentos tranquilos y agradables con la familia y los amigos, jugar, leer o pasear… muchas veces sin pantallas.</p>
+      <p>Justo ahora, Hugo, el técnico de sonido del equipo, ha recibido su <b>primer móvil</b> por su cumpleaños. Al principio todo es genial, pero a los pocos días llega a la radio con ojeras: se queda viendo vídeos hasta muy tarde, le suenan notificaciones mientras hace los deberes y ayer casi compra unas monedas de un juego sin preguntar.</p>
+      <p class="dlg">—Creo que el móvil me usa más a mí que yo a él —confiesa Hugo.</p>
+      <p class="dlg">—La tecnología es una herramienta genial —dice <span class="nw">Pini—</span>, pero hay que saber usarla: con horarios, sin dejar de dormir, de jugar fuera y de estar con la gente.</p>
+      <p>El equipo decide preparar un programa especial con un semáforo de pantallas, un horario equilibrado y un pacto para el primer móvil. ¿Nos ayudas a encontrar el <i>hygge</i> digital? <i>Hej!</i> (¡Hola, en danés!)</p>
+      <div class="reto"><b class="t">Vuestro reto: superar las misiones</b>
+        <ul>
+        <li><b>Misión 1:</b> El semáforo</li>
+        <li><b>Misión 2:</b> Mi día equilibrado</li>
+        <li><b>Misión 3:</b> Pacto del primer móvil</li>
+        <li><b>Misión 4:</b> ¿Dónde está el truco?</li>
+        <li><b>Misión 5:</b> Vídeos y juegos</li>
+        <li><b>Misión 6:</b> Examen e informe</li>
+        </ul>
+      </div>
+      <div class="indic"><b class="t">Indicadores de logro · Programación de TIAC</b>
+        <div class="cols">
+          <div><h4>5.º de Primaria</h4><ul><li><span class="crit">Crit. 1.1</span><b>1.1.4</b> Distingue en una web el contenido, la publicidad y los anuncios trampa, no pulsa los enlaces engañosos y lee los iconos y las palabras en inglés del navegador y de OneDrive (candado, pestañas, actualizar, Download, Share) y explica qué hace cada uno. <span class="do">(CCL3 · CD1 · CP1)</span></li><li><span class="crit">Crit. 4.2</span><b>4.2.2</b> Identifica qué datos personales no debe dar en un anuncio, juego o formulario y explica qué huella digital deja al hacerlo. <span class="do">(CD4 · CC2)</span></li><li><span class="crit">Crit. 4.3</span><b>4.3.4</b> Mantiene postura, distancia y pausas, cuida el material de robótica y apaga y guarda el equipo al terminar. <span class="do">(CD4)</span></li></ul></div>
+          <div><h4>6.º de Primaria</h4><ul><li><span class="crit">Crit. 4.3</span><b>4.3.1</b> Ajusta su equipo (brillo, volumen, fondo) y explica cómo cuidar la postura y el tiempo de pantalla. <span class="do">(CD4)</span></li><li><span class="crit">Crit. 5.1</span><b>5.1.2</b> Escribe a una IA una instrucción (prompt) clara con todo lo que necesita y revisa y corrige lo que propone antes de usarlo. <span class="do">(CD2 · CD3)</span></li></ul></div>
+        </div>
+      </div><!--/indic-->
+    </div>
+  </section>
+
+  <div class="ficha">
+    <label for="alNombre">Nombre y apellido<input id="alNombre" autocomplete="off" placeholder="Escribe tu nombre"></label>
+    <label for="alCurso">Curso y grupo<input id="alCurso" autocomplete="off" placeholder="Ej.: 5.º B"></label>
+  </div>
+
+  <nav class="tabs" role="tablist" id="tabs">
+    <button role="tab" data-t="semaforo" aria-selected="true"><span class="n">1</span>El semáforo</button>
+    <button role="tab" data-t="horario" aria-selected="false"><span class="n">2</span>Mi día equilibrado</button>
+    <button role="tab" data-t="pacto" aria-selected="false"><span class="n">3</span>Pacto del primer móvil</button>
+    <button role="tab" data-t="truco" aria-selected="false"><span class="n">4</span>¿Dónde está el truco?</button>
+    <button role="tab" data-t="videos" aria-selected="false"><span class="n">5</span>Vídeos y juegos</button>
+    <button role="tab" data-t="examen" aria-selected="false"><span class="n">6</span>Examen e informe</button>
+  </nav>
+
+  <section class="mission" id="m-semaforo">
+    <div class="intro"><span class="label">Misión 1 · El semáforo de las pantallas</span>
+      <h2>¿Verde, amarillo o rojo?</h2>
+      <p><span class="dot" style="background:#1d8a52"></span><b>Verde:</b> buen uso. <span class="dot" style="background:#e0a400"></span><b>Amarillo:</b> cuidado, mejor con límites o con un adulto. <span class="dot" style="background:#c43c2f"></span><b>Rojo:</b> mal uso, hay que cambiarlo.</p></div>
+    <div class="acts" id="acts"></div>
+  </section>
+
+  <section class="mission" id="m-horario" hidden>
+    <div class="intro"><span class="label">Misión 2 · Mi día equilibrado</span>
+      <h2>Reparte las 24 horas de un día de cole</h2>
+      <p>Este es el día de Hugo desde que tiene móvil. Mueve las barras para repartir mejor las horas de un día de cole. Tienen que sumar 24. Luego pulsa «Revisar mi día» y Pini te dirá cómo está tu equilibrio.</p></div>
+    <div class="planner">
+      <div class="panel"><div id="slots"></div><div class="choices"><span id="sum" style="font-weight:800"></span><button class="btn primary" id="chkDay">Revisar mi día</button></div></div>
+      <div class="panel"><svg class="clock" id="clock" viewBox="0 0 200 200" aria-label="Reparto del día"></svg><div class="legend" id="legend"></div><div id="fbDay"></div></div>
+    </div>
+  </section>
+
+  <section class="mission" id="m-pacto" hidden>
+    <div class="intro"><span class="label">Misión 3 · Pacto de mi primer móvil</span>
+      <h2>Las normas del primer móvil</h2>
+      <p>Elige las 8 normas que harían de un primer móvil algo seguro y sano. Cuidado: hay 4 trampas. Después tendrás tu pacto listo para comentarlo y firmarlo en casa.</p></div>
+    <div class="pact" id="pact"></div>
+    <div class="choices"><button class="btn primary" id="chkPact">Comprobar</button><span id="pactMsg" style="color:var(--muted)"></span></div>
+    <div id="contract"></div>
+  </section>
+
+  <section class="mission" id="m-truco" hidden>
+    <div class="intro"><span class="label">Misión 4 · ¿Dónde está el truco?</span>
+      <h2>Publicidad, influencers, juegos e inteligencia artificial</h2>
+      <p>Muchas apps y vídeos están pensados para que pases más tiempo o gastes dinero. Descubre el truco en cada pantalla.</p></div>
+    <div class="cards" id="cards"></div>
+  </section>
+
+
+  <section class="mission" id="m-videos" hidden>
+    <div class="intro"><span class="label">Misión 5 · Vídeos y juegos</span>
+      <h2>Mira, piensa y juega</h2>
+      <p>Abre cada vídeo o juego (se abre en una pestaña nueva), míralo con tu profe y responde en tu cuaderno a la pregunta. Marca la casilla al terminar: cuenta para tu informe.</p></div>
+    <div class="vids" id="vids"></div>
+  </section>
+
+
+  <section class="mission" id="m-examen" hidden>
+    <div class="intro"><span class="label">Misión 6 · Examen final</span>
+      <h2>¿Usas la tecnología con cabeza?</h2>
+      <p>Responde a las ocho preguntas. Al final verás tu diploma y el informe para tu profe.</p></div>
+    <div class="quiz" id="quiz"></div>
+    <div class="diploma" id="diploma" hidden></div>
+    <div id="informe"></div>
+  </section>
+
+  <footer>Actividad educativa. Apps, cuentas y personas de los ejemplos son ficticias. Vídeos de Smile and Learn e IS4K; tarea y clase de Lumio.</footer>
+</div>
+
+<script>
+const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
+let pts=0;const add=n=>{pts+=n;$('#score').textContent='Hojas: '+pts};
+const keyAct=(el,fn)=>{el.addEventListener('click',fn);el.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();fn(e)}})};
+
+const ACTS=[
+ ['Hacer una videollamada con tu abuela que vive lejos.','v','Las pantallas sirven para estar cerca de quien queremos.'],
+ ['Ver vídeos en la cama hasta las once de la noche.','r','La luz de la pantalla y los vídeos quitan horas de sueño. El móvil, fuera de la habitación por la noche.'],
+ ['Buscar información para un trabajo de clase con ayuda de un adulto.','v','Internet es una gran biblioteca si la usas con criterio.'],
+ ['Jugar 30 minutos a un videojuego para tu edad después de hacer los deberes.','v','Jugar está bien con tiempo limitado y juegos adecuados a tu edad (mira el PEGI).'],
+ ['Comer con la familia mirando el móvil.','a','Las comidas son para hablar y compartir. Mejor sin pantallas en la mesa.'],
+ ['Hacer los deberes con las notificaciones del móvil sonando.','a','Las notificaciones te distraen. Silencia el móvil o déjalo en otra habitación mientras estudias.'],
+ ['Descargar una app nueva sin preguntar en casa.','r','Siempre con permiso: algunas apps piden datos, tienen compras o no son para tu edad.'],
+ ['Pasar toda la tarde del sábado viendo vídeos sin parar.','r','Demasiadas horas seguidas. Alterna con deporte, juego al aire libre y amigos.'],
+ ['Usar una app para aprender inglés 15 minutos al día.','v','Un uso corto y con un objetivo es un buen uso.'],
+ ['Consultar a un chat de inteligencia artificial cuando estás triste en vez de hablar con alguien.','a','La IA puede dar información, pero cuando estás triste lo mejor es hablar con una persona de confianza.']
+];
+const SEM={v:['Verde','#1d8a52'],a:['Amarillo','#e0a400'],r:['Rojo','#c43c2f']};
+const res1={};const fails1=[];
+const SL=[['dormir','😴 Dormir','#5b6bd6',7],['cole','🏫 Cole','#8a6d3b',5],['deberes','📚 Deberes y lectura','#2f8f5b',1],['deporte','⚽ Deporte y aire libre','#e08a1e',0],['familia','👨‍👩‍👧 Familia, amigos y comidas','#c8102e',2],['pantallas','📱 Pantallas de ocio','#20232b',5],['otros','🧩 Aseo, trayectos y otros','#999',4]];
+let dayDone=false,dayOk=0;const dayFails=[];
+const PACT=[
+ ['Por la noche, el móvil duerme fuera de mi habitación.',1],['Mis padres o tutores conocen mis contraseñas.',1],['Pido permiso antes de descargar una app o comprar algo.',1],
+ ['Tenemos un horario para usar el móvil.',1],['En las comidas y en la cama, sin móvil.',1],['Si veo algo que me incomoda o me da miedo, se lo cuento a un adulto.',1],
+ ['No comparto fotos de otras personas sin su permiso.',1],['Solo hablo con personas que conozco en la vida real.',1],
+ ['Puedo usar el móvil todo el tiempo que quiera si saco buenas notas.',0],['Acepto a cualquier persona que me escriba, cuantos más contactos mejor.',0],['Me llevo el móvil a la cama para usarlo de despertador y ver vídeos.',0],['Guardo mis contraseñas en secreto, sin que nadie de casa las sepa.',0]
+].map((r,i)=>[...r,i]).sort(()=>Math.random()-.5);
+const pick3=new Set();let p3done=false,p3ok=0;
+const CARDS=[
+ {tag:'#publi',scr:'<b>@SuperLuna_vlogs</b><span>«¡Estas zapatillas son LAS MEJORES del mundo! Corred a comprarlas 👟✨»</span><small>1,2 M de visualizaciones</small>',q:'¿Qué está pasando?',o:['Luna da su opinión sincera','Es un anuncio: una marca le paga para recomendarlas','Es un vídeo de deportes'],a:1,why:'Cuando ves #publi, #ad o «colaboración pagada», es publicidad. Los influencers también cobran por anunciar.'},
+ {tag:'Tienda del juego',scr:'<b>¡Cofre legendario!</b><span>Puede tocarte una skin épica… o no. Solo 4,99 €. ¡Quedan 2 minutos!</span><small>Oferta por tiempo limitado</small>',q:'¿Dónde está el truco?',o:['Es un regalo','Pagas sin saber qué te va a tocar y con prisa: es parecido a una apuesta','Es gratis'],a:1,why:'Los «cofres» o cajas sorpresa enganchan como un juego de azar. Nunca compres sin permiso de casa.'},
+ {tag:'Vídeos automáticos',scr:'<b>Siguiente vídeo en 3…2…1…</b><span>Reproducción automática activada · Llevas 2 h 15 min</span><small>Desliza para ver más</small>',q:'¿Por qué es difícil dejar de ver vídeos?',o:['Porque los vídeos se acaban enseguida','Porque la app pone el siguiente vídeo sola para que no pares','Porque es obligatorio verlos'],a:1,why:'La reproducción automática y el «deslizar sin fin» están pensados para que sigas mirando. Ponte un tiempo y desactiva la reproducción automática con un adulto.'},
+ {tag:'App «gratis»',scr:'<b>DinoRun · GRATIS</b><span>Contiene anuncios · Ofrece compras dentro de la aplicación</span><small>Pide acceso a: ubicación, contactos, cámara</small>',q:'¿Qué deberías mirar antes de instalarla?',o:['Nada, es gratis','Que tiene compras, anuncios y pide permisos que no necesita: pregunto en casa','Solo el color del icono'],a:1,why:'«Gratis» no siempre es gratis: a veces pagas con tus datos o con compras dentro. Un juego de dinosaurios no necesita tus contactos.'},
+ {tag:'Chat con IA',scr:'<b>Asistente IA</b><span>«Claro, te hago los deberes enteros. Copia esto y entrégalo.»</span><small>Las respuestas pueden contener errores</small>',q:'¿Cuál es el buen uso de la inteligencia artificial?',o:['Copiar lo que dice y entregarlo','Usarla con un adulto para entender algo, comprobar lo que dice y hacer yo el trabajo','Creerme todo lo que responde'],a:1,why:'La IA puede equivocarse y no aprende por ti. Úsala como ayuda, con un adulto, y comprueba siempre lo que dice.'},
+ {tag:'Notificación',scr:'<b>🔴 ¡Tu racha se perderá!</b><span>Entra ahora o perderás tu racha de 45 días 🔥</span><small>22:47</small>',q:'¿Qué busca este aviso?',o:['Ayudarte a dormir','Que entres a la app aunque sea tarde, metiéndote miedo a perder algo','Avisarte de algo importante'],a:1,why:'Rachas, puntos y alarmas son trucos para engancharte. Puedes silenciar las notificaciones y nada malo pasará.'}
+];
+const res4={};const fails4=[];
+function clock(){
+  const v=SL.map(s=>+$('#sl-'+s[0]).value);let a=-Math.PI/2,paths='';const tot=v.reduce((x,y)=>x+y,0)||1;
+  SL.forEach((s,i)=>{const ang=v[i]/24*2*Math.PI;if(v[i]>0){const x1=100+90*Math.cos(a),y1=100+90*Math.sin(a),a2=a+ang,x2=100+90*Math.cos(a2),y2=100+90*Math.sin(a2);
+    paths+=v[i]>=24?`<circle cx="100" cy="100" r="90" fill="${s[2]}"/>`:`<path d="M100 100L${x1.toFixed(1)} ${y1.toFixed(1)}A90 90 0 ${ang>Math.PI?1:0} 1 ${x2.toFixed(1)} ${y2.toFixed(1)}Z" fill="${s[2]}"/>`;a=a2}});
+  const sum=v.reduce((x,y)=>x+y,0);
+  $('#clock').innerHTML=paths+`<circle cx="100" cy="100" r="42" fill="var(--paper)"/><text x="100" y="98" text-anchor="middle" font-size="22" font-weight="800" fill="var(--ink)" font-family="Fredoka,Arial">${sum} h</text><text x="100" y="118" text-anchor="middle" font-size="11" fill="var(--muted)" font-family="Arial">de 24 h</text>`;
+  $('#sum').textContent=`Total: ${sum} h de 24`;$('#sum').style.color=sum===24?'var(--ok)':'var(--bad)';
+  SL.forEach((s,i)=>$('#o-'+s[0]).textContent=v[i]+' h');
+}
+function init(){
+  $('#acts').innerHTML=ACTS.map((a,i)=>`<div class="act"><p class="s">${a[0]}</p><div class="sem">${['v','a','r'].map(k=>`<button data-i="${i}" data-k="${k}" style="border-color:${SEM[k][1]}"><span class="dot" style="background:${SEM[k][1]}"></span>${SEM[k][0]}</button>`).join('')}</div><div id="f1-${i}"></div></div>`).join('');
+  $$('#acts .sem button').forEach(b=>b.onclick=()=>{const i=+b.dataset.i,a=ACTS[i];if(res1[i]!==undefined)return;const ok=b.dataset.k===a[1];res1[i]=ok;if(ok)add(3);else fails1.push(`«${a[0]}»: dijo ${SEM[b.dataset.k][0].toLowerCase()} y era ${SEM[a[1]][0].toLowerCase()}`);
+    b.parentElement.querySelectorAll('button').forEach(x=>{x.disabled=true;if(x.dataset.k===a[1])x.classList.add('r')});if(!ok)b.classList.add('w');
+    $('#f1-'+i).innerHTML=`<div class="feedback ${ok?'right':'wrong'}"><strong>${SEM[a[1]][0]}</strong><span>${a[2]}</span></div>`});
+  $('#slots').innerHTML=SL.map(s=>`<div class="slot"><label for="sl-${s[0]}"><span class="dot" style="background:${s[2]}"></span>${s[1]}</label><input type="range" id="sl-${s[0]}" min="0" max="14" step="1" value="${s[3]}"><output id="o-${s[0]}"></output></div>`).join('');
+  $('#legend').innerHTML=SL.map(s=>`<span><span class="dot" style="background:${s[2]}"></span>${s[1].replace(/^\S+\s/,'')}</span>`).join('');
+  SL.forEach(s=>$('#sl-'+s[0]).addEventListener('input',clock));clock();
+  $('#chkDay').onclick=()=>{const g=k=>+$('#sl-'+k).value;const sum=SL.reduce((x,s)=>x+g(s[0]),0);
+    if(sum!==24){$('#fbDay').innerHTML=`<div class="feedback wrong"><span>Tu día tiene ${sum} horas. Ajusta las barras hasta que sumen exactamente 24.</span></div>`;return}
+    const C=[[g('dormir')>=9&&g('dormir')<=12,'Duermes entre 9 y 12 horas, lo que se recomienda a tu edad.','Duerme más: a tu edad se recomiendan entre 9 y 12 horas.'],
+      [g('pantallas')<=2,'El ocio con pantallas no pasa de 2 horas.','Demasiadas pantallas de ocio: muchos pediatras aconsejan no pasar de 1 o 2 horas al día.'],
+      [g('deporte')>=1,'Haces al menos 1 hora de deporte o juego al aire libre.','Muévete más: al menos una hora al día de actividad física.'],
+      [g('familia')>=2,'Tienes tiempo para la familia y los amigos.','Reserva más tiempo para estar con tu familia y tus amigos.'],
+      [g('deberes')>=1,'Tienes un rato para los deberes y la lectura.','Guarda un rato para los deberes y para leer.']];
+    const was=dayDone;dayDone=true;dayOk=C.filter(c=>c[0]).length;dayFails.length=0;C.filter(c=>!c[0]).forEach(c=>dayFails.push(c[2]));
+    if(!was)add(dayOk*3);
+    $('#fbDay').innerHTML=`<div class="feedback ${dayOk===5?'right':'wrong'}"><strong>Equilibrio: ${dayOk} de 5</strong><ul>${C.map(c=>`<li>${c[0]?'✔ '+c[1]:'✖ '+c[2]}</li>`).join('')}</ul></div>`};
+  $('#pact').innerHTML=PACT.map(r=>`<button class="prule" aria-pressed="false" data-r="${r[2]}"><span class="bx"></span><span>${r[0]}</span></button>`).join('');
+  $$('#pact .prule').forEach(b=>b.onclick=()=>{if(p3done)return;const i=+b.dataset.r;if(pick3.has(i))pick3.delete(i);else pick3.add(i);b.setAttribute('aria-pressed',pick3.has(i));b.querySelector('.bx').textContent=pick3.has(i)?'✓':'';$('#pactMsg').textContent=`${pick3.size} de 8 elegidas`});
+  $('#chkPact').onclick=()=>{if(p3done)return;if(pick3.size!==8){$('#pactMsg').textContent='Elige exactamente 8 normas.';return}
+    p3done=true;const byId=Object.fromEntries(PACT.map(r=>[r[2],r]));p3ok=[...pick3].filter(i=>byId[i][1]).length;add(p3ok*2);
+    $$('#pact .prule').forEach(b=>{const i=+b.dataset.r,good=byId[i][1];if(pick3.has(i))b.classList.add(good?'r':'w');else if(good)b.classList.add('r')});
+    $('#pactMsg').textContent=`Has acertado ${p3ok} de 8. En verde, las normas del buen pacto.`;
+    const nom=$('#alNombre').value.trim()||'________________';
+    $('#contract').innerHTML=`<div class="contract"><span class="label">Para comentar y firmar en casa</span><h3>Pacto de mi primer móvil</h3><p>Yo, <b>${esc(nom)}</b>, y mi familia acordamos estas normas:</p><ol>${PACT.filter(r=>r[1]).map(r=>`<li>${r[0]}</li>`).join('')}</ol><p style="color:var(--muted);font-size:.9rem">Revisaremos el pacto juntos cada pocos meses.</p><div class="sig"><span>Firma del alumno/a</span><span>Firma de la familia</span></div></div>`};
+  $('#cards').innerHTML=CARDS.map((c,i)=>`<div class="card"><div class="scr"><span class="tag">${c.tag}</span>${c.scr}</div><div class="bd"><p style="font-weight:800">${c.q}</p><div class="opts">${c.o.map((o,j)=>`<button data-c="${i}" data-o="${j}">${o}</button>`).join('')}</div><div id="f4-${i}"></div></div></div>`).join('');
+  $$('#cards .opts button').forEach(b=>b.onclick=()=>{const i=+b.dataset.c,c=CARDS[i],ok=+b.dataset.o===c.a;res4[i]=ok;if(ok)add(4);else fails4.push(`${c.tag}: eligió «${c.o[+b.dataset.o]}»`);
+    [...b.parentElement.children].forEach((x,j)=>{x.disabled=true;if(j===c.a)x.classList.add('r')});if(!ok)b.classList.add('w');
+    $('#f4-'+i).innerHTML=`<div class="feedback ${ok?'right':'wrong'}"><strong>${ok?'¡Truco descubierto!':'Ese no era.'}</strong><span>${c.why}</span></div>`});
+}
+const QUIZ=[
+ ['¿Dónde debería dormir el móvil por la noche?',['En mi cama, por si acaso','Fuera de mi habitación','Debajo de la almohada'],1],
+ ['¿Cuántas horas se recomienda dormir a tu edad?',['Entre 5 y 6','Entre 9 y 12','Entre 14 y 16'],1],
+ ['Un vídeo tiene la etiqueta #publi. ¿Qué significa?',['Que es público','Que es un anuncio pagado','Que es un vídeo nuevo'],1],
+ ['¿Qué haces antes de descargar una app nueva?',['Pido permiso en casa','La descargo si es gratis','Acepto todos los permisos'],0],
+ ['Te suenan notificaciones mientras haces los deberes.',['Las miro todas','Silencio el móvil o lo dejo en otra habitación','Contesto rápido a todo'],1],
+ ['¿Cuál es un buen uso de la inteligencia artificial?',['Que me haga los deberes','Usarla con un adulto para entender algo y comprobar lo que dice','Creerme todo lo que dice'],1],
+ ['¿Qué significa «hygge»?',['Un juego de móvil danés','Disfrutar de momentos tranquilos con los demás, muchas veces sin pantallas','Un tipo de teléfono'],1],
+ ['Un juego te ofrece un «cofre sorpresa» por 4,99 €. ¿Qué haces?',['Lo compro rápido','No compro nada sin permiso: es parecido a una apuesta','Uso la tarjeta de mis padres sin decir nada'],1]
+];
+const LEVELS=['Maestro/a del hygge digital','Usuario/a responsable','Aprendiz digital'];
+const DIPLOMA_SVG='<svg width="70" height="70" viewBox="0 0 80 80" aria-hidden="true"><circle cx="40" cy="40" r="36" fill="var(--tram)"/><path d="M24 41l11 11 22-24" fill="none" stroke="var(--tram-ink)" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+
+const VIDS=[{"src": "Lumio · tarea con evaluación", "t": "Uso responsable de la tecnología: primer móvil, ciberbullying, fake news y privacidad", "url": "https://lum.io/student/assign/30d9503e-d04c-484d-a197-406e4aaeeec9", "q": "Inicia sesión con tu cuenta del centro, haz la tarea y completa la evaluación del final.", "kind": "tarea"}, {"src": "Smile and Learn", "t": "Uso responsable de la tecnología: primer móvil, ciberbullying, fake news y privacidad", "url": "https://www.youtube.com/watch?v=tBObvkx_nOg", "q": "Elige una de las partes del vídeo y escribe una norma para tu clase.", "kind": "video"}, {"src": "IS4K · Internet Segura for Kids", "t": "El móvil no es un juguete", "url": "https://www.youtube.com/watch?v=e4VET8PPJp4", "q": "¿Qué responsabilidades tiene tener un móvil?", "kind": "video"}, {"src": "IS4K · Internet Segura for Kids", "t": "Uso excesivo de pantallas y la gestión del tiempo", "url": "https://www.youtube.com/watch?v=ThsXrbHbvIY", "q": "¿Qué señales indican que usamos demasiado las pantallas?", "kind": "video"}, {"src": "IS4K · Internet Segura for Kids", "t": "Prevención del uso excesivo en internet", "url": "https://www.youtube.com/watch?v=1ln9lnTYsvs", "q": "Escribe dos trucos para desconectar a tiempo.", "kind": "video"}, {"src": "IS4K · Internet Segura for Kids", "t": "Publicidad y menores en los vídeos en internet", "url": "https://www.youtube.com/watch?v=x6cUjAOSAaI", "q": "¿Cómo puedes saber si un vídeo es publicidad?", "kind": "video"}, {"src": "Smile and Learn", "t": "Influencers para niños: pensamiento crítico", "url": "https://www.youtube.com/watch?v=yyQuyJObd_4", "q": "¿Todo lo que enseña un influencer es real? ¿Por qué?", "kind": "video"}, {"src": "Smile and Learn", "t": "¿Puede una IA ser tu mejor apoyo emocional?", "url": "https://www.youtube.com/watch?v=Onwa-KpjGN0", "q": "¿Con quién es mejor hablar cuando estás triste?", "kind": "video"}, {"src": "Smile and Learn", "t": "Privacidad online para niños", "url": "https://www.youtube.com/watch?v=rHDTJQKW2y8", "q": "¿Qué datos tuyos nunca deberías compartir en internet?", "kind": "video"}, {"src": "Google · Sé genial en Internet", "t": "Juego Interland", "url": "https://beinternetawesome.withgoogle.com/es_es/interland", "q": "Juega a los cuatro mundos de Interland y apunta cuál te costó más.", "kind": "game"}, {"src": "Lumio · clase en directo", "t": "Entra en la clase de Lumio (ID 835883)", "url": "https://www.lumioclass.com/link/835883", "q": "Úsalo cuando tu profe abra la clase en directo en la pizarra.", "kind": "clase"}];
+const seenV={};
+(function(){const PLAY='<svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z" fill="currentColor"/></svg>';
+ const lab={video:'Vídeo',game:'Juego',lumio:'Lumio',tarea:'⭐ Tarea obligatoria con evaluación',clase:'Clase Lumio'},btn={video:PLAY+' Ver vídeo',game:'🎮 Jugar',lumio:'📒 Abrir en Lumio',tarea:'📒 Abrir la tarea',clase:'🏫 Entrar en la clase'},ckl={game:'He jugado',tarea:'He hecho la tarea y la evaluación',clase:'He entrado en la clase'};
+ document.querySelector('#vids').innerHTML=VIDS.map((v,i)=>`<div class="vid ${v.kind==='tarea'?'tarea':''}" id="v-${i}"><span class="src">${v.src}</span><span class="kindtag">${lab[v.kind]}</span><h3>${v.t}</h3><a class="go" href="${v.url}" target="_blank" rel="noopener">${btn[v.kind]}</a><p class="q"><b>Piensa:</b> ${v.q}</p><label class="ck" for="ck-${i}"><input type="checkbox" id="ck-${i}">${ckl[v.kind]||'Lo he visto'}</label></div>`).join('');
+ VIDS.forEach((v,i)=>document.querySelector('#ck-'+i).addEventListener('change',e=>{seenV[i]=e.target.checked;document.querySelector('#v-'+i).classList.toggle('seen',e.target.checked);if(typeof onVidChange==='function')onVidChange()}));})();
+function vidRow(label){const L=VIDS.map((v,i)=>[v,i]).filter(x=>x[0].kind!=='clase');const n=L.filter(x=>seenV[x[1]]).length;return {name:label,ok:n,max:L.length,done:n===L.length,fails:L.filter(x=>!seenV[x[1]]).map(([v])=>(v.kind==='tarea'?'Tarea Lumio sin hacer: ':'Sin marcar: ')+v.t)}}
+
+function onVidChange(){}
+
+const res6={};let q6=0;
+$('#quiz').innerHTML=QUIZ.map((q,i)=>`<div class="qitem"><p class="qq">${i+1}. ${q[0]}</p><div class="opts">${q[1].map((o,j)=>`<button data-q="${i}" data-o="${j}">${o}</button>`).join('')}</div></div>`).join('');
+$$('#quiz .opts button').forEach(b=>b.onclick=()=>{
+  const q=QUIZ[+b.dataset.q],ok=+b.dataset.o===q[2];res6[b.dataset.q]=ok;
+  [...b.parentElement.children].forEach((x,j)=>{x.disabled=true;if(j===q[2])x.classList.add('r')});
+  if(ok)add(5);else b.classList.add('w');
+  if(++q6===QUIZ.length){const okN=Object.values(res6).filter(Boolean).length;const d=$('#diploma');d.hidden=false;
+    const lvl=okN>=7?LEVELS[0]:okN>=5?LEVELS[1]:LEVELS[2];
+    d.innerHTML=`${DIPLOMA_SVG}<h3>Diploma de ${lvl}</h3><p>Examen: ${okN} de ${QUIZ.length} · Total: <b>${pts}</b></p>`}
+  setTimeout(renderInforme);
+});
+
+/* ---------- Informe para el profe ---------- */
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function initInforme(){['alNombre','alCurso'].forEach(id=>{const el=$('#'+id);try{el.value=localStorage.getItem(STORE+id)||''}catch(e){}
+  el.addEventListener('input',()=>{try{localStorage.setItem(STORE+id,el.value)}catch(e){};renderInforme()})})}
+function renderInforme(){
+  const rows=informeRows(),nomRaw=$('#alNombre').value.trim(),nom=nomRaw||'(sin nombre)',cur=$('#alCurso').value.trim()||'(sin curso)';
+  let ok=0,max=0;rows.forEach(r=>{ok+=r.ok;max+=r.max});const all=rows.every(r=>r.done);
+  const d=new Date(),fecha=d.toLocaleDateString('es-ES')+' '+d.toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'});
+  let t=`INFORME: ${TITULO}\nAlumno/a: ${nom}\nCurso: ${cur}\nFecha: ${fecha}\nAciertos: ${ok}/${max}${all?'':' (sin terminar)'} · ${PUNTOS()}\n\n`;
+  rows.forEach(r=>{t+=`- ${r.name}: ${r.ok}/${r.max}${r.done?'':' (sin terminar)'}\n`;r.fails.forEach(f=>t+=`    · ${f}\n`)});
+  $('#informe').innerHTML=`<h3>Informe para tu profe</h3>
+   ${nomRaw?'':'<div class="feedback wrong"><span>Escribe tu nombre y curso arriba, en la ficha, antes de entregar.</span></div>'}
+   <div class="rwrap"><table class="rtable"><thead><tr><th>Misión</th><th>Aciertos</th><th>A repasar</th></tr></thead><tbody>${rows.map(r=>`<tr><td>${r.name}${r.done?'':' <span class="pend">pendiente</span>'}</td><td>${r.ok} / ${r.max}</td><td class="rf">${r.fails.length?r.fails.map(esc).join('<br>'):'—'}</td></tr>`).join('')}</tbody></table></div>
+   <div class="copybox" id="copybox">${esc(t)}</div>
+   <div class="cbar"><button class="btn primary" id="copyBtn">Copiar informe</button><span id="copyMsg" class="cmsg"></span></div>
+   <div class="tip">Pega el informe en un correo a tu profe con el asunto «${TITULO} – ${esc(nom)}», o donde te diga tu profe.</div>`;
+  $('#copyBtn').onclick=()=>{const sel=()=>{const r=document.createRange();r.selectNodeContents($('#copybox'));const s=getSelection();s.removeAllRanges();s.addRange(r);$('#copyMsg').textContent='Texto seleccionado: pulsa Ctrl + C para copiarlo.'};
+    try{navigator.clipboard.writeText(t).then(()=>{$('#copyMsg').textContent='¡Copiado! Pégalo con Ctrl + V.'},sel)}catch(e){sel()}};
+}
+
+const STORE='tic-',TITULO='Uso Responsable de las TIC',PUNTOS=()=>'Hojas: '+pts;
+initInforme();
+function informeRows(){
+  const cnt=o=>Object.values(o).filter(x=>x===true).length,ans=o=>Object.values(o).filter(x=>x!==undefined).length;
+  return [
+   {name:'1. El semáforo',ok:cnt(res1),max:ACTS.length,done:ans(res1)===ACTS.length,fails:fails1},
+   {name:'2. Mi día equilibrado',ok:dayOk,max:5,done:dayDone,fails:dayDone?dayFails.slice():['Sin revisar']},
+   {name:'3. Pacto del primer móvil',ok:p3ok,max:8,done:p3done,fails:p3done?[...pick3].filter(i=>!PACT.find(r=>r[2]===i)[1]).map(i=>'Eligió una trampa: '+PACT.find(r=>r[2]===i)[0]):['Sin comprobar']},
+   {name:'4. ¿Dónde está el truco?',ok:cnt(res4),max:CARDS.length,done:ans(res4)===CARDS.length,fails:fails4},
+   vidRow('5. Vídeos y juegos'),
+   {name:'6. Examen final',ok:cnt(res6),max:QUIZ.length,done:ans(res6)===QUIZ.length,fails:QUIZ.filter((q,i)=>res6[i]===false).map(q=>'Falló: '+q[0])}
+  ];
+}
+const ids=['semaforo','horario','pacto','truco','videos','examen'];
+function show(t){
+  if(!ids.includes(t))t=ids[0];
+  ids.forEach(x=>$('#m-'+x).hidden=x!==t);
+  document.querySelector('.relato').hidden=t!==ids[0];
+  $$('#tabs button').forEach(b=>b.setAttribute('aria-selected',b.dataset.t===t));
+  if(location.hash!=='#'+t)history.replaceState(null,'','#'+t);
+  if(t==='examen')renderInforme();
+  scrollTo({top:0});
+}
+$$('#tabs button').forEach(b=>b.onclick=()=>show(b.dataset.t));
+addEventListener('hashchange',()=>show(location.hash.slice(1)));
+init();show(location.hash.slice(1));
+
+
+/* ---------- Valoración de indicadores y llave ---------- */
+const VAL_CFG={"pre": "TIC", "i5": [["1.1.4", [3], "Distingue en una web el contenido, la publicidad y los anuncios trampa, no pulsa los enlaces engañosos y lee los iconos y las palabras en inglés del navegador y de OneDrive (candado, pestañas, actualizar, Download, Share) y explica qué hace cada uno.", "CCL3 · CD1 · CP1"], ["4.2.2", [3, 2], "Identifica qué datos personales no debe dar en un anuncio, juego o formulario y explica qué huella digital deja al hacerlo.", "CD4 · CC2"], ["4.3.4", [0, 1], "Mantiene postura, distancia y pausas, cuida el material de robótica y apaga y guarda el equipo al terminar.", "CD4"]], "i6": [["4.3.1", [0, 1], "Ajusta su equipo (brillo, volumen, fondo) y explica cómo cuidar la postura y el tiempo de pantalla.", "CD4"], ["5.1.2", [3], "Escribe a una IA una instrucción (prompt) clara con todo lo que necesita y revisa y corrige lo que propone antes de usarlo.", "CD2 · CD3"]], "vid": 4, "exam": 5};
+function valRows(){return typeof informeRows==='function'?informeRows():Object.values(R)}
+function valScore(rows,idx){let ok=0,max=0,att=false;idx.forEach(i=>{const r=rows[i];if(!r)return;ok+=r.ok;max+=r.max;if(r.ok>0||r.done)att=true});return att?Math.max(1,Math.round(5*ok/(max||1))):0}
+function valAll(){const rows=valRows();return {rows,s5:VAL_CFG.i5.map(x=>valScore(rows,x[1])),s6:VAL_CFG.i6.map(x=>valScore(rows,x[1]))}}
+function valComplete(rows){return rows.every((r,i)=>i===VAL_CFG.vid||r.done)}
+function valKey(v){const ex=VAL_CFG.exam!=null&&v.rows[VAL_CFG.exam]?v.rows[VAL_CFG.exam].ok:0;const raw=VAL_CFG.pre+'-'+v.s5.join('')+'-'+v.s6.join('')+'-'+ex;let h=0;for(let i=0;i<raw.length;i++)h=(h+raw.charCodeAt(i)*(i+7))%1296;return raw+'-'+h.toString(36).toUpperCase().padStart(2,'0')}
+function valCourse(){const c=(document.querySelector('#alCurso')||{}).value||'';return /6/.test(c)?'6':/5/.test(c)?'5':''}
+function valEsc(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
+function appendVal(){
+  const host=document.querySelector('#informe')||document.querySelector('#report');if(!host)return;
+  const old=host.querySelector('.valora');if(old)old.remove();
+  const v=valAll(),c=valCourse(),done=valComplete(v.rows),key=done?valKey(v):'';
+  const bar=n=>`<span class="vbar">${[1,2,3,4,5].map(i=>`<i class="${i<=n?'on':''}"></i>`).join('')}</span>`;
+  const tab=(k,list,sc)=>`<div><h4>${k}.º de Primaria</h4><table class="rtable"><thead><tr><th>Indicador</th><th>0-5</th></tr></thead><tbody>${list.map((x,i)=>`<tr><td><b>${x[0]}</b> ${valEsc(x[2])} <span style="color:var(--muted)">(${x[3]})</span></td><td><span class="vstar">${sc[i]}</span>${bar(sc[i])}</td></tr>`).join('')}</tbody></table></div>`;
+  const cols=(c!=='6'?tab(5,VAL_CFG.i5,v.s5):'')+(c!=='5'?tab(6,VAL_CFG.i6,v.s6):'');
+  const div=document.createElement('div');div.className='valora';
+  div.innerHTML=`<h3>Valoración de los indicadores de logro</h3><p style="font-size:.88rem;color:var(--muted)">Escala de 0 a 5: 0 = no realizado; 5 = realizado con éxito. Es una estimación automática a partir de las misiones relacionadas; tu profe la revisará.${c?'':' Escribe tu curso en la ficha para ver solo el tuyo.'}</p><div class="cols">${cols}</div>
+   <div class="llave">${done?`<b>🔑 ¡Has conseguido la llave de esta web!</b><code>${key}</code><span style="font-size:.88rem">Ya está guardada: vuelve al rincón Piensa de Rumbo a Europa y envía tus notas.</span><a href="../#piensa" style="align-self:flex-start;font-weight:700;color:var(--accent)">Volver al rincón Piensa · Pasaporte TIC ↗</a>`:`<b>🔒 Llave todavía cerrada</b><span style="font-size:.88rem">Termina todas las misiones${VAL_CFG.exam!=null?' y el examen final':''} (los vídeos no son obligatorios) para conseguir la llave de la siguiente parada.</span>`}</div>`;
+  const cb=host.querySelector('#copybox');
+  if(cb){host.insertBefore(div,cb.previousElementSibling&&cb.previousElementSibling.tagName==='H3'?cb.previousElementSibling:cb);
+    let t=cb.textContent.replace(/\nVALORACIÓN DE INDICADORES[\s\S]*$/,'');
+    t+='\nVALORACIÓN DE INDICADORES (0-5)\n'+(c!=='6'?VAL_CFG.i5.map((x,i)=>`  5.º ${x[0]}: ${v.s5[i]}`).join('\n')+'\n':'')+(c!=='5'?VAL_CFG.i6.map((x,i)=>`  6.º ${x[0]}: ${v.s6[i]}`).join('\n')+'\n':'')+'LLAVE: '+(key||'(sin conseguir)')+'\n';
+    cb.textContent=t;
+    const btn=host.querySelector('#copyBtn'),msg=host.querySelector('#copyMsg');
+    if(btn)btn.onclick=()=>{const sel=()=>{const r=document.createRange();r.selectNodeContents(cb);const s=getSelection();s.removeAllRanges();s.addRange(r);if(msg)msg.textContent='Texto seleccionado: pulsa Ctrl + C para copiarlo.'};try{navigator.clipboard.writeText(cb.textContent).then(()=>{if(msg)msg.textContent='¡Copiado! Pégalo con Ctrl + V.'},sel)}catch(e){sel()}};
+  }else host.appendChild(div);
+}
+(function(){
+  if(typeof renderInforme==='function'){const o=renderInforme;renderInforme=function(){o();appendVal()}}
+  else if(typeof renderReport==='function'){const o=renderReport;renderReport=function(){o();appendVal()}}
+})();
+</script>
+
+<script>
+/* Rumbo a Europa: rellena nombre y curso con los datos de la web y guarda la llave en el rincón Piensa */
+(function(){
+  try{
+    var a=(JSON.parse(localStorage.getItem("rumbo-a-europa-v1")||"{}")||{}).alumno||{};
+    [["alNombre",a.nombre],["alCurso",a.clase]].forEach(function(p){var el=document.getElementById(p[0]);if(el&&p[1]&&!el.value.trim()){el.value=p[1];el.dispatchEvent(new Event("input",{bubbles:true}));el.dispatchEvent(new Event("change",{bubbles:true}));}});
+  }catch(e){}
+  if(typeof valKey==="function"){
+    var orig=valKey;
+    valKey=function(v){var k=orig(v);try{var g=JSON.parse(localStorage.getItem("rumbo-piensa-llaves")||"{}")||{};var done=typeof valComplete==="function"?valComplete(v.rows):true;g[VAL_CFG.pre]={llave:k,completa:!!done,fecha:new Date().toISOString()};localStorage.setItem("rumbo-piensa-llaves",JSON.stringify(g));}catch(e){}return k;};
+  }
+})();
+</script>
+</body></html>

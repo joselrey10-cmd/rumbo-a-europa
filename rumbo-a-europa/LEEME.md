@@ -12,6 +12,20 @@ Pini camina de frente, de lado o de espaldas según hacia dónde vaya. El editor
 (Google, licencia Apache 2.0) y viene incluido en `js/vendor/`, así que no depende de ninguna web externa. Con menos bloques se consiguen más estrellas, y las versiones de Pini
 (con gafas, futbolista y granjero) se desbloquean al completar destinos. El progreso se guarda en el navegador.
 
+## Rincones TIC (portada)
+La web se abre en **Rincones**: el alumno escribe su nombre, su **usuario de Educacyl** y elige su **curso**
+(5ºA, 5ºB, 6ºA o 6ºB). El curso decide qué indicadores ve: los de 5.º o los de 6.º. Hay cuatro rincones:
+- **Crea**: los retos de las sesiones 1 y 2 de cada SA (Word, PDF y correo, Excel, Canva, pódcast), con ruta
+  sencilla, intermedia o avanzada y ExtraTIC. Datos en `js/rincones-datos.js` (`CREA`).
+- **Programa**: los 17 destinos de Rumbo a Europa (pantalla de Programación).
+- **Robótica**: los retos de Robot, SPIKE Essential y SPIKE Prime.
+- **Piensa**: las 10 paradas del Pasaporte TIC, copiadas en la carpeta `piensa/`. Al terminar una actividad su
+  llave se guarda sola y, al volver al rincón, pone las notas de cada indicador (también se puede pegar la llave).
+
+En cada actividad se elige una nota de 0 a 5 por indicador y se pulsa **Enviar notas**: se manda una fila por
+indicador a la misma hoja de Google. En Programa y Robótica la nota se pone sola al jugar; en **Mis notas** se
+puede revisar y volver a enviar. El Excel de la portada recoge los cuatro rincones.
+
 ## Pantalla de Robótica
 En el menú de arriba hay dos pantallas: **Programación · Rumbo a Europa** (el juego con Pini) y **Robótica**.
 En Robótica se programa un robot sobre un mapa de Europa con todos los países, dividido en 6 × 6 casillas de 15 × 15 cm.
@@ -70,8 +84,8 @@ en la pantalla de la actividad y en la ventana final.
 
 ## Registrar los resultados del alumnado (Hoja de Google)
 Cada vez que un alumno supera un destino (o un reto de Robótica), el juego puede apuntar en una hoja de cálculo:
-fecha, nombre, clase, destino, ciudad, estrellas, bloques usados, intentos (veces que pulsó Ejecutar),
-personaje, el programa que hizo, el número de indicador y la valoración de 0 a 5. Solo se piden nombre de pila y clase; no pidáis más datos personales.
+fecha, nombre, usuario de Educacyl, clase, destino, ciudad, estrellas, bloques usados, intentos (veces que pulsó Ejecutar),
+personaje, el programa que hizo, el número de indicador y la valoración de 0 a 5. Se piden nombre, usuario de Educacyl y curso; no pidáis más datos personales.
 
 1. Crea una hoja nueva en https://sheets.new (por ejemplo "Rumbo a Europa · Resultados").
 2. Menú **Extensiones → Apps Script**. Borra lo que haya y pega el contenido de `registro-google-apps-script.gs`. Guarda.
