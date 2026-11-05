@@ -25,6 +25,7 @@ function doPost(e) {
   const pedido = JSON.parse(e.postData.contents);
   if (pedido.accion === "datos") return datosProfe(libro, pedido);
   if (pedido.accion === "importar") return importarAlumnado(libro, pedido);
+  if (pedido.accion === "borrar") return borrarAlumno(libro, pedido);
   if (pedido.accion === "autoevaluacion") return guardarAutoevaluacion(libro, pedido);
   if (pedido.accion === "familiaCodigo") return familiaCodigo(libro, pedido);
   if (pedido.accion === "familiaDatos") return familiaDatos(libro, pedido);
@@ -103,6 +104,8 @@ function guardarAutoevaluacion(libro, d) {
       if (!col) { cab.push(t); col = cab.length; h.getRange(1, col).setValue(t).setFontWeight("bold"); }
       h.getRange(fila, col).setValue(n);
     });
+    SpreadsheetApp.flush();
+    ordenarHoja(libro, "Autoevaluación", 1, 2, 3);
     return ContentService.createTextOutput("ok");
   } finally { lock.releaseLock(); }
 }
@@ -140,6 +143,8 @@ function importarAlumnado(libro, d) {
       }
     });
     if (filas.length) h.getRange(2, 1, filas.length, ALUMNADO.length).setValues(filas);
+    SpreadsheetApp.flush();
+    ordenarTodo(libro);
     return json({ ok: true, nuevos, cambiados, sinUsuario });
   } finally { lock.releaseLock(); }
 }
@@ -240,6 +245,7 @@ function actualizarValoraciones(libro, nombre, usuario, clase, columna, nota) {
     // Se guarda la última nota enviada (el alumno puede revisarla y volver a enviarla).
     hoja.getRange(fila, col).setValue(nota);
     SpreadsheetApp.flush();
+    ordenarHoja(libro, "Valoraciones", 0, 1, 2);
     calcularMedias(libro);
   } finally {
     lock.releaseLock();
@@ -250,7 +256,7 @@ function actualizarValoraciones(libro, nombre, usuario, clase, columna, nota) {
 // con la media de todas las actividades de ese indicador (las no hechas cuentan 0).
 function calcularMedias(libro) {
   const val = libro.getSheetByName("Valoraciones");
-  if (!val || val.getLastRow() < 2) return;
+  if (!val || val.getLastRow() < 2) { const m = libro.getSheetByName("Medias por indicador"); if (m) m.clearContents(); return; }
   const datos = val.getDataRange().getValues(), cab = datos[0];
   const grupos = {};
   cab.forEach((t, i) => { const m = String(t).match(/Ind\. ([\d.]+)$/); if (m) (grupos[m[1]] = grupos[m[1]] || []).push(i); });
@@ -267,4 +273,69 @@ function calcularMedias(libro) {
   hoja.getRange(1, 1, filas.length, filas[0].length).setValues(filas);
   hoja.getRange(1, 1, 1, filas[0].length).setFontWeight("bold");
   hoja.setFrozenRows(1); hoja.setFrozenColumns(3);
+}
+
+/* ---------- Orden por clase y apellidos ---------- */
+// Las pestañas Alumnado, Valoraciones, Autoevaluación y Medias se ordenan por clase, luego apellidos y luego nombre.
+// Los apellidos salen de la pestaña Alumnado (por el usuario de Educacyl); si el alumno no está, de su nombre
+// escrito (todo lo que va detrás de la primera palabra). "Resultados" se queda por fecha, como un diario.
+function mapaApellidos(libro) {
+  const h = libro.getSheetByName("Alumnado"), m = {};
+  if (h && h.getLastRow() > 1) h.getRange(2, 1, h.getLastRow() - 1, 3).getValues().forEach((f) => { if (f[2]) m[minus(f[2])] = [String(f[1] || ""), String(f[0] || "")]; });
+  return m;
+}
+function claveOrden(mapa, nombre, usuario, clase, apellidos) {
+  let ap = apellidos, no = nombre;
+  if (ap == null) {
+    const a = mapa[minus(usuario)];
+    if (a) { ap = a[0]; no = a[1]; }
+    else { const p = String(nombre || "").trim().split(/\s+/); no = p.shift() || ""; ap = p.join(" "); }
+  }
+  return [minus(clase), minus(ap), minus(no)];
+}
+function ordenarHoja(libro, nombreHoja, iN, iU, iC, iA) {
+  const h = libro.getSheetByName(nombreHoja);
+  if (!h || h.getLastRow() < 3) return;
+  const mapa = mapaApellidos(libro), n = h.getLastRow() - 1, c = h.getLastColumn();
+  const filas = h.getRange(2, 1, n, c).getValues();
+  const cmp = (x, y) => { for (let i = 0; i < 3; i++) { const r = x[i].localeCompare(y[i], "es"); if (r) return r; } return 0; };
+  const ord = filas.map((f) => ({ f, k: claveOrden(mapa, f[iN], f[iU], f[iC], iA == null ? null : f[iA]) })).sort((a, b) => cmp(a.k, b.k)).map((x) => x.f);
+  h.getRange(2, 1, n, c).setValues(ord);
+}
+function ordenarTodo(libro) {
+  libro = libro || abrirLibro();
+  ordenarHoja(libro, "Alumnado", 0, 2, 3, 1);
+  ordenarHoja(libro, "Valoraciones", 0, 1, 2);
+  ordenarHoja(libro, "Autoevaluación", 1, 2, 3);
+  SpreadsheetApp.flush();
+  calcularMedias(libro);
+}
+
+/* ---------- Dar de baja a un alumno (panel del profe) ---------- */
+// Borra al alumno de Alumnado, Valoraciones, Autoevaluación y Resultados (por su usuario; si no tiene, por nombre y clase).
+function borrarAlumno(libro, d) {
+  if (CLAVE_PROFE === "cambia-esta-clave" || String(d.clave || "") !== CLAVE_PROFE) return json({ ok: false, error: "Clave incorrecta." });
+  const usuario = minus(d.usuario), nombre = minus(d.nombre), clase = minus(d.clase);
+  if (!usuario && !nombre) return json({ ok: false, error: "Falta el alumno." });
+  const lock = LockService.getScriptLock(); lock.waitLock(20000);
+  try {
+    const borradas = {};
+    ["Alumnado", "Valoraciones", "Autoevaluación", "Resultados"].forEach((t) => {
+      const h = libro.getSheetByName(t);
+      if (!h || h.getLastRow() < 2) return;
+      const v = h.getDataRange().getValues(), cab = v[0].map(String);
+      const iU = cab.indexOf("Usuario Educacyl"), iN = cab.indexOf("Nombre"), iC = cab.indexOf("Clase"), iA = cab.indexOf("Apellidos");
+      const nombreDe = (f) => minus(iA >= 0 ? (f[iN] + " " + f[iA]) : f[iN]);
+      const es = (f) => usuario ? (iU >= 0 && minus(f[iU]) === usuario) : (nombreDe(f) === nombre && minus(f[iC]) === clase && !(iU >= 0 && f[iU]));
+      const quedan = v.slice(1).filter((f) => !es(f));
+      const n = v.length - 1 - quedan.length;
+      if (!n) return;
+      borradas[t] = n;
+      h.getRange(2, 1, v.length - 1, cab.length).clearContent();
+      if (quedan.length) h.getRange(2, 1, quedan.length, cab.length).setValues(quedan);
+    });
+    SpreadsheetApp.flush();
+    calcularMedias(libro);
+    return json({ ok: true, borradas });
+  } finally { lock.releaseLock(); }
 }

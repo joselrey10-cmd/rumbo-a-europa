@@ -447,3 +447,4 @@ a.volver { text-decoration: none; }
 .escala-auto { grid-template-columns: repeat(3, minmax(0, 1fr)); font-size: 14px; margin: 0; }
 .nota-fija { font-size: 16px; color: var(--ink-soft); }
 .nota-fija b { color: var(--navy); font-size: 20px; }
+.p-barra .p-borrar { margin-left: auto; color: #b3261e; border-color: #b3261e; }

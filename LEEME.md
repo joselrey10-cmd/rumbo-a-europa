@@ -137,3 +137,7 @@ Consejo: con un filtro o una tabla dinámica por Clase y Nombre verás de un vis
 2. **URL pegada en `js/personajes.js`** (`REGISTRO.url`), con comillas, y la web **subida de nuevo a Vercel**.
 3. Cada vez que cambies el script: **Gestionar implementaciones → Editar → Versión: nueva versión → Implementar** (si no, sigue el código viejo).
 4. Prueba en la web de Vercel, no en la vista previa de Claude: la vista previa no deja enviar datos a Google.
+
+## Orden por apellidos y dar de baja
+- Las pestañas Alumnado, Valoraciones, Autoevaluación y Medias se ordenan solas por clase y apellidos cada vez que llega una nota (Resultados sigue por fecha). Para ordenarlas ya, elige `ordenarTodo` en el editor de Apps Script y pulsa Ejecutar.
+- En el panel Profe, al abrir un alumno, el botón «🗑️ Dar de baja» lo borra de todas las pestañas (pide confirmación; no se puede deshacer).

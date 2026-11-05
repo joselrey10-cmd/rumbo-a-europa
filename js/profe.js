@@ -45,7 +45,7 @@ window.Profe = (function () {
     const iN = cab.indexOf("Nombre"), iU = cab.indexOf("Usuario Educacyl"), iC = cab.indexOf("Clase");
     // 1) Alumnado importado (pestaña Alumnado): nombre, apellidos, usuario, clase, correo de la familia
     const lista = (datos.alumnado || []).filter((f) => f[2]).map((f) => ({
-      nombre: `${f[0] || ""} ${f[1] || ""}`.trim(), usuario: String(f[2] || ""), clase: String(f[3] || ""), correo: String(f[4] || ""), notas: {}, terminados: {}, registrado: true
+      nombre: `${f[0] || ""} ${f[1] || ""}`.trim(), nom: String(f[0] || "").trim(), apellidos: String(f[1] || "").trim(), usuario: String(f[2] || ""), clase: String(f[3] || ""), correo: String(f[4] || ""), notas: {}, terminados: {}, registrado: true
     }));
     // 2) Notas de la pestaña Valoraciones
     datos.filas.forEach((f) => {
@@ -81,7 +81,15 @@ window.Profe = (function () {
     (cab || []).forEach((t, i) => { t = String(t); if (/ · Ind\. /.test(t) && f && f[i] !== "" && f[i] != null) notas[t] = Number(f[i]); });
     return notas;
   }
-  const delGrupo = () => alumnos().filter((a) => igual(a.clase, grupo)).sort((a, b) => a.nombre.localeCompare(b.nombre, "es"));
+  /* Orden y nombre por apellidos: "Martín Pérez, Lucía". Si no está importado, los apellidos son lo que va tras la primera palabra. */
+  function partes(a) {
+    if (a.apellidos != null) return [a.apellidos, a.nom || ""];
+    const p = String(a.nombre || "").trim().split(/\s+/); const n = p.shift() || ""; return [p.join(" "), n];
+  }
+  const verNombre = (a) => { const [ap, n] = partes(a); return ap ? `${ap}, ${n}` : n || a.nombre || "(sin nombre)"; };
+  const delGrupo = () => alumnos().filter((a) => igual(a.clase, grupo)).sort((a, b) => {
+    const x = partes(a), y = partes(b); return x[0].localeCompare(y[0], "es", { sensitivity: "base" }) || x[1].localeCompare(y[1], "es", { sensitivity: "base" });
+  });
 
   function resumen(a, c) {
     const cat = catalogo(c), out = {};
@@ -153,7 +161,7 @@ window.Profe = (function () {
           const res = resumen(a, c), todas = RINC.map((r) => res[r.id]).filter((x) => x.media !== null);
           const hechas = todas.reduce((s, x) => s + x.hechas, 0);
           const media = hechas ? Math.round(todas.reduce((s, x) => s + x.media * x.hechas, 0) / hechas * 10) / 10 : "–";
-          return `<tr><td><button type="button" class="p-alumno" data-i="${i}">${esc(a.nombre || "(sin nombre)")}</button></td><td>${esc(a.usuario)}${a.correo ? ` <span title="${esc(a.correo)}">✉️</span>` : ""}</td>
+          return `<tr><td><button type="button" class="p-alumno" data-i="${i}">${esc(verNombre(a))}</button></td><td>${esc(a.usuario)}${a.correo ? ` <span title="${esc(a.correo)}">✉️</span>` : ""}</td>
             ${RINC.map((r) => `<td>${res[r.id].media === null ? "–" : `<b>${res[r.id].media}</b>`}<small>${res[r.id].hechas}/${res[r.id].total} notas</small>${r.id === "crea" ? `<small>✓ ${res.crea.retos}/${res.crea.nRetos} retos</small>` : ""}</td>`).join("")}<td><b>${media}</b></td></tr>`;
         }).join("")}</tbody></table></div>` : `<p class="intro">Todavía no hay notas de este grupo en la hoja.</p>`}
       <details class="p-import"><summary>Importar alumnado desde un CSV</summary>
@@ -268,9 +276,10 @@ window.Profe = (function () {
   function pintarAlumno(a) {
     alumnoSel = a;
     const c = cursoDe(a.clase), cat = catalogo(c), res = resumen(a, c);
-    raiz.innerHTML = cab(`${esc(a.nombre)} · ${esc(a.clase)}${a.usuario ? " · " + esc(a.usuario) : ""} · indicadores de ${c}`) +
+    raiz.innerHTML = cab(`${esc(verNombre(a))} · ${esc(a.clase)}${a.usuario ? " · " + esc(a.usuario) : ""} · indicadores de ${c}`) +
       `<div class="envoltura seccion">
-      <p class="p-barra"><button type="button" class="btn sec" id="p-volver">← Volver a ${esc(a.clase)}</button></p>
+      <p class="p-barra"><button type="button" class="btn sec" id="p-volver">← Volver a ${esc(a.clase)}</button>
+        <button type="button" class="btn sec p-borrar" id="p-borrar">🗑️ Dar de baja</button><span class="estado" id="p-borrar-est" aria-live="polite"></span></p>
       <form class="alumno p-correo" id="p-correo" autocomplete="off">
         <label>Correo de la familia<input id="p-correo-in" type="email" maxlength="120" value="${esc(a.correo || "")}" placeholder="familia@ejemplo.com"></label>
         <button class="btn sec" type="submit"${a.usuario ? "" : " disabled title=\"Hace falta el usuario de Educacyl\""}>Guardar correo</button>
@@ -288,6 +297,16 @@ window.Profe = (function () {
           </article>`).join("")}</div></details>`).join("")}
       </div>`;
     $("#p-volver").onclick = pintarGrupo;
+    $("#p-borrar").onclick = async () => {
+      if (!confirm(`¿Dar de baja a ${verNombre(a)} (${a.clase})?\n\nSe borrarán de la hoja de Google sus datos, sus notas, su autoevaluación y su historial. No se puede deshacer.`)) return;
+      const est = $("#p-borrar-est"), btn = $("#p-borrar"); btn.disabled = true; est.textContent = "Borrando…"; est.dataset.tipo = "";
+      const j = await llamar({ accion: "borrar", usuario: a.usuario, nombre: a.nombre, clase: a.clase }).catch(() => ({ ok: false, error: "No se ha podido conectar con la hoja." }));
+      if (!j.ok) { est.textContent = j.error; est.dataset.tipo = "error"; btn.disabled = false; return; }
+      extra = extra.filter((x) => !(igual(x.nombre, a.nombre) && igual(x.clase, a.clase)));
+      const d = await llamar({ accion: "datos" }).catch(() => null);
+      if (d && d.ok) datos = d;
+      pintarGrupo();
+    };
     $("#p-correo").addEventListener("submit", async (e) => {
       e.preventDefault();
       const correo = $("#p-correo-in").value.trim().toLowerCase(), est = $("#p-correo-est");
