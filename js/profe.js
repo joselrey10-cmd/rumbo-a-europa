@@ -84,7 +84,9 @@ window.Profe = (function () {
   /* Orden y nombre por apellidos: "Martín Pérez, Lucía". Si no está importado, los apellidos son lo que va tras la primera palabra. */
   function partes(a) {
     if (a.apellidos != null) return [a.apellidos, a.nom || ""];
-    const p = String(a.nombre || "").trim().split(/\s+/); const n = p.shift() || ""; return [p.join(" "), n];
+    const t = String(a.nombre || "").trim();
+    if (t.indexOf(", ") > 0) { const q = t.split(", "); return [q[0], q.slice(1).join(", ")]; }
+    const p = t.split(/\s+/); const n = p.shift() || ""; return [p.join(" "), n];
   }
   const verNombre = (a) => { const [ap, n] = partes(a); return ap ? `${ap}, ${n}` : n || a.nombre || "(sin nombre)"; };
   const delGrupo = () => alumnos().filter((a) => igual(a.clase, grupo)).sort((a, b) => {
@@ -165,7 +167,7 @@ window.Profe = (function () {
             ${RINC.map((r) => `<td>${res[r.id].media === null ? "–" : `<b>${res[r.id].media}</b>`}<small>${res[r.id].hechas}/${res[r.id].total} notas</small>${r.id === "crea" ? `<small>✓ ${res.crea.retos}/${res.crea.nRetos} retos</small>` : ""}</td>`).join("")}<td><b>${media}</b></td><td><button type="button" class="p-papelera" data-i="${i}" title="Dar de baja a ${esc(verNombre(a))}" aria-label="Dar de baja a ${esc(verNombre(a))}">🗑️</button></td></tr>`;
         }).join("")}</tbody></table></div>` : `<p class="intro">Todavía no hay notas de este grupo en la hoja.</p>`}
       <details class="p-import"><summary>Importar alumnado desde un CSV</summary>
-        <p class="intro">Columnas: <b>nombre; apellidos; usuario</b> (de Educacyl). Opcionales: <b>curso</b> (5ºA, 5ºB, 6ºA, 6ºB) y <b>correo</b> de la familia (para que pueda consultar los resultados). Si el CSV no trae el curso, se ponen en ${grupo}. Si un alumno ya está, se actualizan sus datos.</p>
+        <p class="intro">Columnas: <b>nombre; apellidos; usuario</b> (de Educacyl). Opcionales: <b>curso</b> (5ºA, 5ºB, 6ºA, 6ºB) y hasta dos <b>correos</b> de los tutores (columnas «correo tutor 1» y «correo tutor 2») (para que pueda consultar los resultados). Si el CSV no trae el curso, se ponen en ${grupo}. Si un alumno ya está, se actualizan sus datos.</p>
         <div class="p-barra"><input type="file" id="p-csv" accept=".csv,text/csv,text/plain"><button type="button" class="btn sec" id="p-plantilla">Descargar plantilla CSV</button></div>
         <div id="p-csv-vista"></div>
       </details>
@@ -185,7 +187,7 @@ window.Profe = (function () {
     });
     raiz.querySelectorAll(".p-alumno").forEach((b) => b.onclick = () => pintarAlumno(lista[+b.dataset.i]));
     raiz.querySelectorAll(".p-papelera").forEach((b) => b.onclick = () => darDeBaja(lista[+b.dataset.i], b, null));
-    $("#p-plantilla").onclick = () => descargar("plantilla_alumnado.csv", "nombre;apellidos;usuario;curso;correo\nLucía;Martín Pérez;lucia.martper;5ºA;familia.martin@ejemplo.com\n");
+    $("#p-plantilla").onclick = () => descargar("plantilla_alumnado.csv", "nombre;apellidos;usuario;curso;correo tutor 1;correo tutor 2\nLucía;Martín Pérez;lucia.martper;5ºA;madre.martin@ejemplo.com;padre.martin@ejemplo.com\n");
     $("#p-csv").onchange = (e) => leerCSV(e.target.files[0]);
   }
 
@@ -214,6 +216,9 @@ window.Profe = (function () {
     const m = /([56])\s*[º°o.]*\s*([ab])/i.exec(normal(t).replace(/primaria|curso/g, ""));
     return m ? `${m[1]}º${m[2].toUpperCase()}` : "";
   }
+  /* Hasta dos correos de tutores por alumno: se guardan juntos, separados por coma, en "Correo familia". */
+  const separarCorreos = (t) => String(t || "").toLowerCase().split(/[;,\s]+/).filter((x) => x);
+  const unirCorreos = (lista) => [...new Set(lista.flatMap(separarCorreos))].slice(0, 2).join(", ");
   async function leerCSV(archivo) {
     const vista = $("#p-csv-vista"); if (!archivo) return;
     const buf = await archivo.arrayBuffer();
@@ -225,15 +230,16 @@ window.Profe = (function () {
     const cab = filas[0].map(normal);
     const col = (...p) => cab.findIndex((c) => p.some((x) => c.includes(x)));
     let iN = col("nombre"), iA = col("apellido"), iU = col("usuario", "educacyl", "user"), iC = col("curso", "clase", "grupo"), iE = col("correo", "email", "mail");
+    const iEs = cab.map((c, i) => (/correo|email|mail/.test(c) ? i : -1)).filter((i) => i >= 0);
     let datosF = filas.slice(1);
-    if (iN < 0 && iU < 0) { iN = 0; iA = 1; iU = 2; iC = filas[0].length > 3 ? 3 : -1; iE = filas[0].length > 4 ? 4 : -1; datosF = filas; }   // sin cabecera
+    if (iN < 0 && iU < 0) { iN = 0; iA = 1; iU = 2; iC = filas[0].length > 3 ? 3 : -1; iE = filas[0].length > 4 ? 4 : -1; iEs.length = 0; for (let k = 4; k < filas[0].length; k++) iEs.push(k); datosF = filas; }   // sin cabecera
     const alumnosCSV = datosF.map((f) => ({
       nombre: f[iN] || "", apellidos: iA >= 0 ? f[iA] || "" : "", usuario: (f[iU] || "").replace(/@.*$/, ""),
-      clase: (iC >= 0 && claseValida(f[iC])) || grupo, correo: iE >= 0 ? (f[iE] || "").toLowerCase() : ""
+      clase: (iC >= 0 && claseValida(f[iC])) || grupo, correo: unirCorreos(iEs.map((k) => f[k]))
     }));
     const validos = alumnosCSV.filter((a) => a.usuario && a.nombre), malos = alumnosCSV.length - validos.length;
     vista.innerHTML = `<p><b>${validos.length}</b> alumnos listos para importar${malos ? ` · ${malos} filas sin nombre o sin usuario (no se importan)` : ""}.</p>
-      <div class="tabla-scroll"><table class="p-tabla"><thead><tr><th>Nombre</th><th>Apellidos</th><th>Usuario</th><th>Curso</th><th>Correo familia</th></tr></thead><tbody>
+      <div class="tabla-scroll"><table class="p-tabla"><thead><tr><th>Nombre</th><th>Apellidos</th><th>Usuario</th><th>Curso</th><th>Correos de la familia</th></tr></thead><tbody>
       ${validos.slice(0, 200).map((a) => `<tr><td>${esc(a.nombre)}</td><td>${esc(a.apellidos)}</td><td>${esc(a.usuario)}</td><td>${esc(a.clase)}</td><td>${esc(a.correo)}</td></tr>`).join("")}</tbody></table></div>
       <div class="enviar-fila" style="margin-top:10px"><button type="button" class="btn" id="p-importar"${validos.length ? "" : " disabled"}>Importar ${validos.length} alumnos</button><span class="estado" id="p-imp-estado"></span></div>`;
     const b = $("#p-importar"); if (b) b.onclick = () => importar(validos, $("#p-imp-estado"), b);
@@ -282,9 +288,10 @@ window.Profe = (function () {
       <p class="p-barra"><button type="button" class="btn sec" id="p-volver">← Volver a ${esc(a.clase)}</button>
         <button type="button" class="btn sec p-borrar" id="p-borrar">🗑️ Dar de baja</button><span class="estado" id="p-borrar-est" aria-live="polite"></span></p>
       <form class="alumno p-correo" id="p-correo" autocomplete="off">
-        <label>Correo de la familia<input id="p-correo-in" type="email" maxlength="120" value="${esc(a.correo || "")}" placeholder="familia@ejemplo.com"></label>
-        <button class="btn sec" type="submit"${a.usuario ? "" : " disabled title=\"Hace falta el usuario de Educacyl\""}>Guardar correo</button>
-        <span class="estado" id="p-correo-est">${a.usuario ? "Con este correo la familia puede ver los resultados en la pestaña Familias." : "Este alumno no tiene usuario de Educacyl: impórtalo con su usuario."}</span>
+        <label>Correo tutor 1<input id="p-correo-in" type="email" maxlength="120" value="${esc(separarCorreos(a.correo)[0] || "")}" placeholder="tutor1@ejemplo.com"></label>
+        <label>Correo tutor 2 <small>(opcional)</small><input id="p-correo-in2" type="email" maxlength="120" value="${esc(separarCorreos(a.correo)[1] || "")}" placeholder="tutor2@ejemplo.com"></label>
+        <button class="btn sec" type="submit"${a.usuario ? "" : " disabled title=\"Hace falta el usuario de Educacyl\""}>Guardar correos</button>
+        <span class="estado" id="p-correo-est">${a.usuario ? "Con cualquiera de estos correos la familia puede ver los resultados en la pestaña Familias." : "Este alumno no tiene usuario de Educacyl: impórtalo con su usuario."}</span>
       </form>
       <div class="p-resumen">${RINC.map((r) => `<div style="--rc:${r.color}"><b>${r.nombre}</b><span>${res[r.id].media === null ? "–" : res[r.id].media}</span><small>${res[r.id].hechas} de ${res[r.id].total} con nota${r.id === "crea" ? ` · ✓ ${res.crea.retos}/${res.crea.nRetos} retos terminados` : ""}</small></div>`).join("")}</div>
       <p class="intro">Las casillas marcadas son las notas que ya hay en la hoja. En Crea, el alumno solo marca el reto como terminado: la nota de cada indicador la pones tú aquí. Cambia las que quieras y pulsa Enviar en esa actividad.</p>
@@ -301,11 +308,12 @@ window.Profe = (function () {
     $("#p-borrar").onclick = () => darDeBaja(a, $("#p-borrar"), $("#p-borrar-est"));
     $("#p-correo").addEventListener("submit", async (e) => {
       e.preventDefault();
-      const correo = $("#p-correo-in").value.trim().toLowerCase(), est = $("#p-correo-est");
-      if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(correo)) { est.textContent = "Escribe un correo válido."; est.dataset.tipo = "error"; return; }
+      const est = $("#p-correo-est"), lista = [$("#p-correo-in").value, $("#p-correo-in2").value].map((x) => x.trim().toLowerCase()).filter((x) => x);
+      if (lista.some((x) => !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(x))) { est.textContent = "Revisa los correos: alguno no es válido."; est.dataset.tipo = "error"; return; }
+      const correo = unirCorreos(lista);
       const partes = a.nombre.split(" ");
-      const j = await llamar({ accion: "importar", alumnos: [{ nombre: a.registrado ? "" : partes[0], apellidos: a.registrado ? "" : partes.slice(1).join(" "), usuario: a.usuario, clase: a.clase, correo }] }).catch(() => ({ ok: false, error: "No se ha podido conectar con la hoja." }));
-      if (j.ok) { a.correo = correo; a.registrado = true; est.textContent = "✓ Correo guardado."; est.dataset.tipo = "ok"; } else { est.textContent = j.error; est.dataset.tipo = "error"; }
+      const j = await llamar({ accion: "importar", alumnos: [{ nombre: a.registrado ? "" : partes[0], apellidos: a.registrado ? "" : partes.slice(1).join(" "), usuario: a.usuario, clase: a.clase, correo: correo || "-" }] }).catch(() => ({ ok: false, error: "No se ha podido conectar con la hoja." }));
+      if (j.ok) { a.correo = correo; a.registrado = true; est.textContent = correo ? "✓ Correos guardados." : "✓ Correos borrados."; est.dataset.tipo = "ok"; } else { est.textContent = j.error; est.dataset.tipo = "error"; }
     });
     window.scrollTo(0, 0);
   }

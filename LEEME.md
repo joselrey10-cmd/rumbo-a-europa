@@ -141,3 +141,5 @@ Consejo: con un filtro o una tabla dinámica por Clase y Nombre verás de un vis
 ## Orden por apellidos y dar de baja
 - Las pestañas Alumnado, Valoraciones, Autoevaluación y Medias se ordenan solas por clase y apellidos cada vez que llega una nota (Resultados sigue por fecha). Para ordenarlas ya, elige `ordenarTodo` en el editor de Apps Script y pulsa Ejecutar.
 - En el panel Profe, la papelera 🗑️ de cada fila (o el botón «Dar de baja» dentro del alumno) lo borra de todas las pestañas (pide confirmación; no se puede deshacer).
+- Correos de las familias: hasta dos por alumno (tutor 1 y tutor 2), en el panel o en el CSV con las columnas «correo tutor 1» y «correo tutor 2». Se guardan juntos en «Correo familia», separados por coma, y cualquiera de los dos puede pedir el código.
+- En Valoraciones, Autoevaluación, Medias y Resultados el alumno aparece en una sola columna como «Apellidos, Nombre» (sacado de la pestaña Alumnado por su usuario). Alumnado mantiene Nombre y Apellidos por separado porque es la lista importada.

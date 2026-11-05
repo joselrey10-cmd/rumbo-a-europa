@@ -41,7 +41,8 @@ function doPost(e) {
   }
   const d = pedido;
   const limpiar = (v, max) => String(v == null ? "" : v).slice(0, max);
-  const nombre = limpiar(d.nombre, 30), usuario = limpiar(d.usuario, 60), clase = limpiar(d.clase, 12);
+  const usuario = limpiar(d.usuario, 60), clase = limpiar(d.clase, 12);
+  const nombre = nombreCompleto(libro, limpiar(d.nombre, 30), usuario);
   const nota = d.valoracion === "" || d.valoracion == null ? "" : Number(d.valoracion);
   hoja.appendRow([
     new Date(d.fecha), nombre, usuario, clase, limpiar(d.destino, 60), limpiar(d.ciudad, 40),
@@ -86,7 +87,8 @@ function datosProfe(libro, d) {
 // con lo que el alumno dice que sabe hacer (0-5). Va aparte: no cuenta en las medias de las notas.
 function guardarAutoevaluacion(libro, d) {
   const limpiar = (v, max) => String(v == null ? "" : v).slice(0, max);
-  const nombre = limpiar(d.nombre, 30), usuario = limpiar(d.usuario, 60), clase = limpiar(d.clase, 12), rincon = limpiar(d.rincon, 20);
+  const usuario = limpiar(d.usuario, 60), clase = limpiar(d.clase, 12), rincon = limpiar(d.rincon, 20);
+  const nombre = nombreCompleto(libro, limpiar(d.nombre, 30), usuario);
   const lock = LockService.getScriptLock(); lock.waitLock(10000);
   try {
     const h = libro.getSheetByName("Autoevaluación") || libro.insertSheet("Autoevaluación");
@@ -121,7 +123,8 @@ function hojaAlumnado(libro) {
   return h;
 }
 
-// Añade o actualiza alumnos por su usuario de Educacyl. El correo de la familia solo se cambia si viene escrito.
+// Añade o actualiza alumnos por su usuario de Educacyl. El correo de la familia (hasta dos, separados por coma)
+// solo se cambia si viene escrito; "-" lo borra.
 function importarAlumnado(libro, d) {
   if (CLAVE_PROFE === "cambia-esta-clave" || String(d.clave || "") !== CLAVE_PROFE) return json({ ok: false, error: "Clave incorrecta." });
   const lock = LockService.getScriptLock(); lock.waitLock(20000);
@@ -133,12 +136,13 @@ function importarAlumnado(libro, d) {
     (d.alumnos || []).slice(0, 2000).forEach((a) => {
       const u = String(a.usuario || "").trim().slice(0, 60);
       if (!u) { sinUsuario++; return; }
-      const fila = [String(a.nombre || "").trim().slice(0, 40), String(a.apellidos || "").trim().slice(0, 60), u, String(a.clase || "").trim().slice(0, 12), String(a.correo || "").trim().slice(0, 120)];
+      const fila = [String(a.nombre || "").trim().slice(0, 40), String(a.apellidos || "").trim().slice(0, 60), u, String(a.clase || "").trim().slice(0, 12), String(a.correo || "").trim().slice(0, 250)];
       const i = pos[minus(u)];
+      if (fila[4] === "-") fila[4] = i === undefined ? "" : "-";
       if (i === undefined) { pos[minus(u)] = filas.length; filas.push(fila); nuevos++; }
       else {
         const v = filas[i];
-        filas[i] = [fila[0] || v[0], fila[1] || v[1], v[2], fila[3] || v[3], fila[4] || v[4]];
+        filas[i] = [fila[0] || v[0], fila[1] || v[1], v[2], fila[3] || v[3], fila[4] === "-" ? "" : (fila[4] || v[4])];
         cambiados++;
       }
     });
@@ -284,11 +288,18 @@ function mapaApellidos(libro) {
   if (h && h.getLastRow() > 1) h.getRange(2, 1, h.getLastRow() - 1, 3).getValues().forEach((f) => { if (f[2]) m[minus(f[2])] = [String(f[1] || ""), String(f[0] || "")]; });
   return m;
 }
+// Nombre del alumno en las pestañas: "Apellidos, Nombre" (de la pestaña Alumnado si está importado).
+function nombreCompleto(libro, nombre, usuario, mapa) {
+  const a = usuario ? (mapa || mapaApellidos(libro))[minus(usuario)] : null;
+  if (!a) return nombre;
+  return a[0] ? a[0] + ", " + a[1] : a[1];
+}
 function claveOrden(mapa, nombre, usuario, clase, apellidos) {
   let ap = apellidos, no = nombre;
   if (ap == null) {
     const a = mapa[minus(usuario)];
     if (a) { ap = a[0]; no = a[1]; }
+    else if (String(nombre).indexOf(", ") > 0) { const p = String(nombre).split(", "); ap = p[0]; no = p.slice(1).join(", "); }
     else { const p = String(nombre || "").trim().split(/\s+/); no = p.shift() || ""; ap = p.join(" "); }
   }
   return [minus(clase), minus(ap), minus(no)];
@@ -299,6 +310,8 @@ function ordenarHoja(libro, nombreHoja, iN, iU, iC, iA) {
   const mapa = mapaApellidos(libro), n = h.getLastRow() - 1, c = h.getLastColumn();
   const filas = h.getRange(2, 1, n, c).getValues();
   const cmp = (x, y) => { for (let i = 0; i < 3; i++) { const r = x[i].localeCompare(y[i], "es"); if (r) return r; } return 0; };
+  // Fuera de Alumnado, el nombre se escribe como "Apellidos, Nombre".
+  if (iA == null) filas.forEach((f) => { f[iN] = nombreCompleto(libro, f[iN], f[iU], mapa); });
   const ord = filas.map((f) => ({ f, k: claveOrden(mapa, f[iN], f[iU], f[iC], iA == null ? null : f[iA]) })).sort((a, b) => cmp(a.k, b.k)).map((x) => x.f);
   h.getRange(2, 1, n, c).setValues(ord);
 }
