@@ -156,13 +156,13 @@ window.Profe = (function () {
     raiz.innerHTML = cab(`Grupo ${grupo} · indicadores de ${c}. Pulsa un alumno para ver y poner sus notas.`) +
       `<div class="envoltura seccion">${barraGrupos()}
       <h2 class="sa-tit">Alumnado de ${grupo} (${lista.length})</h2>
-      ${lista.length ? `<div class="tabla-scroll"><table class="p-tabla"><thead><tr><th>Alumno</th><th>Usuario Educacyl</th>${RINC.map((r) => `<th style="color:${r.color}">${r.nombre}</th>`).join("")}<th>Media</th></tr></thead><tbody>
+      ${lista.length ? `<div class="tabla-scroll"><table class="p-tabla"><thead><tr><th>Alumno</th><th>Usuario Educacyl</th>${RINC.map((r) => `<th style="color:${r.color}">${r.nombre}</th>`).join("")}<th>Media</th><th><span class="vh">Dar de baja</span></th></tr></thead><tbody>
         ${lista.map((a, i) => {
           const res = resumen(a, c), todas = RINC.map((r) => res[r.id]).filter((x) => x.media !== null);
           const hechas = todas.reduce((s, x) => s + x.hechas, 0);
           const media = hechas ? Math.round(todas.reduce((s, x) => s + x.media * x.hechas, 0) / hechas * 10) / 10 : "–";
           return `<tr><td><button type="button" class="p-alumno" data-i="${i}">${esc(verNombre(a))}</button></td><td>${esc(a.usuario)}${a.correo ? ` <span title="${esc(a.correo)}">✉️</span>` : ""}</td>
-            ${RINC.map((r) => `<td>${res[r.id].media === null ? "–" : `<b>${res[r.id].media}</b>`}<small>${res[r.id].hechas}/${res[r.id].total} notas</small>${r.id === "crea" ? `<small>✓ ${res.crea.retos}/${res.crea.nRetos} retos</small>` : ""}</td>`).join("")}<td><b>${media}</b></td></tr>`;
+            ${RINC.map((r) => `<td>${res[r.id].media === null ? "–" : `<b>${res[r.id].media}</b>`}<small>${res[r.id].hechas}/${res[r.id].total} notas</small>${r.id === "crea" ? `<small>✓ ${res.crea.retos}/${res.crea.nRetos} retos</small>` : ""}</td>`).join("")}<td><b>${media}</b></td><td><button type="button" class="p-papelera" data-i="${i}" title="Dar de baja a ${esc(verNombre(a))}" aria-label="Dar de baja a ${esc(verNombre(a))}">🗑️</button></td></tr>`;
         }).join("")}</tbody></table></div>` : `<p class="intro">Todavía no hay notas de este grupo en la hoja.</p>`}
       <details class="p-import"><summary>Importar alumnado desde un CSV</summary>
         <p class="intro">Columnas: <b>nombre; apellidos; usuario</b> (de Educacyl). Opcionales: <b>curso</b> (5ºA, 5ºB, 6ºA, 6ºB) y <b>correo</b> de la familia (para que pueda consultar los resultados). Si el CSV no trae el curso, se ponen en ${grupo}. Si un alumno ya está, se actualizan sus datos.</p>
@@ -184,6 +184,7 @@ window.Profe = (function () {
       extra.push(a); pintarAlumno(a);
     });
     raiz.querySelectorAll(".p-alumno").forEach((b) => b.onclick = () => pintarAlumno(lista[+b.dataset.i]));
+    raiz.querySelectorAll(".p-papelera").forEach((b) => b.onclick = () => darDeBaja(lista[+b.dataset.i], b, null));
     $("#p-plantilla").onclick = () => descargar("plantilla_alumnado.csv", "nombre;apellidos;usuario;curso;correo\nLucía;Martín Pérez;lucia.martper;5ºA;familia.martin@ejemplo.com\n");
     $("#p-csv").onchange = (e) => leerCSV(e.target.files[0]);
   }
@@ -297,16 +298,7 @@ window.Profe = (function () {
           </article>`).join("")}</div></details>`).join("")}
       </div>`;
     $("#p-volver").onclick = pintarGrupo;
-    $("#p-borrar").onclick = async () => {
-      if (!confirm(`¿Dar de baja a ${verNombre(a)} (${a.clase})?\n\nSe borrarán de la hoja de Google sus datos, sus notas, su autoevaluación y su historial. No se puede deshacer.`)) return;
-      const est = $("#p-borrar-est"), btn = $("#p-borrar"); btn.disabled = true; est.textContent = "Borrando…"; est.dataset.tipo = "";
-      const j = await llamar({ accion: "borrar", usuario: a.usuario, nombre: a.nombre, clase: a.clase }).catch(() => ({ ok: false, error: "No se ha podido conectar con la hoja." }));
-      if (!j.ok) { est.textContent = j.error; est.dataset.tipo = "error"; btn.disabled = false; return; }
-      extra = extra.filter((x) => !(igual(x.nombre, a.nombre) && igual(x.clase, a.clase)));
-      const d = await llamar({ accion: "datos" }).catch(() => null);
-      if (d && d.ok) datos = d;
-      pintarGrupo();
-    };
+    $("#p-borrar").onclick = () => darDeBaja(a, $("#p-borrar"), $("#p-borrar-est"));
     $("#p-correo").addEventListener("submit", async (e) => {
       e.preventDefault();
       const correo = $("#p-correo-in").value.trim().toLowerCase(), est = $("#p-correo-est");
@@ -316,6 +308,17 @@ window.Profe = (function () {
       if (j.ok) { a.correo = correo; a.registrado = true; est.textContent = "✓ Correo guardado."; est.dataset.tipo = "ok"; } else { est.textContent = j.error; est.dataset.tipo = "error"; }
     });
     window.scrollTo(0, 0);
+  }
+
+  async function darDeBaja(a, btn, est) {
+      if (!confirm(`¿Dar de baja a ${verNombre(a)} (${a.clase})?\n\nSe borrarán de la hoja de Google sus datos, sus notas, su autoevaluación y su historial. No se puede deshacer.`)) return;
+      btn.disabled = true; if (est) { est.textContent = "Borrando…"; est.dataset.tipo = ""; }
+      const j = await llamar({ accion: "borrar", usuario: a.usuario, nombre: a.nombre, clase: a.clase }).catch(() => ({ ok: false, error: "No se ha podido conectar con la hoja." }));
+      if (!j.ok) { if (est) { est.textContent = j.error; est.dataset.tipo = "error"; } else alert(j.error); btn.disabled = false; return; }
+      extra = extra.filter((x) => !(igual(x.nombre, a.nombre) && igual(x.clase, a.clase)));
+      const d = await llamar({ accion: "datos" }).catch(() => null);
+      if (d && d.ok) datos = d;
+      pintarGrupo();
   }
 
   async function enviarProfe(caja) {

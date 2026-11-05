@@ -140,4 +140,4 @@ Consejo: con un filtro o una tabla dinámica por Clase y Nombre verás de un vis
 
 ## Orden por apellidos y dar de baja
 - Las pestañas Alumnado, Valoraciones, Autoevaluación y Medias se ordenan solas por clase y apellidos cada vez que llega una nota (Resultados sigue por fecha). Para ordenarlas ya, elige `ordenarTodo` en el editor de Apps Script y pulsa Ejecutar.
-- En el panel Profe, al abrir un alumno, el botón «🗑️ Dar de baja» lo borra de todas las pestañas (pide confirmación; no se puede deshacer).
+- En el panel Profe, la papelera 🗑️ de cada fila (o el botón «Dar de baja» dentro del alumno) lo borra de todas las pestañas (pide confirmación; no se puede deshacer).

@@ -448,3 +448,6 @@ a.volver { text-decoration: none; }
 .nota-fija { font-size: 16px; color: var(--ink-soft); }
 .nota-fija b { color: var(--navy); font-size: 20px; }
 .p-barra .p-borrar { margin-left: auto; color: #b3261e; border-color: #b3261e; }
+.p-papelera { background: none; border: 1px solid transparent; border-radius: 8px; font-size: 18px; cursor: pointer; padding: 4px 8px; }
+.p-papelera:hover, .p-papelera:focus-visible { border-color: #b3261e; background: rgba(179, 38, 30, .08); }
+.vh { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
