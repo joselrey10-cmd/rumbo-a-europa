@@ -1,0 +1,592 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Contraseñas Seguras</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@600;700&family=Atkinson+Hyperlegible:wght@400;700&family=JetBrains+Mono:wght@500&display=swap">
+<style>
+/* Layout: caja fuerte suiza como emblema; medidor de fuerza; parejas, frases y tarjetas de situaciones */
+:root{
+  --bg:#f3f5f4; --paper:#ffffff; --ink:#1a2321; --muted:#56635f; --line:#d4dcd9; --accent:#b3202a; --accent-ink:#ffffff; --tram:#1f7a68; --tram-ink:#ffffff; --ok:#1d8a52; --ok-bg:#e0f3e8; --bad:#c43c2f; --bad-bg:#fbe5e2; --soft:#e8edeb; --sel:#fff0c9;
+  --f-display:"Chakra Petch","Arial Narrow",system-ui,sans-serif; --f-body:"Atkinson Hyperlegible",system-ui,-apple-system,"Segoe UI",sans-serif; --f-mono:"JetBrains Mono",ui-monospace,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){ --bg:#111716; --paper:#1a2220; --ink:#e6eeeb; --muted:#a0b0ab; --line:#2e3b38; --accent:#ff7d84; --accent-ink:#2a0709; --tram:#5fd0b7; --tram-ink:#062a22; --ok:#5fd18e; --ok-bg:#163527; --bad:#ff8a7c; --bad-bg:#3a1d1a; --soft:#232d2b; --sel:#3d3418; color-scheme:dark}}
+:root[data-theme="dark"]{ --bg:#111716; --paper:#1a2220; --ink:#e6eeeb; --muted:#a0b0ab; --line:#2e3b38; --accent:#ff7d84; --accent-ink:#2a0709; --tram:#5fd0b7; --tram-ink:#062a22; --ok:#5fd18e; --ok-bg:#163527; --bad:#ff8a7c; --bad-bg:#3a1d1a; --soft:#232d2b; --sel:#3d3418; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:16px;line-height:1.55;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 48px}
+.wrap{max-width:1060px;margin:0 auto;display:flex;flex-direction:column;gap:20px}
+h1,h2,h3{font-family:var(--f-display);font-weight:400;text-wrap:balance;margin:0;line-height:1.08;letter-spacing:.01em}
+p{margin:0}
+button,input,select,textarea{font-family:inherit;font-size:inherit}
+button:focus-visible,[tabindex]:focus-visible,input:focus-visible,textarea:focus-visible{outline:3px solid var(--tram);outline-offset:2px}
+
+header.hero{display:flex;gap:16px;align-items:center;flex-wrap:wrap}
+.tile{width:80px;height:80px;flex:none}
+.hero-text{flex:1;min-width:0;display:flex;flex-direction:column;gap:4px}
+.hero h1{font-size:clamp(2.2rem,6vw,3.4rem);color:var(--accent)}
+.hero p{color:var(--muted);max-width:64ch}
+.score{font-family:var(--f-display);background:var(--tram);color:var(--tram-ink);border-radius:999px;padding:8px 18px;font-variant-numeric:tabular-nums;white-space:nowrap;font-size:1.1rem}
+
+nav.tabs{display:flex;gap:6px;flex-wrap:wrap}
+nav.tabs button{font:800 .96rem var(--f-body);border:2px solid var(--line);background:var(--paper);color:var(--ink);padding:8px 12px;border-radius:12px;cursor:pointer;display:flex;gap:8px;align-items:center}
+nav.tabs .n{display:inline-grid;place-items:center;width:24px;height:24px;border-radius:6px;background:var(--soft);font-size:.85rem}
+nav.tabs button[aria-selected="true"]{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+nav.tabs button[aria-selected="true"] .n{background:var(--tram);color:var(--tram-ink)}
+
+section.mission{display:flex;flex-direction:column;gap:16px}
+.intro{background:var(--paper);border:2px solid var(--line);border-radius:16px;padding:16px 18px;display:flex;flex-direction:column;gap:6px}
+.intro h2{font-size:1.7rem}
+.intro p{color:var(--muted);max-width:74ch}
+.label{font:800 .74rem var(--f-body);letter-spacing:.1em;text-transform:uppercase;color:var(--accent)}
+.grid2{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);gap:16px;align-items:start}
+@media (max-width:820px){.grid2{grid-template-columns:minmax(0,1fr)}}
+.grid2>*{min-width:0}
+.panel{background:var(--paper);border:2px solid var(--line);border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:12px}
+.panel h3{font-size:1.35rem}
+.btn{font:800 .98rem var(--f-body);border:2px solid var(--line);border-radius:12px;padding:8px 14px;cursor:pointer;background:var(--soft);color:var(--ink)}
+.btn.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.btn.ok{background:var(--ok-bg);color:var(--ok);border-color:var(--ok)}
+.btn.bad{background:var(--bad-bg);color:var(--bad);border-color:var(--bad)}
+.btn:disabled{opacity:.5;cursor:default}
+.choices{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.feedback{border-radius:12px;padding:10px 14px;display:flex;flex-direction:column;gap:5px}
+.feedback.right{background:var(--ok-bg)}.feedback.wrong{background:var(--bad-bg)}
+.feedback strong{font-family:var(--f-display);font-weight:400;font-size:1.15rem}
+.feedback ul{margin:0;padding-left:20px}
+.tip{background:var(--soft);border-radius:12px;padding:10px 14px;font-size:.95rem}
+
+.opts{display:flex;flex-direction:column;gap:8px}
+.opts button{text-align:left;font-size:.95rem;background:var(--bg);color:var(--ink);border:2px solid var(--line);border-radius:12px;padding:9px 12px;cursor:pointer}
+.opts button.r{background:var(--ok-bg);border-color:var(--ok)}.opts button.w{background:var(--bad-bg);border-color:var(--bad)}
+.quiz{display:flex;flex-direction:column;gap:12px}
+.qitem{background:var(--paper);border:2px solid var(--line);border-radius:16px;padding:14px;display:flex;flex-direction:column;gap:10px}
+.qitem .qq{font-weight:800}
+.diploma{border:3px dashed var(--accent);border-radius:20px;padding:20px;background:var(--paper);text-align:center;display:flex;flex-direction:column;gap:8px;align-items:center}
+.diploma h3{font-size:1.7rem;color:var(--accent)}
+.bars{display:flex;gap:4px;flex-wrap:wrap}.bars i{width:24px;height:8px;border-radius:4px;background:var(--line);display:block}
+.bars i.ok{background:var(--ok)}.bars i.ko{background:var(--bad)}.bars i.now{background:var(--tram)}
+
+
+.safe{background:var(--paper);border:3px solid var(--ink);border-radius:18px;padding:16px;display:flex;flex-direction:column;gap:12px}
+.safe .dial{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.safe input{flex:1;min-width:0;font:500 1.15rem var(--f-mono);padding:10px 12px;border:2px solid var(--line);border-radius:10px;background:var(--bg);color:var(--ink)}
+.meter{height:14px;border-radius:999px;background:var(--soft);overflow:hidden}
+.meter i{display:block;height:100%;width:0;border-radius:999px;transition:width .25s,background .25s}
+.lvl{font:700 1.3rem var(--f-display)}
+.crit{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:6px;list-style:none;margin:0;padding:0}
+.crit li{font-size:.9rem;color:var(--muted)}
+.crit li.on{color:var(--ok);font-weight:700}
+.crit li.warn{color:var(--bad);font-weight:700}
+.time{font-size:.95rem}
+.pairs{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px}
+.pair{background:var(--paper);border:2px solid var(--line);border-radius:16px;padding:14px;display:flex;flex-direction:column;gap:10px}
+.pw{font:500 1rem var(--f-mono);text-align:left;border:2px solid var(--line);background:var(--bg);color:var(--ink);border-radius:10px;padding:10px 12px;cursor:pointer;overflow-wrap:anywhere}
+.pw.r{border-color:var(--ok);background:var(--ok-bg)}.pw.w{border-color:var(--bad);background:var(--bad-bg)}
+.phrase{background:var(--paper);border:2px solid var(--line);border-radius:16px;padding:14px;display:flex;flex-direction:column;gap:10px}
+.phrase .fr{font-size:1.1rem;font-weight:700}
+.phrase .fr b{color:var(--accent);font-size:1.25rem}
+.gen{font:500 1.1rem var(--f-mono);background:var(--soft);border-radius:10px;padding:10px 12px;overflow-wrap:anywhere}
+.gcards{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:12px}
+.gcard{background:var(--paper);border:2px solid var(--line);border-radius:16px;padding:14px;display:flex;flex-direction:column;gap:10px}
+.gcard p.s{font-weight:700}
+.gcard .choices{margin-top:auto}
+.warnbox{border:2px solid var(--accent);border-radius:12px;padding:10px 14px;font-size:.92rem}
+
+.relato{background:var(--paper);border:2px solid var(--line);border-radius:18px;padding:18px;display:grid;grid-template-columns:120px minmax(0,1fr);gap:20px;align-items:start}
+@media (max-width:620px){.relato{grid-template-columns:minmax(0,1fr)}.relato .pini{width:96px}}
+.relato .pini{width:120px;height:auto;display:block}
+.relato .rt{display:flex;flex-direction:column;gap:10px;min-width:0}
+.relato .cap{font-size:.74rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--accent)}
+.relato h2{font-size:clamp(1.5rem,3.6vw,2rem);text-wrap:balance}
+.relato p{max-width:68ch;line-height:1.65}
+.relato .dlg{padding-left:14px;border-left:3px solid var(--line)}
+.relato .reto{border:2px dashed var(--accent);border-radius:14px;padding:12px 16px;display:flex;flex-direction:column;gap:6px;margin-top:4px}
+.relato .reto b.t{font-size:.8rem;letter-spacing:.08em;text-transform:uppercase;color:var(--accent)}
+.relato .reto ul{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:4px}
+.relato[hidden]{display:none}
+.relato .nw{white-space:nowrap}
+.ficha{display:flex;gap:12px;flex-wrap:wrap;background:var(--paper);border:2px solid var(--line);border-radius:14px;padding:12px 14px}
+.ficha label{display:flex;flex-direction:column;gap:3px;font-size:.78rem;font-weight:800;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;flex:1 1 180px;min-width:0}
+.ficha input{border:2px solid var(--line);border-radius:10px;padding:8px 10px;background:var(--bg);color:var(--ink);font:inherit;font-size:1rem;text-transform:none;letter-spacing:0;font-weight:400;width:100%}
+.ficha input:focus-visible{outline:3px solid var(--accent);outline-offset:1px}
+#informe{background:var(--paper);border:2px solid var(--line);border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:12px}
+#informe h3{font-size:1.35rem}
+.rwrap{overflow-x:auto}
+.rtable{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
+.rtable th,.rtable td{text-align:left;padding:8px 6px;border-bottom:1px solid var(--line);font-size:.93rem;vertical-align:top}
+.rtable th{font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.rtable .rf{font-size:.85rem;color:var(--muted)}
+.pend{font-size:.75rem;color:var(--muted);background:var(--bg);border-radius:999px;padding:1px 8px;white-space:nowrap}
+.copybox{font:500 .82rem var(--f-mono);background:var(--bg);border:2px dashed var(--line);border-radius:10px;padding:10px;white-space:pre-wrap;overflow-wrap:anywhere;max-height:260px;overflow:auto}
+.cbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.cmsg{font-size:.9rem;color:var(--muted)}
+
+.vids{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:14px}
+.vid{background:var(--paper);border:2px solid var(--line);border-radius:16px;padding:14px;display:flex;flex-direction:column;gap:8px}
+.vid.seen{border-color:var(--ok)}
+.vid .src{font-weight:800;font-size:.7rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.vid h3{font-size:1.08rem}
+.vid .kindtag{align-self:flex-start;font-size:.72rem;font-weight:800;border-radius:999px;padding:2px 9px;background:var(--bg);color:var(--muted)}
+.vid a.go{display:inline-flex;gap:8px;align-items:center;align-self:flex-start;background:var(--accent);color:var(--accent-ink);text-decoration:none;font-weight:800;border-radius:999px;padding:7px 14px}
+.vid a.go svg{width:16px;height:16px}
+.vid .q{font-size:.92rem;background:var(--bg);border-radius:10px;padding:8px 10px}
+.vid label.ck{display:flex;gap:8px;align-items:center;font-weight:700;font-size:.92rem;cursor:pointer;margin-top:auto}
+.vid label.ck input{width:20px;height:20px;accent-color:var(--ok)}
+.vid.tarea{border-color:var(--accent);border-width:3px}
+.vid.tarea .kindtag{background:var(--accent);color:var(--accent-ink)}
+.vfilter{display:flex;gap:8px;flex-wrap:wrap}
+
+.indic{border:2px solid var(--line);border-radius:14px;padding:12px 16px;display:flex;flex-direction:column;gap:10px;margin-top:4px;background:var(--bg)}
+.indic>b.t{font-size:.8rem;letter-spacing:.08em;text-transform:uppercase;color:var(--accent)}
+.indic .cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px}
+.indic h4{margin:0;font-size:.95rem}
+.indic ul{margin:0;padding-left:0;list-style:none;display:flex;flex-direction:column;gap:6px;font-size:.88rem;line-height:1.45}
+.indic li{overflow-wrap:anywhere}
+.indic .crit{display:inline-block;font-weight:800;border:1.5px solid var(--accent);color:var(--accent);border-radius:6px;padding:0 5px;margin-right:4px;font-size:.78rem;font-variant-numeric:tabular-nums}
+.indic .do{color:var(--muted);font-size:.8rem}
+.valora{border:2px solid var(--accent);border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:10px;background:var(--paper)}
+.valora h3{font-size:1.2rem}
+.valora .cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px}
+.valora h4{margin:0 0 4px;font-size:.95rem}
+.valora td{font-size:.85rem}
+.vstar{font-weight:800;white-space:nowrap;font-variant-numeric:tabular-nums}
+.vbar{display:inline-flex;gap:2px;margin-left:6px;vertical-align:middle}.vbar i{width:8px;height:8px;border-radius:2px;background:var(--line);display:block}.vbar i.on{background:var(--ok)}
+.llave{border:2px dashed var(--accent);border-radius:12px;padding:12px;display:flex;flex-direction:column;gap:6px}
+.llave code{font:700 1.3rem var(--f-mono,monospace);letter-spacing:.06em;color:var(--accent);overflow-wrap:anywhere}
+footer{color:var(--muted);font-size:.85rem;text-align:center}
+</style>
+
+<div class="wrap">
+  <header class="hero">
+    <svg width="80" height="80" viewBox="0 0 80 80" aria-hidden="true" style="flex:none"><rect x="6" y="10" width="68" height="62" rx="10" fill="var(--ink)"/><rect x="12" y="16" width="56" height="50" rx="6" fill="var(--paper)"/><circle cx="40" cy="41" r="15" fill="none" stroke="var(--accent)" stroke-width="5"/><path d="M40 26v6M40 50v6M25 41h6M49 41h6" stroke="var(--accent)" stroke-width="4"/><rect x="34" y="35" width="12" height="12" rx="2" fill="var(--accent)"/><path d="M36 35v-3a4 4 0 0 1 8 0v3" fill="none" stroke="var(--accent)" stroke-width="2.5"/></svg>
+    <div class="hero-text">
+      <h1>Contraseñas Seguras</h1>
+      <p>Aprende a crear contraseñas fuertes que puedas recordar, a cuidarlas y a proteger tus cuentas. Practica solo con contraseñas inventadas: nada de lo que escribas se guarda.</p>
+    </div>
+    <div class="score" id="score">Llaves: 0</div>
+  </header>
+
+  <section class="relato" aria-labelledby="relato-t">
+    <svg class="pini" viewBox="0 0 120 150" aria-label="Pini, la mascota de Radio La Piña">
+  <path d="M60 14l6 12h-12z" fill="#5f8f3a"/>
+  <ellipse cx="60" cy="86" rx="36" ry="50" fill="#a5642f"/>
+  <g fill="none" stroke="#6e3a17" stroke-width="3" stroke-linecap="round">
+    <path d="M32 58q7 8 14 0q7 8 14 0q7 8 14 0q7 8 14 0"/>
+    <path d="M27 104q8 8 16 0q8 8 17 0q8 8 17 0q8 8 16 0"/>
+    <path d="M33 122q7 7 14 0q6 7 13 0q7 7 14 0q6 7 13 0"/>
+    <path d="M40 42q5 6 10 0q5 6 10 0q5 6 10 0q5 6 10 0"/>
+  </g>
+  <ellipse cx="48" cy="78" rx="8" ry="9" fill="#fff"/><ellipse cx="72" cy="78" rx="8" ry="9" fill="#fff"/>
+  <circle cx="50" cy="80" r="4" fill="#1d1d1d"/><circle cx="74" cy="80" r="4" fill="#1d1d1d"/>
+  <path d="M50 92q10 9 20 0" fill="none" stroke="#1d1d1d" stroke-width="3" stroke-linecap="round"/>
+  <path d="M22 76a38 42 0 0 1 76 0" fill="none" stroke="#2b2f3a" stroke-width="6"/>
+  <rect x="14" y="70" width="14" height="22" rx="5" fill="#e2553f"/><rect x="92" y="70" width="14" height="22" rx="5" fill="#e2553f"/>
+  <path d="M21 92q0 16 18 18" fill="none" stroke="#2b2f3a" stroke-width="3"/>
+  <rect x="38" y="104" width="12" height="9" rx="4" fill="#2b2f3a"/>
+</svg>
+    <div class="rt">
+      <span class="cap">Rumbo a Europa · Radio La Piña · Suiza</span>
+      <h2 id="relato-t">La caja fuerte de Radio La Piña</h2>
+      <p>Radio La Piña prepara un programa sobre <b>Suiza</b>, el país de las montañas, los relojes de precisión y las cajas fuertes más famosas del mundo. Pero el lunes, al abrir la cuenta de la radio en Piñagram, el equipo se lleva un susto: alguien ha entrado y ha publicado mensajes absurdos en su nombre.</p>
+      <p class="dlg">—¿Cuál era la contraseña? —pregunta la tutora.</p>
+      <p class="dlg">—Pues… «pini123» —confiesa alguien en voz baja—. Era fácil de recordar.</p>
+      <p class="dlg">—Y también fácil de adivinar —suspira <span class="nw">Pini—</span>. Una contraseña es como la combinación de una caja fuerte suiza: si es corta y conocida, cualquiera la abre.</p>
+      <p>Por suerte, la profe consigue recuperar la cuenta. Ahora toca protegerla de verdad: crear contraseñas largas y secretas, inventar trucos para recordarlas sin apuntarlas en un pósit y activar la verificación en dos pasos. ¿Te unes al equipo de cerrajeros digitales? <i>Grüezi!</i> (¡Hola, en suizo alemán!)</p>
+      <div class="reto"><b class="t">Vuestro reto: superar las misiones</b>
+        <ul>
+        <li><b>Misión 1:</b> El medidor</li>
+        <li><b>Misión 2:</b> ¿Cuál es más segura?</li>
+        <li><b>Misión 3:</b> La frase secreta</li>
+        <li><b>Misión 4:</b> Guardianes</li>
+        <li><b>Misión 5:</b> Vídeos y juegos</li>
+        <li><b>Misión 6:</b> Examen e informe</li>
+        </ul>
+      </div>
+      <div class="indic"><b class="t">Indicadores de logro · Programación de TIAC</b>
+        <div class="cols">
+          <div><h4>5.º de Primaria</h4><ul><li><span class="crit">Crit. 4.1</span><b>4.1.1</b> Crea en la actividad de LUMIO una contraseña segura para «la maleta» (frase de paso con mayúsculas, números y símbolos, sin datos personales) y explica dónde guardarla y cómo cambiarla. <span class="do">(CD4)</span></li><li><span class="crit">Crit. 4.1</span><b>4.1.2</b> Inicia sesión en Code.org y MakeCode con su cuenta Microsoft de Educacyl y la cierra al terminar sin dejar sus credenciales a la vista. <span class="do">(CD4)</span></li></ul></div>
+          <div><h4>6.º de Primaria</h4><ul><li><span class="crit">Crit. 4.1</span><b>4.1.1</b> Crea una contraseña segura con el método de la frase secreta, sabe que no se comparte y explica qué es la verificación en dos pasos. <span class="do">(CD4)</span></li><li><span class="crit">Crit. 4.1</span><b>4.1.2</b> Inicia y cierra sesión correctamente (Educacyl, Microsoft, MakeCode) y no deja la sesión abierta. <span class="do">(CD4)</span></li></ul></div>
+        </div>
+      </div><!--/indic-->
+    </div>
+  </section>
+
+  <div class="ficha">
+    <label for="alNombre">Nombre y apellido<input id="alNombre" autocomplete="off" placeholder="Escribe tu nombre"></label>
+    <label for="alCurso">Curso y grupo<input id="alCurso" autocomplete="off" placeholder="Ej.: 5.º B"></label>
+  </div>
+
+  <nav class="tabs" role="tablist" id="tabs">
+    <button role="tab" data-t="medidor" aria-selected="true"><span class="n">1</span>El medidor</button>
+    <button role="tab" data-t="pares" aria-selected="false"><span class="n">2</span>¿Cuál es más segura?</button>
+    <button role="tab" data-t="frase" aria-selected="false"><span class="n">3</span>La frase secreta</button>
+    <button role="tab" data-t="guardianes" aria-selected="false"><span class="n">4</span>Guardianes</button>
+    <button role="tab" data-t="videos" aria-selected="false"><span class="n">5</span>Vídeos y juegos</button>
+    <button role="tab" data-t="examen" aria-selected="false"><span class="n">6</span>Examen e informe</button>
+  </nav>
+
+  <section class="mission" id="m-medidor">
+    <div class="intro"><span class="label">Misión 1 · El medidor de la caja fuerte</span>
+      <h2>¿Cuánto resistiría tu contraseña?</h2>
+      <p>Escribe contraseñas <b>inventadas</b> y mira cómo cambia el medidor. Reto: consigue el nivel «Caja fuerte suiza». Lo que escribas aquí no se guarda ni se envía a nadie, y no aparece en el informe.</p></div>
+    <div class="warnbox">⚠ No escribas nunca aquí ni en ninguna web de práctica tus contraseñas de verdad.</div>
+    <div class="safe">
+      <label for="pwIn" class="label" style="color:var(--ink)">Contraseña de prueba</label>
+      <div class="dial"><input id="pwIn" type="password" autocomplete="off" spellcheck="false" maxlength="60" placeholder="Prueba, por ejemplo: pini123"><button class="btn" id="eye" type="button">👁 Ver</button></div>
+      <div class="meter"><i id="mbar"></i></div>
+      <div class="lvl" id="mlvl">Escribe algo para empezar</div>
+      <p class="time" id="mtime"></p>
+      <ul class="crit" id="crit"></ul>
+      <div id="fbM"></div>
+    </div>
+  </section>
+
+  <section class="mission" id="m-pares" hidden>
+    <div class="intro"><span class="label">Misión 2 · ¿Cuál es más segura?</span>
+      <h2>Elige la contraseña más fuerte de cada pareja</h2>
+      <p>Todas son inventadas. Piensa en la longitud, la mezcla de caracteres y si contiene datos fáciles de adivinar.</p></div>
+    <div class="pairs" id="pairs"></div>
+  </section>
+
+  <section class="mission" id="m-frase" hidden>
+    <div class="intro"><span class="label">Misión 3 · El método de la frase secreta</span>
+      <h2>Una frase que solo tú conoces</h2>
+      <p>Piensa una frase fácil de recordar para ti, toma la primera letra de cada palabra y respeta los números y signos. Así sale una contraseña larga y rara que puedes recordar sin apuntarla.</p></div>
+    <div id="phrases" style="display:flex;flex-direction:column;gap:12px"></div>
+    <div class="phrase">
+      <span class="label">Laboratorio</span>
+      <label for="frIn" style="font-weight:700">Escribe una frase inventada (no la uses como contraseña real) y mira la contraseña que saldría:</label>
+      <input id="frIn" maxlength="120" autocomplete="off" style="font:inherit;padding:10px 12px;border:2px solid var(--line);border-radius:10px;background:var(--bg);color:var(--ink)" placeholder="Ej.: Los 4 pinos del patio cantan en la radio!">
+      <div class="gen" id="frOut">…</div>
+    </div>
+  </section>
+
+  <section class="mission" id="m-guardianes" hidden>
+    <div class="intro"><span class="label">Misión 4 · Guardianes de la contraseña</span>
+      <h2>¿Seguro o peligro?</h2>
+      <p>Una contraseña fuerte no sirve de nada si no la cuidas. Decide en cada situación.</p></div>
+    <div class="gcards" id="gcards"></div>
+    <div class="tip"><b>Verificación en dos pasos:</b> además de la contraseña, la app pide un código que llega al móvil de un adulto de confianza. Así, aunque alguien adivine la contraseña, no puede entrar. ¡Pide a tu familia que la active!</div>
+  </section>
+
+
+  <section class="mission" id="m-videos" hidden>
+    <div class="intro"><span class="label">Misión 5 · Vídeos y juegos</span>
+      <h2>Mira, piensa y juega</h2>
+      <p>Abre cada vídeo o juego (se abre en una pestaña nueva), míralo con tu profe y responde en tu cuaderno a la pregunta. Marca la casilla al terminar: cuenta para tu informe.</p></div>
+    <div class="vids" id="vids"></div>
+  </section>
+
+
+  <section class="mission" id="m-examen" hidden>
+    <div class="intro"><span class="label">Misión 6 · Examen final</span>
+      <h2>¿Tu caja fuerte es segura?</h2>
+      <p>Responde a las ocho preguntas. Al final verás tu diploma y el informe para tu profe.</p></div>
+    <div class="quiz" id="quiz"></div>
+    <div class="diploma" id="diploma" hidden></div>
+    <div id="informe"></div>
+  </section>
+
+  <footer>Actividad educativa. Todas las contraseñas, cuentas y personas de los ejemplos son inventadas. Vídeos de PantallasAmigas, INCIBE/OSI y Smile and Learn; tarea de Lumio.</footer>
+</div>
+
+<script>
+const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
+let pts=0;const add=n=>{pts+=n;$('#score').textContent='Llaves: '+pts};
+const keyAct=(el,fn)=>{el.addEventListener('click',fn);el.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();fn(e)}})};
+
+/* M1 medidor */
+const COMMON=/(1234|abcd|qwer|asdf|pass|contrase|clave|pini|radio|lapi|0000|1111|hola|admin|futbol|messi|real|barca|perro|gato|mama|papa|20[0-2][0-9]|19[5-9][0-9])/i;
+function score(p){
+  const c={len8:p.length>=8,len12:p.length>=12,low:/[a-zñ]/.test(p),up:/[A-ZÑ]/.test(p),num:/[0-9]/.test(p),sym:/[^A-Za-z0-9ñÑ]/.test(p),common:COMMON.test(p),rep:/(.)\1\1/.test(p)};
+  let s=0;if(c.len8)s++;if(c.len12)s++;if(p.length>=16)s++;if(c.low&&c.up)s++;if(c.num)s++;if(c.sym)s++;if(c.common)s-=2;if(c.rep)s--;
+  const lvl=p.length===0?-1:s<=1?0:s<=3?1:s<=5?2:3;return {c,lvl}
+}
+const LV=[['Candado de juguete','#c43c2f',20,'unos segundos'],['Candado de bici','#e08a1e',45,'unas horas'],['Cerradura de casa','#d4b500',72,'varios años'],['Caja fuerte suiza','#1d8a52',100,'miles de años']];
+let bestLvl=-1;
+function meter(){
+  const p=$('#pwIn').value,{c,lvl}=score(p);
+  if(lvl<0){$('#mbar').style.width='0';$('#mlvl').textContent='Escribe algo para empezar';$('#mtime').textContent='';$('#crit').innerHTML='';return}
+  const L=LV[lvl];$('#mbar').style.width=L[2]+'%';$('#mbar').style.background=L[1];$('#mlvl').textContent=L[0];$('#mlvl').style.color=L[1];
+  $('#mtime').innerHTML=`Un programa que prueba combinaciones tardaría <b>${L[3]}</b> en adivinarla (estimación aproximada).`;
+  $('#crit').innerHTML=[[c.len12,'12 caracteres o más'],[c.low&&c.up,'Mayúsculas y minúsculas'],[c.num,'Algún número'],[c.sym,'Algún símbolo (- _ ! ? …)'],[!c.common,c.common?'Contiene algo fácil de adivinar (nombres, 1234, años…)':'Nada fácil de adivinar'],[!c.rep,c.rep?'Tiene letras repetidas seguidas':'Sin repeticiones raras']].map(x=>`<li class="${x[0]?'on':(x[1].startsWith('Contiene')||x[1].startsWith('Tiene')?'warn':'')}">${x[0]?'✔':'○'} ${x[1]}</li>`).join('');
+  if(lvl>bestLvl){bestLvl=lvl;if(lvl===3){add(10);$('#fbM').innerHTML='<div class="feedback right"><strong>¡Caja fuerte suiza!</strong><span>Así se hace una contraseña fuerte: larga, variada y sin datos tuyos. Recuerda: esta era de práctica, no la uses.</span></div>'}}
+}
+/* M2 pares */
+const PAIRS=[
+ ['lucia2015','Mi-Gato_Come*Pizza8',1,'La segunda es larga y mezcla de todo. La primera es tu nombre y un año: muy fácil de adivinar.'],
+ ['Tr3n!Azul-Lisboa_44','123456789',0,'«123456789» es de las contraseñas más usadas del mundo. ¡Es la primera que prueban!'],
+ ['qwerty','Pinar$Verde=Sol72',1,'«qwerty» son las primeras letras del teclado. Se adivina enseguida.'],
+ ['contraseña','LaRadio_SuenaFuerte9!',1,'Usar la palabra «contraseña» como contraseña es de lo primero que se prueba.'],
+ ['Pb8!rK2#vL5@','pini',0,'Cuatro letras y además el nombre de la mascota: demasiado corta y fácil.'],
+ ['Barça','Rio+Duero_Corre7Libre',1,'Tu equipo, tu mascota o tu cantante favorito son datos que otros pueden conocer.']
+];
+const res2={};const fails2=[];
+/* M3 frase */
+const PH=[
+ {f:'<b>M</b>i <b>p</b>erro <b>T</b>oby <b>c</b>ome <b>3</b> <b>g</b>alletas <b>a</b>l <b>d</b>ía<b>!</b>',o:['MpTc3gad!','miperrotoby','Toby3!'],a:0},
+ {f:'<b>L</b>os <b>l</b>unes <b>g</b>rabamos <b>R</b>adio <b>L</b>a <b>P</b>iña <b>a</b> <b>l</b>as <b>10</b><b>?</b>',o:['lunes10','LlgRLPal10?','RadioLaPiña'],a:1},
+ {f:'<b>E</b>n <b>v</b>erano <b>v</b>oy <b>a</b> <b>N</b>adar <b>2</b> <b>v</b>eces <b>a</b>l <b>d</b>ía<b>-</b>',o:['Verano2','nadar2veces','EvvaN2vad-'],a:2}
+];
+const res3={};const fails3=[];
+/* M4 guardianes */
+const G=[
+ ['Apuntas tu contraseña en un pósit pegado a la pantalla.',0,'Cualquiera que pase la puede ver.'],
+ ['Usas una contraseña distinta para cada cuenta.',1,'Si roban una, las demás siguen a salvo.'],
+ ['Tu mejor amigo te pide la contraseña para ayudarte en un juego.',0,'Las contraseñas no se comparten ni con amigos: solo las conoce tu familia.'],
+ ['Cierras sesión al terminar en un ordenador del cole.',1,'Así el siguiente no puede entrar en tu cuenta.'],
+ ['Te llega un correo de «soporte» pidiendo tu contraseña para «verificar la cuenta».',0,'Es phishing. Ninguna empresa seria te pide la contraseña por correo.'],
+ ['Tu familia activa la verificación en dos pasos en tu cuenta.',1,'Aunque adivinen la contraseña, sin el código no pueden entrar.'],
+ ['Usas «pini123» en todas tus cuentas porque así no se te olvida.',0,'Es corta, fácil y repetida: si cae una, caen todas.'],
+ ['Cambias la contraseña si crees que alguien la ha visto.',1,'Cambiarla a tiempo cierra la puerta.']
+];
+const res4={};const fails4=[];
+function init(){
+  $('#pwIn').addEventListener('input',meter);
+  $('#eye').onclick=()=>{const i=$('#pwIn');i.type=i.type==='password'?'text':'password';$('#eye').textContent=i.type==='password'?'👁 Ver':'🙈 Ocultar'};
+  $('#pairs').innerHTML=PAIRS.map((p,i)=>`<div class="pair"><span class="label">Pareja ${i+1}</span><button class="pw" data-p="${i}" data-o="0">${p[0]}</button><button class="pw" data-p="${i}" data-o="1">${p[1]}</button><div id="f2-${i}"></div></div>`).join('');
+  $$('#pairs .pw').forEach(b=>b.onclick=()=>{const i=+b.dataset.p;if(res2[i]!==undefined)return;const p=PAIRS[i],ok=+b.dataset.o===p[2];res2[i]=ok;if(ok)add(4);else fails2.push(`Pareja ${i+1}: eligió «${p[+b.dataset.o]}»`);
+    $$(`#pairs .pw[data-p="${i}"]`).forEach(x=>x.classList.add(+x.dataset.o===p[2]?'r':'w'));
+    $('#f2-'+i).innerHTML=`<div class="feedback ${ok?'right':'wrong'}"><strong>${ok?'¡Bien elegido!':'Era la otra.'}</strong><span>${p[3]}</span></div>`});
+  $('#phrases').innerHTML=PH.map((p,i)=>`<div class="phrase"><span class="label">Frase ${i+1}</span><p class="fr">${p.f}</p><p>¿Qué contraseña sale de esta frase?</p><div class="opts">${p.o.map((o,j)=>`<button data-f="${i}" data-o="${j}" style="font-family:var(--f-mono)">${o}</button>`).join('')}</div><div id="f3-${i}"></div></div>`).join('');
+  $$('#phrases .opts button').forEach(b=>b.onclick=()=>{const i=+b.dataset.f,p=PH[i],ok=+b.dataset.o===p.a;res3[i]=ok;if(ok)add(4);else fails3.push(`Frase ${i+1}: eligió «${p.o[+b.dataset.o]}»`);
+    [...b.parentElement.children].forEach((x,j)=>{x.disabled=true;if(j===p.a)x.classList.add('r')});if(!ok)b.classList.add('w');
+    $('#f3-'+i).innerHTML=`<div class="feedback ${ok?'right':'wrong'}"><span>Las letras en rojo de la frase forman la contraseña, con sus números y signos.</span></div>`});
+  $('#frIn').addEventListener('input',()=>{const w=$('#frIn').value.trim().split(/\s+/).filter(Boolean);
+    const out=w.map(x=>/^\d+$/.test(x)?x:(x[0]||'')+(/[^\wáéíóúñÁÉÍÓÚÑ]$/.test(x)?x.slice(-1):'')).join('');
+    $('#frOut').textContent=out?out+`   (${out.length} caracteres)`:'…'});
+  $('#gcards').innerHTML=G.map((g,i)=>`<div class="gcard"><p class="s">${g[0]}</p><div class="choices"><button class="btn" data-g="${i}" data-v="1" style="border-color:var(--ok);color:var(--ok)">🛡 Seguro</button><button class="btn" data-g="${i}" data-v="0" style="border-color:var(--bad);color:var(--bad)">⚠ Peligro</button></div><div id="f4-${i}"></div></div>`).join('');
+  $$('#gcards [data-g]').forEach(b=>b.onclick=()=>{const i=+b.dataset.g,g=G[i],ok=+b.dataset.v===g[1];res4[i]=ok;if(ok)add(3);else fails4.push(`«${g[0]}»: era ${g[1]?'seguro':'peligro'}`);
+    b.parentElement.querySelectorAll('button').forEach(x=>x.disabled=true);
+    $('#f4-'+i).innerHTML=`<div class="feedback ${ok?'right':'wrong'}"><strong>${g[1]?'Seguro 🛡':'Peligro ⚠'}</strong><span>${g[2]}</span></div>`});
+}
+const QUIZ=[
+ ['¿Qué contraseña es más segura?',['ana2016','12345678','Luna_Salta-Charcos9!'],2],
+ ['¿Con quién puedes compartir tus contraseñas?',['Con mis amigos de confianza','Con mi familia (madre, padre o tutores)','Con quien me la pida por correo'],1],
+ ['¿Qué es mejor usar en una contraseña?',['El nombre de mi mascota','Una frase secreta convertida en letras, números y signos','Mi fecha de nacimiento'],1],
+ ['¿Por qué no hay que usar la misma contraseña en todo?',['Porque se gasta','Porque si roban una, pueden entrar en todas tus cuentas','Porque no está permitido'],1],
+ ['¿Qué es la verificación en dos pasos?',['Escribir la contraseña dos veces','Pedir además un código que llega a un móvil de confianza','Tener dos cuentas'],1],
+ ['Terminas de usar el ordenador del cole. ¿Qué haces?',['Cierro sesión','Dejo la cuenta abierta para el siguiente','Apago la pantalla'],0],
+ ['Un mensaje de «soporte» te pide tu contraseña. ¿Qué es?',['Un aviso normal','Phishing: no la doy y aviso a un adulto','Un premio'],1],
+ ['¿Cuántos caracteres debería tener, como mínimo, una buena contraseña?',['4','6','12'],2]
+];
+const LEVELS=['Cerrajero/a digital experto/a','Guardián/a de contraseñas','Aprendiz de cerrajero/a'];
+const DIPLOMA_SVG='<svg width="70" height="70" viewBox="0 0 80 80" aria-hidden="true"><rect x="6" y="10" width="68" height="62" rx="10" fill="var(--tram)"/><path d="M24 42l11 11 22-24" fill="none" stroke="var(--tram-ink)" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+
+const VIDS=[{"src": "Lumio · tarea con evaluación", "t": "Ajustes de privacidad", "url": "https://lum.io/student/assign/954ec93f-9f8e-4be4-b97e-b4ab334bbfea", "q": "Inicia sesión con tu cuenta del centro, haz la tarea y completa la evaluación del final.", "kind": "tarea"}, {"src": "PantallasAmigas", "t": "Contraseña segura: ocho claves para proteger tu vida digital", "url": "https://www.youtube.com/watch?v=Cp4Tiq3LOrc", "q": "Escribe las tres claves que te parezcan más importantes.", "kind": "video"}, {"src": "OSI · INCIBE", "t": "Cómo crear contraseñas con reglas mnemotécnicas", "url": "https://www.youtube.com/watch?v=dRSiu13_AUk", "q": "Inventa una frase (¡sin escribir la contraseña!) que te serviría para crear una.", "kind": "video"}, {"src": "INCIBE", "t": "¿Tu contraseña es el nombre de tu mascota?", "url": "https://www.youtube.com/watch?v=dWmPIFkRHp4", "q": "¿Por qué no es buena idea usar datos tuyos en una contraseña?", "kind": "video"}, {"src": "INCIBE", "t": "¡Activa ya la verificación en dos pasos!", "url": "https://www.youtube.com/watch?v=Ls5AvCIbZB0", "q": "Explica con tus palabras qué es la verificación en dos pasos.", "kind": "video"}, {"src": "Smile and Learn", "t": "Privacidad online para niños", "url": "https://www.youtube.com/watch?v=rHDTJQKW2y8", "q": "¿Qué datos tuyos nunca deberías compartir en internet?", "kind": "video"}, {"src": "Google · Sé genial en Internet", "t": "Juego Interland", "url": "https://beinternetawesome.withgoogle.com/es_es/interland", "q": "Juega a los cuatro mundos de Interland y apunta cuál te costó más.", "kind": "game"}, {"src": "INCIBE · OSI", "t": "Juego CyberScouts", "url": "https://cyberscouts.osi.es/", "q": "Juega a CyberScouts y apunta el reto que te resultó más difícil.", "kind": "game"}, {"src": "Lumio · clase en directo", "t": "Entra en la clase de Lumio (ID 835883)", "url": "https://www.lumioclass.com/link/835883", "q": "Úsalo cuando tu profe abra la clase en directo en la pizarra.", "kind": "clase"}];
+const seenV={};
+(function(){const PLAY='<svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z" fill="currentColor"/></svg>';
+ const lab={video:'Vídeo',game:'Juego',lumio:'Lumio',tarea:'⭐ Tarea obligatoria con evaluación',clase:'Clase Lumio'},btn={video:PLAY+' Ver vídeo',game:'🎮 Jugar',lumio:'📒 Abrir en Lumio',tarea:'📒 Abrir la tarea',clase:'🏫 Entrar en la clase'},ckl={game:'He jugado',tarea:'He hecho la tarea y la evaluación',clase:'He entrado en la clase'};
+ document.querySelector('#vids').innerHTML=VIDS.map((v,i)=>`<div class="vid ${v.kind==='tarea'?'tarea':''}" id="v-${i}"><span class="src">${v.src}</span><span class="kindtag">${lab[v.kind]}</span><h3>${v.t}</h3><a class="go" href="${v.url}" target="_blank" rel="noopener">${btn[v.kind]}</a><p class="q"><b>Piensa:</b> ${v.q}</p><label class="ck" for="ck-${i}"><input type="checkbox" id="ck-${i}">${ckl[v.kind]||'Lo he visto'}</label></div>`).join('');
+ VIDS.forEach((v,i)=>document.querySelector('#ck-'+i).addEventListener('change',e=>{seenV[i]=e.target.checked;document.querySelector('#v-'+i).classList.toggle('seen',e.target.checked);if(typeof onVidChange==='function')onVidChange()}));})();
+function vidRow(label){const L=VIDS.map((v,i)=>[v,i]).filter(x=>x[0].kind!=='clase');const n=L.filter(x=>seenV[x[1]]).length;return {name:label,ok:n,max:L.length,done:n===L.length,fails:L.filter(x=>!seenV[x[1]]).map(([v])=>(v.kind==='tarea'?'Tarea Lumio sin hacer: ':'Sin marcar: ')+v.t)}}
+
+function onVidChange(){}
+
+const res6={};let q6=0;
+$('#quiz').innerHTML=QUIZ.map((q,i)=>`<div class="qitem"><p class="qq">${i+1}. ${q[0]}</p><div class="opts">${q[1].map((o,j)=>`<button data-q="${i}" data-o="${j}">${o}</button>`).join('')}</div></div>`).join('');
+$$('#quiz .opts button').forEach(b=>b.onclick=()=>{
+  const q=QUIZ[+b.dataset.q],ok=+b.dataset.o===q[2];res6[b.dataset.q]=ok;
+  [...b.parentElement.children].forEach((x,j)=>{x.disabled=true;if(j===q[2])x.classList.add('r')});
+  if(ok)add(5);else b.classList.add('w');
+  if(++q6===QUIZ.length){const okN=Object.values(res6).filter(Boolean).length;const d=$('#diploma');d.hidden=false;
+    const lvl=okN>=7?LEVELS[0]:okN>=5?LEVELS[1]:LEVELS[2];
+    d.innerHTML=`${DIPLOMA_SVG}<h3>Diploma de ${lvl}</h3><p>Examen: ${okN} de ${QUIZ.length} · Total: <b>${pts}</b></p>`}
+  setTimeout(renderInforme);
+});
+
+/* ---------- Informe para el profe ---------- */
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function initInforme(){['alNombre','alCurso'].forEach(id=>{const el=$('#'+id);try{el.value=localStorage.getItem(STORE+id)||''}catch(e){}
+  el.addEventListener('input',()=>{try{localStorage.setItem(STORE+id,el.value)}catch(e){};renderInforme()})})}
+function renderInforme(){
+  const rows=informeRows(),nomRaw=$('#alNombre').value.trim(),nom=nomRaw||'(sin nombre)',cur=$('#alCurso').value.trim()||'(sin curso)';
+  let ok=0,max=0;rows.forEach(r=>{ok+=r.ok;max+=r.max});const all=rows.every(r=>r.done);
+  const d=new Date(),fecha=d.toLocaleDateString('es-ES')+' '+d.toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'});
+  let t=`INFORME: ${TITULO}\nAlumno/a: ${nom}\nCurso: ${cur}\nFecha: ${fecha}\nAciertos: ${ok}/${max}${all?'':' (sin terminar)'} · ${PUNTOS()}\n\n`;
+  rows.forEach(r=>{t+=`- ${r.name}: ${r.ok}/${r.max}${r.done?'':' (sin terminar)'}\n`;r.fails.forEach(f=>t+=`    · ${f}\n`)});
+  $('#informe').innerHTML=`<h3>Informe para tu profe</h3>
+   ${nomRaw?'':'<div class="feedback wrong"><span>Escribe tu nombre y curso arriba, en la ficha, antes de entregar.</span></div>'}
+   <div class="rwrap"><table class="rtable"><thead><tr><th>Misión</th><th>Aciertos</th><th>A repasar</th></tr></thead><tbody>${rows.map(r=>`<tr><td>${r.name}${r.done?'':' <span class="pend">pendiente</span>'}</td><td>${r.ok} / ${r.max}</td><td class="rf">${r.fails.length?r.fails.map(esc).join('<br>'):'—'}</td></tr>`).join('')}</tbody></table></div>
+   <div class="copybox" id="copybox">${esc(t)}</div>
+   <div class="cbar"><button class="btn primary" id="copyBtn">Copiar informe</button><span id="copyMsg" class="cmsg"></span></div>
+   <div class="tip">Pega el informe en un correo a tu profe con el asunto «${TITULO} – ${esc(nom)}», o donde te diga tu profe.</div>`;
+  $('#copyBtn').onclick=()=>{const sel=()=>{const r=document.createRange();r.selectNodeContents($('#copybox'));const s=getSelection();s.removeAllRanges();s.addRange(r);$('#copyMsg').textContent='Texto seleccionado: pulsa Ctrl + C para copiarlo.'};
+    try{navigator.clipboard.writeText(t).then(()=>{$('#copyMsg').textContent='¡Copiado! Pégalo con Ctrl + V.'},sel)}catch(e){sel()}};
+}
+
+const STORE='contrasenas-',TITULO='Contraseñas Seguras',PUNTOS=()=>'Llaves: '+pts;
+initInforme();
+function informeRows(){
+  const cnt=o=>Object.values(o).filter(x=>x===true).length,ans=o=>Object.values(o).filter(x=>x!==undefined).length;
+  return [
+   {name:'1. El medidor',ok:bestLvl===3?1:0,max:1,done:bestLvl===3,fails:bestLvl===3?[]:[bestLvl<0?'No ha probado el medidor':'Nivel máximo conseguido: '+LV[bestLvl][0]]},
+   {name:'2. ¿Cuál es más segura?',ok:cnt(res2),max:PAIRS.length,done:ans(res2)===PAIRS.length,fails:fails2},
+   {name:'3. La frase secreta',ok:cnt(res3),max:PH.length,done:ans(res3)===PH.length,fails:fails3},
+   {name:'4. Guardianes',ok:cnt(res4),max:G.length,done:ans(res4)===G.length,fails:fails4},
+   vidRow('5. Vídeos y juegos'),
+   {name:'6. Examen final',ok:cnt(res6),max:QUIZ.length,done:ans(res6)===QUIZ.length,fails:QUIZ.filter((q,i)=>res6[i]===false).map(q=>'Falló: '+q[0])}
+  ];
+}
+const ids=['medidor','pares','frase','guardianes','videos','examen'];
+function show(t){
+  if(!ids.includes(t))t=ids[0];
+  ids.forEach(x=>$('#m-'+x).hidden=x!==t);
+  document.querySelector('.relato').hidden=t!==ids[0];
+  $$('#tabs button').forEach(b=>b.setAttribute('aria-selected',b.dataset.t===t));
+  if(location.hash!=='#'+t)history.replaceState(null,'','#'+t);
+  if(t==='examen')renderInforme();
+  scrollTo({top:0});
+}
+$$('#tabs button').forEach(b=>b.onclick=()=>show(b.dataset.t));
+addEventListener('hashchange',()=>show(location.hash.slice(1)));
+init();show(location.hash.slice(1));
+
+
+/* ---------- Valoración de indicadores y llave ---------- */
+const VAL_CFG={"pre": "CON", "i5": [["4.1.1", [0, 1, 2], "Crea en la actividad de LUMIO una contraseña segura para «la maleta» (frase de paso con mayúsculas, números y símbolos, sin datos personales) y explica dónde guardarla y cómo cambiarla.", "CD4"], ["4.1.2", [3], "Inicia sesión en Code.org y MakeCode con su cuenta Microsoft de Educacyl y la cierra al terminar sin dejar sus credenciales a la vista.", "CD4"]], "i6": [["4.1.1", [0, 2, 3], "Crea una contraseña segura con el método de la frase secreta, sabe que no se comparte y explica qué es la verificación en dos pasos.", "CD4"], ["4.1.2", [3], "Inicia y cierra sesión correctamente (Educacyl, Microsoft, MakeCode) y no deja la sesión abierta.", "CD4"]], "vid": 4, "exam": 5};
+function valRows(){return typeof informeRows==='function'?informeRows():Object.values(R)}
+function valScore(rows,idx){let ok=0,max=0,att=false;idx.forEach(i=>{const r=rows[i];if(!r)return;ok+=r.ok;max+=r.max;if(r.ok>0||r.done)att=true});return att?Math.max(1,Math.round(5*ok/(max||1))):0}
+function valAll(){const rows=valRows();return {rows,s5:VAL_CFG.i5.map(x=>valScore(rows,x[1])),s6:VAL_CFG.i6.map(x=>valScore(rows,x[1]))}}
+function valComplete(rows){return rows.every((r,i)=>i===VAL_CFG.vid||r.done)}
+function valKey(v){const ex=VAL_CFG.exam!=null&&v.rows[VAL_CFG.exam]?v.rows[VAL_CFG.exam].ok:0;const raw=VAL_CFG.pre+'-'+v.s5.join('')+'-'+v.s6.join('')+'-'+ex;let h=0;for(let i=0;i<raw.length;i++)h=(h+raw.charCodeAt(i)*(i+7))%1296;return raw+'-'+h.toString(36).toUpperCase().padStart(2,'0')}
+function valCourse(){const c=(document.querySelector('#alCurso')||{}).value||'';return /6/.test(c)?'6':/5/.test(c)?'5':''}
+function valEsc(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
+function appendVal(){
+  const host=document.querySelector('#informe')||document.querySelector('#report');if(!host)return;
+  const old=host.querySelector('.valora');if(old)old.remove();
+  const v=valAll(),c=valCourse(),done=valComplete(v.rows),key=done?valKey(v):'';
+  const bar=n=>`<span class="vbar">${[1,2,3,4,5].map(i=>`<i class="${i<=n?'on':''}"></i>`).join('')}</span>`;
+  const tab=(k,list,sc)=>`<div><h4>${k}.º de Primaria</h4><table class="rtable"><thead><tr><th>Indicador</th><th>0-5</th></tr></thead><tbody>${list.map((x,i)=>`<tr><td><b>${x[0]}</b> ${valEsc(x[2])} <span style="color:var(--muted)">(${x[3]})</span></td><td><span class="vstar">${sc[i]}</span>${bar(sc[i])}</td></tr>`).join('')}</tbody></table></div>`;
+  const cols=(c!=='6'?tab(5,VAL_CFG.i5,v.s5):'')+(c!=='5'?tab(6,VAL_CFG.i6,v.s6):'');
+  const div=document.createElement('div');div.className='valora';
+  div.innerHTML=`<h3>Valoración de los indicadores de logro</h3><p style="font-size:.88rem;color:var(--muted)">Escala de 0 a 5: 0 = no realizado; 5 = realizado con éxito. Es una estimación automática a partir de las misiones relacionadas; tu profe la revisará.${c?'':' Escribe tu curso en la ficha para ver solo el tuyo.'}</p><div class="cols">${cols}</div>
+   <div class="llave">${done?`<b>🔑 ¡Has conseguido la llave de esta web!</b><code>${key}</code><span style="font-size:.88rem">Ya está guardada: vuelve al rincón Piensa de Rumbo a Europa y envía tus notas.</span><a href="../#piensa" style="align-self:flex-start;font-weight:700;color:var(--accent)">Volver al rincón Piensa · Pasaporte TIC ↗</a>`:`<b>🔒 Llave todavía cerrada</b><span style="font-size:.88rem">Termina todas las misiones${VAL_CFG.exam!=null?' y el examen final':''} (los vídeos no son obligatorios) para conseguir la llave de la siguiente parada.</span>`}</div>`;
+  const cb=host.querySelector('#copybox');
+  if(cb){host.insertBefore(div,cb.previousElementSibling&&cb.previousElementSibling.tagName==='H3'?cb.previousElementSibling:cb);
+    let t=cb.textContent.replace(/\nVALORACIÓN DE INDICADORES[\s\S]*$/,'');
+    t+='\nVALORACIÓN DE INDICADORES (0-5)\n'+(c!=='6'?VAL_CFG.i5.map((x,i)=>`  5.º ${x[0]}: ${v.s5[i]}`).join('\n')+'\n':'')+(c!=='5'?VAL_CFG.i6.map((x,i)=>`  6.º ${x[0]}: ${v.s6[i]}`).join('\n')+'\n':'')+'LLAVE: '+(key||'(sin conseguir)')+'\n';
+    cb.textContent=t;
+    const btn=host.querySelector('#copyBtn'),msg=host.querySelector('#copyMsg');
+    if(btn)btn.onclick=()=>{const sel=()=>{const r=document.createRange();r.selectNodeContents(cb);const s=getSelection();s.removeAllRanges();s.addRange(r);if(msg)msg.textContent='Texto seleccionado: pulsa Ctrl + C para copiarlo.'};try{navigator.clipboard.writeText(cb.textContent).then(()=>{if(msg)msg.textContent='¡Copiado! Pégalo con Ctrl + V.'},sel)}catch(e){sel()}};
+  }else host.appendChild(div);
+}
+(function(){
+  if(typeof renderInforme==='function'){const o=renderInforme;renderInforme=function(){o();appendVal()}}
+  else if(typeof renderReport==='function'){const o=renderReport;renderReport=function(){o();appendVal()}}
+})();
+</script>
+
+<script>
+/* Rumbo a Europa: rellena nombre y curso con los datos de la web y guarda la llave en el rincón Piensa */
+(function(){
+  try{
+    var a=(JSON.parse(localStorage.getItem("rumbo-a-europa-v1")||"{}")||{}).alumno||{};
+    [["alNombre",a.nombre],["alCurso",a.clase]].forEach(function(p){var el=document.getElementById(p[0]);if(el&&p[1]&&!el.value.trim()){el.value=p[1];el.dispatchEvent(new Event("input",{bubbles:true}));el.dispatchEvent(new Event("change",{bubbles:true}));}});
+  }catch(e){}
+  if(typeof valKey==="function"){
+    var orig=valKey;
+    valKey=function(v){var k=orig(v);try{var g=JSON.parse(localStorage.getItem("rumbo-piensa-llaves")||"{}")||{};var done=typeof valComplete==="function"?valComplete(v.rows):true;g[VAL_CFG.pre]={llave:k,completa:!!done,fecha:new Date().toISOString()};localStorage.setItem("rumbo-piensa-llaves",JSON.stringify(g));}catch(e){}return k;};
+  }
+})();
+</script>
+<style id="lectura-css">
+.lectura{margin-top:14px;border:2px solid var(--accent,#c8102e);border-radius:14px;padding:16px;background:var(--paper,#fff);color:var(--ink,#1a1f2e)}
+.lectura h3{margin:0 0 6px;font-size:1.25rem;color:var(--ink,#1a1f2e)}
+.lectura>p{font-size:1.05rem;color:var(--ink,#1a1f2e)}
+.lectura .lq{margin:14px 0 0}
+.lectura .lq p{margin:0 0 8px;font-weight:800;font-size:1.12rem;line-height:1.4;color:var(--ink,#1a1f2e)}
+.lectura .lops{display:grid;gap:8px}
+.lectura .lop{text-align:left;font:inherit;font-size:1.05rem;line-height:1.4;padding:10px 14px;border-radius:10px;border:2px solid var(--line,#bbb);background:var(--bg,#f4f4f4);color:var(--ink,#1a1f2e);cursor:pointer}
+.lectura .lop:hover{border-color:var(--accent,#c8102e)}
+.lectura .lop[aria-pressed="true"]{border-color:var(--accent,#c8102e);box-shadow:0 0 0 3px var(--accent,#c8102e);font-weight:700}
+.lectura .lq.mal .lop[aria-pressed="true"]{border-color:var(--bad,#c8102e);background:var(--bad-bg,#fdeaea);box-shadow:none}
+.lectura .lq.bien .lop[aria-pressed="true"]{border-color:var(--ok,#2f8f5b);background:var(--ok-bg,#e6f4ec);box-shadow:none}
+.lectura .lfb{margin-top:10px;font-weight:800;font-size:1.05rem}
+.lectura .lfb.mal{color:var(--bad,#c8102e)}.lectura .lfb.bien{color:var(--ok,#2f8f5b)}
+.lectura .lbtn{margin-top:12px;font:inherit;font-weight:800;font-size:1.05rem;padding:10px 20px;border-radius:12px;border:0;background:var(--accent,#c8102e);color:var(--accent-ink,#fff);cursor:pointer}
+body.lect-bloq section.mission,body.lect-bloq section.st{display:none!important}
+body.lect-bloq #tabs button:not(:first-child){opacity:.45}
+body.lect-bloq #tabs button:not(:first-child)::after{content:" 🔒"}
+.lect-aviso{border:2px dashed var(--accent,#c8102e);border-radius:12px;padding:12px;margin:12px 0;font-weight:700;text-align:center;color:var(--ink,#1a1f2e)}
+</style>
+<script>
+/* Rumbo a Europa: dos preguntas de comprensión de la lectura. Hasta acertar las dos no se abren las misiones. */
+(function(){
+  var PREG = [["¿Qué problema tenía la contraseña «pini123»?", ["Era corta y fácil de adivinar", "Era demasiado larga", "Tenía demasiados símbolos"]], ["¿Con qué compara Pini una contraseña?", ["Con la combinación de una caja fuerte", "Con un reloj de cuco", "Con una montaña de Suiza"]]], CLAVE = "rumbo-lectura-" + "contrasenas";
+  var abierto = false; try { abierto = sessionStorage.getItem(CLAVE) === "1"; } catch (e) {}
+  var tabs = document.querySelectorAll("#tabs button");
+  var primera = (typeof ids !== "undefined" && ids[0]) || (tabs[0] && tabs[0].dataset.t);
+  var rt = document.querySelector(".relato .rt"), reto = rt && rt.querySelector(".reto");
+  if (!rt || typeof show !== "function") return;
+  var orig = show;
+  show = function (t) { if (!abierto && t !== primera) { t = primera; avisar(); } return orig(t); };
+  function avisar() { var c = document.getElementById("lectura"); if (c) { c.scrollIntoView({ behavior: "smooth", block: "center" }); var f = c.querySelector(".lfb"); f.className = "lfb mal"; f.textContent = "Primero contesta bien las dos preguntas de la lectura."; } }
+  var caja = document.createElement("div"); caja.className = "lectura"; caja.id = "lectura";
+  function mezclar(a) { a = a.slice(); for (var i = a.length - 1; i > 0; i--) { var j = Math.floor(Math.random() * (i + 1)); var x = a[i]; a[i] = a[j]; a[j] = x; } return a; }
+  function pintar() {
+    if (abierto) {
+      caja.innerHTML = '<h3>📖 Comprensión de la lectura</h3><p class="lfb bien">✓ ¡Lectura comprendida! Las misiones están abiertas.</p>';
+      return;
+    }
+    caja.innerHTML = '<h3>📖 Comprensión de la lectura</h3><p style="margin:0">Lee el texto y contesta las dos preguntas. Si aciertas las dos, se abren las misiones.</p>' +
+      PREG.map(function (q, k) {
+        return '<div class="lq" data-k="' + k + '"><p>' + (k + 1) + '. ' + q[0] + '</p><div class="lops">' +
+          mezclar(q[1].map(function (o, i) { return [o, i]; })).map(function (o) { return '<button type="button" class="lop" aria-pressed="false" data-ok="' + (o[1] === 0 ? 1 : 0) + '">' + o[0] + '</button>'; }).join("") + '</div></div>';
+      }).join("") + '<button type="button" class="lbtn">Comprobar</button><p class="lfb" aria-live="polite"></p>';
+  }
+  caja.addEventListener("click", function (e) {
+    var op = e.target.closest(".lop");
+    if (op) { var g = op.closest(".lq"); g.classList.remove("mal", "bien"); g.querySelectorAll(".lop").forEach(function (b) { b.setAttribute("aria-pressed", String(b === op)); }); return; }
+    if (!e.target.closest(".lbtn")) return;
+    var fb = caja.querySelector(".lfb"), grupos = caja.querySelectorAll(".lq"), bien = 0, faltan = 0;
+    grupos.forEach(function (g) {
+      var s = g.querySelector('[aria-pressed="true"]');
+      g.classList.remove("mal", "bien");
+      if (!s) { faltan++; return; }
+      if (s.dataset.ok === "1") { bien++; g.classList.add("bien"); } else g.classList.add("mal");
+    });
+    if (faltan) { fb.className = "lfb mal"; fb.textContent = "Contesta las dos preguntas."; return; }
+    if (bien === PREG.length) {
+      abierto = true; try { sessionStorage.setItem(CLAVE, "1"); } catch (x) {}
+      document.body.classList.remove("lect-bloq");
+      var av = document.getElementById("lect-aviso"); if (av) av.remove();
+      pintar(); orig(primera);
+      var t = document.getElementById("tabs"); if (t) t.scrollIntoView({ behavior: "smooth", block: "start" });
+    } else {
+      fb.className = "lfb mal";
+      fb.textContent = "Has acertado " + bien + " de " + PREG.length + ". Vuelve a leer el texto con calma y prueba otra vez.";
+      setTimeout(function () { var m = fb.textContent; pintar(); var f2 = caja.querySelector(".lfb"); f2.className = "lfb mal"; f2.textContent = m; }, 1800);
+    }
+  });
+  if (reto) rt.insertBefore(caja, reto); else rt.appendChild(caja);
+  pintar();
+  if (!abierto) {
+    document.body.classList.add("lect-bloq");
+    var t = document.getElementById("tabs");
+    if (t) { var av = document.createElement("div"); av.className = "lect-aviso"; av.id = "lect-aviso"; av.textContent = "🔒 Las misiones se abren cuando contestes bien las dos preguntas de la lectura (arriba)."; t.parentNode.insertBefore(av, t.nextSibling); }
+    orig(primera);
+  }
+})();
+</script>
+<script id="solo-curso">
+/* Rumbo a Europa: muestra solo los indicadores del curso del alumno (5.º o 6.º). */
+(function(){
+  function curso(){
+    var c = (document.getElementById("alCurso") || {}).value || "";
+    if (!c) { try { c = ((JSON.parse(localStorage.getItem("rumbo-a-europa-v1") || "{}") || {}).alumno || {}).clase || ""; } catch (e) {} }
+    return /6/.test(c) ? "6" : /5/.test(c) ? "5" : "";
+  }
+  function aplicar(){
+    var c = curso();
+    document.querySelectorAll(".indic .cols > div").forEach(function (d) {
+      var h = d.querySelector("h4"), k = h && /([56])/.exec(h.textContent);
+      d.style.display = c && k && k[1] !== c ? "none" : "";
+    });
+  }
+  aplicar();
+  var cu = document.getElementById("alCurso");
+  if (cu) { cu.addEventListener("input", aplicar); cu.addEventListener("change", aplicar); }
+  setTimeout(aplicar, 500);
+})();
+</script>
+</body></html>

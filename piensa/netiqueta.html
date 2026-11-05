@@ -1,0 +1,601 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Netiqueta</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Nunito+Sans:opsz,wght@6..12,400;6..12,700;6..12,800&family=JetBrains+Mono:wght@500&display=swap">
+<style>
+/* Layout: bocadillo de chat como emblema; tarjetas de mensajes; videollamada simulada; decálogo para el aula */
+:root{
+  --bg:#f6f4ef; --paper:#ffffff; --ink:#1f2430; --muted:#5b6070; --line:#dedbd2; --accent:#2c4a9a; --accent-ink:#ffffff; --tram:#e2483d; --tram-ink:#ffffff; --ok:#1d8a52; --ok-bg:#e0f3e8; --bad:#c43c2f; --bad-bg:#fbe5e2; --soft:#ecebe4; --sel:#fff0c9;
+  --f-display:"Baloo 2","Trebuchet MS",system-ui,sans-serif; --f-body:"Nunito Sans",system-ui,-apple-system,"Segoe UI",sans-serif; --f-mono:"JetBrains Mono",ui-monospace,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){ --bg:#13151c; --paper:#1c1f29; --ink:#ece9e2; --muted:#a7aab6; --line:#323646; --accent:#8eaaf2; --accent-ink:#0d1630; --tram:#ff7a6e; --tram-ink:#2a0b08; --ok:#5fd18e; --ok-bg:#163527; --bad:#ff8a7c; --bad-bg:#3a1d1a; --soft:#262a36; --sel:#3d3418; color-scheme:dark}}
+:root[data-theme="dark"]{ --bg:#13151c; --paper:#1c1f29; --ink:#ece9e2; --muted:#a7aab6; --line:#323646; --accent:#8eaaf2; --accent-ink:#0d1630; --tram:#ff7a6e; --tram-ink:#2a0b08; --ok:#5fd18e; --ok-bg:#163527; --bad:#ff8a7c; --bad-bg:#3a1d1a; --soft:#262a36; --sel:#3d3418; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:16px;line-height:1.55;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 48px}
+.wrap{max-width:1060px;margin:0 auto;display:flex;flex-direction:column;gap:20px}
+h1,h2,h3{font-family:var(--f-display);font-weight:400;text-wrap:balance;margin:0;line-height:1.08;letter-spacing:.01em}
+p{margin:0}
+button,input,select,textarea{font-family:inherit;font-size:inherit}
+button:focus-visible,[tabindex]:focus-visible,input:focus-visible,textarea:focus-visible{outline:3px solid var(--tram);outline-offset:2px}
+
+header.hero{display:flex;gap:16px;align-items:center;flex-wrap:wrap}
+.tile{width:80px;height:80px;flex:none}
+.hero-text{flex:1;min-width:0;display:flex;flex-direction:column;gap:4px}
+.hero h1{font-size:clamp(2.2rem,6vw,3.4rem);color:var(--accent)}
+.hero p{color:var(--muted);max-width:64ch}
+.score{font-family:var(--f-display);background:var(--tram);color:var(--tram-ink);border-radius:999px;padding:8px 18px;font-variant-numeric:tabular-nums;white-space:nowrap;font-size:1.1rem}
+
+nav.tabs{display:flex;gap:6px;flex-wrap:wrap}
+nav.tabs button{font:800 .96rem var(--f-body);border:2px solid var(--line);background:var(--paper);color:var(--ink);padding:8px 12px;border-radius:12px;cursor:pointer;display:flex;gap:8px;align-items:center}
+nav.tabs .n{display:inline-grid;place-items:center;width:24px;height:24px;border-radius:6px;background:var(--soft);font-size:.85rem}
+nav.tabs button[aria-selected="true"]{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+nav.tabs button[aria-selected="true"] .n{background:var(--tram);color:var(--tram-ink)}
+
+section.mission{display:flex;flex-direction:column;gap:16px}
+.intro{background:var(--paper);border:2px solid var(--line);border-radius:16px;padding:16px 18px;display:flex;flex-direction:column;gap:6px}
+.intro h2{font-size:1.7rem}
+.intro p{color:var(--muted);max-width:74ch}
+.label{font:800 .74rem var(--f-body);letter-spacing:.1em;text-transform:uppercase;color:var(--accent)}
+.grid2{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);gap:16px;align-items:start}
+@media (max-width:820px){.grid2{grid-template-columns:minmax(0,1fr)}}
+.grid2>*{min-width:0}
+.panel{background:var(--paper);border:2px solid var(--line);border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:12px}
+.panel h3{font-size:1.35rem}
+.btn{font:800 .98rem var(--f-body);border:2px solid var(--line);border-radius:12px;padding:8px 14px;cursor:pointer;background:var(--soft);color:var(--ink)}
+.btn.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.btn.ok{background:var(--ok-bg);color:var(--ok);border-color:var(--ok)}
+.btn.bad{background:var(--bad-bg);color:var(--bad);border-color:var(--bad)}
+.btn:disabled{opacity:.5;cursor:default}
+.choices{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.feedback{border-radius:12px;padding:10px 14px;display:flex;flex-direction:column;gap:5px}
+.feedback.right{background:var(--ok-bg)}.feedback.wrong{background:var(--bad-bg)}
+.feedback strong{font-family:var(--f-display);font-weight:400;font-size:1.15rem}
+.feedback ul{margin:0;padding-left:20px}
+.tip{background:var(--soft);border-radius:12px;padding:10px 14px;font-size:.95rem}
+
+.opts{display:flex;flex-direction:column;gap:8px}
+.opts button{text-align:left;font-size:.95rem;background:var(--bg);color:var(--ink);border:2px solid var(--line);border-radius:12px;padding:9px 12px;cursor:pointer}
+.opts button.r{background:var(--ok-bg);border-color:var(--ok)}.opts button.w{background:var(--bad-bg);border-color:var(--bad)}
+.quiz{display:flex;flex-direction:column;gap:12px}
+.qitem{background:var(--paper);border:2px solid var(--line);border-radius:16px;padding:14px;display:flex;flex-direction:column;gap:10px}
+.qitem .qq{font-weight:800}
+.diploma{border:3px dashed var(--accent);border-radius:20px;padding:20px;background:var(--paper);text-align:center;display:flex;flex-direction:column;gap:8px;align-items:center}
+.diploma h3{font-size:1.7rem;color:var(--accent)}
+.bars{display:flex;gap:4px;flex-wrap:wrap}.bars i{width:24px;height:8px;border-radius:4px;background:var(--line);display:block}
+.bars i.ok{background:var(--ok)}.bars i.ko{background:var(--bad)}.bars i.now{background:var(--tram)}
+
+
+h1,h2,h3{font-weight:800}
+.msgcard{background:var(--paper);border:2px solid var(--line);border-radius:16px;overflow:hidden;display:flex;flex-direction:column}
+.msgcard .ctx{background:var(--soft);padding:7px 12px;font:800 .75rem var(--f-body);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.msgcard .bd{padding:12px;display:flex;flex-direction:column;gap:10px;flex:1}
+.bub{align-self:flex-start;max-width:95%;background:var(--soft);border-radius:14px;padding:8px 12px;font-size:.95rem;overflow-wrap:anywhere}
+.bub b{display:block;font-size:.75rem;color:var(--accent)}
+.msgs{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px}
+.msgcard .choices{margin-top:auto}
+.fix{background:var(--paper);border:2px solid var(--line);border-radius:16px;padding:14px;display:flex;flex-direction:column;gap:8px}
+.fix .orig{font-weight:800;color:var(--bad);overflow-wrap:anywhere}
+.fix textarea{width:100%;min-height:70px;border:2px solid var(--line);border-radius:10px;padding:8px 10px;background:var(--bg);color:var(--ink);resize:vertical;font:inherit}
+.check{display:flex;flex-wrap:wrap;gap:6px}
+.check span{font-size:.8rem;border-radius:999px;padding:2px 10px;background:var(--soft);color:var(--muted)}
+.check span.on{background:var(--ok-bg);color:var(--ok);font-weight:800}
+.vc{background:#1e2230;border-radius:16px;padding:10px;display:flex;flex-direction:column;gap:8px}
+.vc .grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+.tile{aspect-ratio:4/3;border-radius:10px;display:grid;place-items:center;position:relative;color:#fff;font-weight:800;font-size:.8rem;max-width:100%}
+.tile .nm{position:absolute;left:6px;bottom:4px;font-size:.7rem;font-weight:700}
+.tile .ic{position:absolute;right:6px;top:4px;font-size:.8rem}
+.vc .bar{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+.vc .bar span{background:#353b52;color:#fff;border-radius:999px;padding:5px 12px;font-size:.8rem}
+.vc .bar span.red{background:#d64545}
+.rules{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px}
+.rule{text-align:left;border:2px solid var(--line);background:var(--paper);color:var(--ink);border-radius:12px;padding:10px 12px;cursor:pointer;font-size:.95rem;display:flex;gap:10px;align-items:flex-start}
+.rule .bx{width:22px;height:22px;border-radius:6px;border:2px solid var(--muted);flex:none;display:grid;place-items:center;font-weight:900;font-size:.8rem}
+.rule[aria-pressed="true"]{border-color:var(--accent);background:var(--sel)}
+.rule[aria-pressed="true"] .bx{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.rule.r{border-color:var(--ok);background:var(--ok-bg)}.rule.w{border-color:var(--bad);background:var(--bad-bg)}
+.poster{border:3px solid var(--accent);border-radius:18px;padding:18px;background:var(--paper);display:flex;flex-direction:column;gap:8px}
+.poster h3{font-size:1.5rem;color:var(--accent)}
+.poster ol{margin:0;padding-left:24px;display:flex;flex-direction:column;gap:4px;font-weight:700}
+
+.relato{background:var(--paper);border:2px solid var(--line);border-radius:18px;padding:18px;display:grid;grid-template-columns:120px minmax(0,1fr);gap:20px;align-items:start}
+@media (max-width:620px){.relato{grid-template-columns:minmax(0,1fr)}.relato .pini{width:96px}}
+.relato .pini{width:120px;height:auto;display:block}
+.relato .rt{display:flex;flex-direction:column;gap:10px;min-width:0}
+.relato .cap{font-size:.74rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--accent)}
+.relato h2{font-size:clamp(1.5rem,3.6vw,2rem);text-wrap:balance}
+.relato p{max-width:68ch;line-height:1.65}
+.relato .dlg{padding-left:14px;border-left:3px solid var(--line)}
+.relato .reto{border:2px dashed var(--accent);border-radius:14px;padding:12px 16px;display:flex;flex-direction:column;gap:6px;margin-top:4px}
+.relato .reto b.t{font-size:.8rem;letter-spacing:.08em;text-transform:uppercase;color:var(--accent)}
+.relato .reto ul{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:4px}
+.relato[hidden]{display:none}
+.relato .nw{white-space:nowrap}
+.ficha{display:flex;gap:12px;flex-wrap:wrap;background:var(--paper);border:2px solid var(--line);border-radius:14px;padding:12px 14px}
+.ficha label{display:flex;flex-direction:column;gap:3px;font-size:.78rem;font-weight:800;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;flex:1 1 180px;min-width:0}
+.ficha input{border:2px solid var(--line);border-radius:10px;padding:8px 10px;background:var(--bg);color:var(--ink);font:inherit;font-size:1rem;text-transform:none;letter-spacing:0;font-weight:400;width:100%}
+.ficha input:focus-visible{outline:3px solid var(--accent);outline-offset:1px}
+#informe{background:var(--paper);border:2px solid var(--line);border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:12px}
+#informe h3{font-size:1.35rem}
+.rwrap{overflow-x:auto}
+.rtable{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
+.rtable th,.rtable td{text-align:left;padding:8px 6px;border-bottom:1px solid var(--line);font-size:.93rem;vertical-align:top}
+.rtable th{font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.rtable .rf{font-size:.85rem;color:var(--muted)}
+.pend{font-size:.75rem;color:var(--muted);background:var(--bg);border-radius:999px;padding:1px 8px;white-space:nowrap}
+.copybox{font:500 .82rem var(--f-mono);background:var(--bg);border:2px dashed var(--line);border-radius:10px;padding:10px;white-space:pre-wrap;overflow-wrap:anywhere;max-height:260px;overflow:auto}
+.cbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.cmsg{font-size:.9rem;color:var(--muted)}
+
+.vids{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:14px}
+.vid{background:var(--paper);border:2px solid var(--line);border-radius:16px;padding:14px;display:flex;flex-direction:column;gap:8px}
+.vid.seen{border-color:var(--ok)}
+.vid .src{font-weight:800;font-size:.7rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.vid h3{font-size:1.08rem}
+.vid .kindtag{align-self:flex-start;font-size:.72rem;font-weight:800;border-radius:999px;padding:2px 9px;background:var(--bg);color:var(--muted)}
+.vid a.go{display:inline-flex;gap:8px;align-items:center;align-self:flex-start;background:var(--accent);color:var(--accent-ink);text-decoration:none;font-weight:800;border-radius:999px;padding:7px 14px}
+.vid a.go svg{width:16px;height:16px}
+.vid .q{font-size:.92rem;background:var(--bg);border-radius:10px;padding:8px 10px}
+.vid label.ck{display:flex;gap:8px;align-items:center;font-weight:700;font-size:.92rem;cursor:pointer;margin-top:auto}
+.vid label.ck input{width:20px;height:20px;accent-color:var(--ok)}
+.vid.tarea{border-color:var(--accent);border-width:3px}
+.vid.tarea .kindtag{background:var(--accent);color:var(--accent-ink)}
+.vfilter{display:flex;gap:8px;flex-wrap:wrap}
+
+.indic{border:2px solid var(--line);border-radius:14px;padding:12px 16px;display:flex;flex-direction:column;gap:10px;margin-top:4px;background:var(--bg)}
+.indic>b.t{font-size:.8rem;letter-spacing:.08em;text-transform:uppercase;color:var(--accent)}
+.indic .cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px}
+.indic h4{margin:0;font-size:.95rem}
+.indic ul{margin:0;padding-left:0;list-style:none;display:flex;flex-direction:column;gap:6px;font-size:.88rem;line-height:1.45}
+.indic li{overflow-wrap:anywhere}
+.indic .crit{display:inline-block;font-weight:800;border:1.5px solid var(--accent);color:var(--accent);border-radius:6px;padding:0 5px;margin-right:4px;font-size:.78rem;font-variant-numeric:tabular-nums}
+.indic .do{color:var(--muted);font-size:.8rem}
+.valora{border:2px solid var(--accent);border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:10px;background:var(--paper)}
+.valora h3{font-size:1.2rem}
+.valora .cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px}
+.valora h4{margin:0 0 4px;font-size:.95rem}
+.valora td{font-size:.85rem}
+.vstar{font-weight:800;white-space:nowrap;font-variant-numeric:tabular-nums}
+.vbar{display:inline-flex;gap:2px;margin-left:6px;vertical-align:middle}.vbar i{width:8px;height:8px;border-radius:2px;background:var(--line);display:block}.vbar i.on{background:var(--ok)}
+.llave{border:2px dashed var(--accent);border-radius:12px;padding:12px;display:flex;flex-direction:column;gap:6px}
+.llave code{font:700 1.3rem var(--f-mono,monospace);letter-spacing:.06em;color:var(--accent);overflow-wrap:anywhere}
+footer{color:var(--muted);font-size:.85rem;text-align:center}
+</style>
+
+<div class="wrap">
+  <header class="hero">
+    <svg class="tile-logo" width="80" height="80" viewBox="0 0 80 80" aria-hidden="true" style="flex:none"><rect width="80" height="80" rx="18" fill="var(--accent)"/><path d="M16 22h48a6 6 0 0 1 6 6v22a6 6 0 0 1-6 6H36l-12 10V56h-8a6 6 0 0 1-6-6V28a6 6 0 0 1 6-6z" fill="var(--accent-ink)"/><circle cx="30" cy="39" r="3.5" fill="var(--accent)"/><circle cx="50" cy="39" r="3.5" fill="var(--accent)"/><path d="M31 46q9 7 18 0" fill="none" stroke="var(--tram)" stroke-width="3.5" stroke-linecap="round"/></svg>
+    <div class="hero-text">
+      <h1>Netiqueta</h1>
+      <p>La buena educación también existe en internet. Aprende a escribir en chats y correos, a comportarte en una videollamada y crea el decálogo de tu clase. Todos los mensajes y personas son inventados.</p>
+    </div>
+    <div class="score" id="score">Estrellas: 0</div>
+  </header>
+
+  <section class="relato" aria-labelledby="relato-t">
+    <svg class="pini" viewBox="0 0 120 150" aria-label="Pini, la mascota de Radio La Piña">
+  <path d="M60 14l6 12h-12z" fill="#5f8f3a"/>
+  <ellipse cx="60" cy="86" rx="36" ry="50" fill="#a5642f"/>
+  <g fill="none" stroke="#6e3a17" stroke-width="3" stroke-linecap="round">
+    <path d="M32 58q7 8 14 0q7 8 14 0q7 8 14 0q7 8 14 0"/>
+    <path d="M27 104q8 8 16 0q8 8 17 0q8 8 17 0q8 8 16 0"/>
+    <path d="M33 122q7 7 14 0q6 7 13 0q7 7 14 0q6 7 13 0"/>
+    <path d="M40 42q5 6 10 0q5 6 10 0q5 6 10 0q5 6 10 0"/>
+  </g>
+  <ellipse cx="48" cy="78" rx="8" ry="9" fill="#fff"/><ellipse cx="72" cy="78" rx="8" ry="9" fill="#fff"/>
+  <circle cx="50" cy="80" r="4" fill="#1d1d1d"/><circle cx="74" cy="80" r="4" fill="#1d1d1d"/>
+  <path d="M50 92q10 9 20 0" fill="none" stroke="#1d1d1d" stroke-width="3" stroke-linecap="round"/>
+  <path d="M22 76a38 42 0 0 1 76 0" fill="none" stroke="#2b2f3a" stroke-width="6"/>
+  <rect x="14" y="70" width="14" height="22" rx="5" fill="#e2553f"/><rect x="92" y="70" width="14" height="22" rx="5" fill="#e2553f"/>
+  <path d="M21 92q0 16 18 18" fill="none" stroke="#2b2f3a" stroke-width="3"/>
+  <rect x="38" y="104" width="12" height="9" rx="4" fill="#2b2f3a"/>
+</svg>
+    <div class="rt">
+      <span class="cap">Rumbo a Europa · Radio La Piña · Francia</span>
+      <h2 id="relato-t">Bonjour, netiqueta</h2>
+      <p>Radio La Piña va a hacer su primera <b>videollamada</b> con una clase de Lyon, en <b>Francia</b>, para preparar juntos un programa. Para organizarse, el equipo abre un grupo de chat… y en pocos minutos se lía.</p>
+      <p>Alguien escribe TODO EN MAYÚSCULAS, como si gritara. Otro manda veinte audios seguidos a las once de la noche. Una compañera sube sin permiso una foto de Hugo bostezando, y en el juego online del recreo dos amigos se insultan por perder una partida.</p>
+      <p class="dlg">—En Francia dicen <i>bonjour</i> al entrar en cualquier tienda —cuenta Claire, la profesora francesa, al ver el lío—. En internet también hay que saludar, pedir las cosas por favor y respetar a los demás. Eso se llama <b>netiqueta</b>.</p>
+      <p class="dlg">—La netiqueta es la buena educación en internet —resume <span class="nw">Pini—</span>. Si la clase de Lyon nos ve gritando o riéndonos de alguien, ¿qué pensará de Radio La Piña?</p>
+      <p>El equipo decide aprender las normas antes de la videollamada y crear su propio decálogo. <i>Allez!</i> ¡Vamos!</p>
+      <div class="reto"><b class="t">Vuestro reto: superar las misiones</b>
+        <ul>
+        <li><b>Misión 1:</b> ¿Sí o no?</li>
+        <li><b>Misión 2:</b> Arregla el mensaje</li>
+        <li><b>Misión 3:</b> Videollamada</li>
+        <li><b>Misión 4:</b> Nuestro decálogo</li>
+        <li><b>Misión 5:</b> Vídeos y juegos</li>
+        <li><b>Misión 6:</b> Examen e informe</li>
+        </ul>
+      </div>
+      <div class="indic"><b class="t">Indicadores de logro · Programación de TIAC</b>
+        <div class="cols">
+          <div><h4>5.º de Primaria</h4><ul><li><span class="crit">Crit. 2.1</span><b>2.1.2</b> Deja en el blog BiblioPini o en La Piña 3.0 un comentario respetuoso, pertinente y bien escrito sobre una entrada. <span class="do">(CCL5 · CCEC3)</span></li><li><span class="crit">Crit. 2.1</span><b>2.1.4</b> Participa en Teams (publicaciones, chat y tareas) con mensajes respetuosos y pertinentes y entrega las tareas con el archivo adjunto correcto. <span class="do">(CCL5 · CPSAA3)</span></li></ul></div>
+          <div><h4>6.º de Primaria</h4><ul><li><span class="crit">Crit. 2.1</span><b>2.1.3</b> Aplica la netiqueta en chats, correos y videollamadas: saluda, pide por favor, no grita en mayúsculas, pide turno y pide permiso antes de compartir imágenes de otros. <span class="do">(CPSAA3 · CC1)</span></li></ul></div>
+        </div>
+      </div><!--/indic-->
+    </div>
+  </section>
+
+  <div class="ficha">
+    <label for="alNombre">Nombre y apellido<input id="alNombre" autocomplete="off" placeholder="Escribe tu nombre"></label>
+    <label for="alCurso">Curso y grupo<input id="alCurso" autocomplete="off" placeholder="Ej.: 5.º B"></label>
+  </div>
+
+  <nav class="tabs" role="tablist" id="tabs">
+    <button role="tab" data-t="sino" aria-selected="true"><span class="n">1</span>¿Sí o no?</button>
+    <button role="tab" data-t="arregla" aria-selected="false"><span class="n">2</span>Arregla el mensaje</button>
+    <button role="tab" data-t="video" aria-selected="false"><span class="n">3</span>Videollamada</button>
+    <button role="tab" data-t="decalogo" aria-selected="false"><span class="n">4</span>Nuestro decálogo</button>
+    <button role="tab" data-t="videos" aria-selected="false"><span class="n">5</span>Vídeos y juegos</button>
+    <button role="tab" data-t="examen" aria-selected="false"><span class="n">6</span>Examen e informe</button>
+  </nav>
+
+  <section class="mission" id="m-sino">
+    <div class="intro"><span class="label">Misión 1 · ¿Netiqueta sí o no?</span>
+      <h2>¿Este mensaje cumple la netiqueta?</h2>
+      <p>Lee cada mensaje y decide si es correcto o si es mejorable. Fíjate en cómo se dice, cuándo se dice y a quién.</p></div>
+    <div class="msgs" id="msgs"></div>
+  </section>
+
+  <section class="mission" id="m-arregla" hidden>
+    <div class="intro"><span class="label">Misión 2 · Arregla el mensaje</span>
+      <h2>Reescribe con educación</h2>
+      <p>Estos mensajes no cumplen la netiqueta. Reescríbelos para decir lo mismo de forma respetuosa. El detector de netiqueta te dirá qué te falta. Tu profe verá tus mensajes en el informe.</p></div>
+    <div id="fixes" style="display:flex;flex-direction:column;gap:12px"></div>
+  </section>
+
+  <section class="mission" id="m-video" hidden>
+    <div class="intro"><span class="label">Misión 3 · Videollamada con Lyon</span>
+      <h2>Netiqueta en una clase por videollamada</h2>
+      <p>Es el día de la videollamada con la clase de Lyon. ¿Qué haces en cada situación?</p></div>
+    <div class="bars" id="bars3"></div>
+    <div class="grid2">
+      <div class="vc">
+        <div class="grid" id="vgrid"></div>
+        <div class="bar"><span id="micS">🎙 Micrófono</span><span>📷 Cámara</span><span>✋ Levantar la mano</span><span>💬 Chat</span><span class="red">Salir</span></div>
+      </div>
+      <div class="panel" id="p3"></div>
+    </div>
+  </section>
+
+  <section class="mission" id="m-decalogo" hidden>
+    <div class="intro"><span class="label">Misión 4 · Nuestro decálogo</span>
+      <h2>Elige las normas buenas</h2>
+      <p>De estas 14 normas, solo 8 son de buena netiqueta. Selecciona las 8 buenas y pulsa «Comprobar». Con ellas tendrás el decálogo de tu clase.</p></div>
+    <div class="rules" id="rules"></div>
+    <div class="choices"><button class="btn primary" id="chkRules">Comprobar</button><span id="rulesMsg" style="color:var(--muted)"></span></div>
+    <div id="poster"></div>
+  </section>
+
+
+  <section class="mission" id="m-videos" hidden>
+    <div class="intro"><span class="label">Misión 5 · Vídeos y juegos</span>
+      <h2>Mira, piensa y juega</h2>
+      <p>Abre cada vídeo o juego (se abre en una pestaña nueva), míralo con tu profe y responde en tu cuaderno a la pregunta. Marca la casilla al terminar: cuenta para tu informe.</p></div>
+    <div class="vids" id="vids"></div>
+  </section>
+
+
+  <section class="mission" id="m-examen" hidden>
+    <div class="intro"><span class="label">Misión 6 · Examen final</span>
+      <h2>¿Dominas la netiqueta?</h2>
+      <p>Responde a las ocho preguntas. Al final verás tu diploma y el informe para tu profe.</p></div>
+    <div class="quiz" id="quiz"></div>
+    <div class="diploma" id="diploma" hidden></div>
+    <div id="informe"></div>
+  </section>
+
+  <footer>Actividad educativa. Mensajes, personas y apps de los ejemplos son ficticios. Vídeos de Smile and Learn, IS4K y PantallasAmigas; tarea de Lumio.</footer>
+</div>
+
+<script>
+const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
+let pts=0;const add=n=>{pts+=n;$('#score').textContent='Estrellas: '+pts};
+const keyAct=(el,fn)=>{el.addEventListener('click',fn);el.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();fn(e)}})};
+
+/* M1 */
+const M1=[
+ {ctx:'Grupo de clase',who:'Iker',t:'MAÑANA HAY EXAMEN DE MATES. ¡¡NO OS OLVIDÉIS!!',ok:false,why:'Escribir todo en MAYÚSCULAS es como gritar. Mejor: «Recordad que mañana hay examen de mates».'},
+ {ctx:'Correo a la profe',who:'Sara',t:'Hola, Ana: te envío el trabajo de ciencias. ¿Podrías decirme si está bien? Gracias. Un saludo, Sara.',ok:true,why:'Saluda, pide las cosas por favor, da las gracias y firma. ¡Perfecto!'},
+ {ctx:'Grupo de clase · 23:15',who:'Dani',t:'🎤 Audio (2:30) · 🎤 Audio (1:58) · 🎤 Audio (3:12) · 🎤 Audio (2:45)',ok:false,why:'Muchos audios largos y a horas de dormir molestan a todos. Mejor un mensaje corto y en un horario razonable.'},
+ {ctx:'Juego online',who:'Leo',t:'Buena partida, ¡la próxima vez ganamos nosotros! 😄',ok:true,why:'Saber ganar y perder con deportividad también es netiqueta.'},
+ {ctx:'Grupo de clase',who:'Marta',t:'[foto de Hugo bostezando en clase] jajaja mirad 😂',ok:false,why:'Nunca compartas fotos de otras personas sin su permiso, y menos para reírte de ellas.'},
+ {ctx:'Grupo de clase',who:'Álex',t:'¿Alguien sabe qué página de Lengua hay que hacer? Gracias 🙂',ok:true,why:'Pregunta clara, en el grupo adecuado y con educación.'},
+ {ctx:'Chat del juego',who:'Iker',t:'eres un manco y un inútil, desinstala el juego',ok:false,why:'Los insultos hacen daño aunque sea «solo un juego». Detrás de la pantalla hay una persona.'},
+ {ctx:'Grupo de clase',who:'Lucía',t:'Reenvía este mensaje a 20 personas o tendrás mala suerte 7 años 🍀',ok:false,why:'Las cadenas llenan los móviles de los demás y a veces dan miedo. No las reenvíes.'}
+];
+const res1={};const fails1=[];
+/* M2 */
+const FIX=[
+ {o:'DEVUÉLVEME MI ESTUCHE YA, PESADO',hint:'Pide lo mismo con educación.'},
+ {o:'tu dibujo es feísimo jajaja',hint:'Si quieres dar tu opinión, hazlo con respeto y ayuda a mejorar.'},
+ {o:'callaos ya todos, que nadie os ha preguntado',hint:'Explica qué te molesta sin ofender.'}
+];
+const fixTxt={};
+const BAD=/(pesad|tont|idiot|in[uú]til|feís|feis|callaos|c[aá]llate|manco|pringad|nadie os ha)/i;
+function fixChecks(t){return [
+ [/(^|\W)(hola|buenos|buenas|oye|perdona)/i.test(t),'Saludo o acercamiento amable'],
+ [/(por favor|porfa|gracias|perdona|¿podr[ií]as|¿puedes|me gustar[ií]a)/i.test(t),'Pide por favor o da las gracias'],
+ [!/[A-ZÁÉÍÓÚÑ]{4,}/.test(t),'Sin GRITAR en mayúsculas'],
+ [!BAD.test(t),'Sin insultos ni palabras que hieren'],
+ [t.trim().split(/\s+/).length>=5,'Mensaje completo (5 palabras o más)']]}
+const fixOk=()=>FIX.filter((f,i)=>fixTxt[i]&&fixChecks(fixTxt[i]).every(x=>x[0])).length;
+/* M3 */
+const TILES=[['Pini','#a5642f','🌲'],['Claire','#2c4a9a','🇫🇷'],['Hugo','#5c51b8','🙂'],['Inès','#e2483d','🙂'],['Sara','#1d8a52','🙂'],['Tú','#555','⭐']];
+const SIT=[
+ {q:'Claire, la profesora francesa, está explicando. En tu casa ladra el perro. ¿Qué haces?',o:['Dejo el micrófono abierto, ya se callará','Silencio mi micrófono y solo lo activo cuando me toca hablar','Le grito al perro por el micrófono'],a:1,why:'Con el micrófono silenciado no se oyen los ruidos de casa. Actívalo solo para hablar.'},
+ {q:'Quieres hacer una pregunta mientras habla otra persona.',o:['Hablo encima para que me oigan','Uso «Levantar la mano» o escribo la pregunta en el chat','Me salgo de la llamada'],a:1,why:'Pedir turno es la forma educada de participar.'},
+ {q:'Un compañero hace una captura de pantalla de la videollamada y la quiere subir a internet.',o:['Le digo que no se puede sin el permiso de todos los que salen','Le ayudo a subirla','Le pido que me la pase para reírnos'],a:0,why:'Las imágenes de las personas son suyas: hace falta su permiso para compartirlas.'},
+ {q:'Inès pronuncia mal una palabra en español y alguien escribe «jajaja» en el chat.',o:['Escribo también «jajaja»','No me río y le digo que lo está haciendo genial','Hago un meme con su error'],a:1,why:'Equivocarse es normal, sobre todo en otro idioma. Animar es mucho mejor que burlarse.'},
+ {q:'Se acaba la videollamada.',o:['Me salgo sin decir nada','Me despido: «¡Gracias y hasta pronto! Au revoir!» y después salgo','Dejo la cámara encendida y me voy'],a:1,why:'Saludar al entrar y despedirse al salir: la cortesía también vale en internet.'}
+];
+let i3=0;const res3=[];const fails3=[];
+/* M4 */
+const RULES=[
+ ['Saluda al empezar y despídete al terminar',1],['Escribe todo en MAYÚSCULAS para que te lean',0],['Pide permiso antes de compartir fotos de otras personas',1],
+ ['Si alguien se equivoca, ríete en el grupo',0],['Lee tu mensaje antes de enviarlo',1],['Reenvía las cadenas por si acaso',0],
+ ['Respeta los horarios: no escribas de noche',1],['Contesta a los insultos con más insultos',0],['Trata a los demás como te gustaría que te trataran',1],
+ ['Comparte contraseñas con tus amigos de confianza',0],['Usa el grupo para lo que sirve y no lo llenes de mensajes',1],['Manda muchos audios largos seguidos',0],
+ ['Si algo te molesta o te hace daño, cuéntaselo a un adulto',1],['Si no estás de acuerdo, insulta para ganar la discusión',0]
+];
+const pick4=new Set();let r4done=false,r4ok=0;
+function init(){
+  $('#msgs').innerHTML=M1.map((m,i)=>`<div class="msgcard"><span class="ctx">${m.ctx}</span><div class="bd"><div class="bub"><b>${m.who}</b>${m.t}</div><div class="choices"><button class="btn ok" data-i="${i}" data-v="1">👍 Correcto</button><button class="btn bad" data-i="${i}" data-v="0">👎 Mejorable</button></div><div id="f1-${i}"></div></div></div>`).join('');
+  $$('#msgs [data-v]').forEach(b=>b.onclick=()=>{const i=+b.dataset.i,m=M1[i],ok=(b.dataset.v==='1')===m.ok;res1[i]=ok;if(ok)add(4);else fails1.push(`«${m.t.slice(0,45)}…»: era ${m.ok?'correcto':'mejorable'}`);
+    b.parentElement.querySelectorAll('button').forEach(x=>x.disabled=true);
+    $('#f1-'+i).innerHTML=`<div class="feedback ${ok?'right':'wrong'}"><strong>${ok?'¡Bien visto!':'Piénsalo otra vez.'}</strong><span>${m.why}</span></div>`});
+  $('#fixes').innerHTML=FIX.map((f,i)=>`<div class="fix"><span class="label">Mensaje ${i+1}</span><p class="orig">«${f.o}»</p><label for="fx-${i}" style="font-size:.88rem;font-weight:800">Tu versión con netiqueta <span style="font-weight:400;color:var(--muted)">(${f.hint})</span></label><textarea id="fx-${i}" maxlength="200" placeholder="Escribe aquí tu mensaje"></textarea><div class="check" id="fc-${i}"></div></div>`).join('');
+  FIX.forEach((f,i)=>{const ta=$('#fx-'+i);const up=()=>{fixTxt[i]=ta.value.trim();$('#fc-'+i).innerHTML=ta.value.trim()?fixChecks(ta.value).map(x=>`<span class="${x[0]?'on':''}">${x[0]?'✔':'○'} ${x[1]}</span>`).join(''):''};ta.addEventListener('input',up)});
+  $('#vgrid').innerHTML=TILES.map(t=>`<div class="tile" style="background:${t[1]}">${t[2]}<span class="nm">${t[0]}</span><span class="ic" data-n="${t[0]}">🎙</span></div>`).join('');
+  p3();
+  $('#rules').innerHTML=RULES.map((r,i)=>`<button class="rule" aria-pressed="false" data-r="${i}"><span class="bx"></span><span>${r[0]}</span></button>`).join('');
+  $$('#rules .rule').forEach(b=>b.onclick=()=>{if(r4done)return;const i=+b.dataset.r;if(pick4.has(i))pick4.delete(i);else pick4.add(i);b.setAttribute('aria-pressed',pick4.has(i));b.querySelector('.bx').textContent=pick4.has(i)?'✓':'';$('#rulesMsg').textContent=`${pick4.size} de 8 elegidas`});
+  $('#chkRules').onclick=()=>{if(r4done)return;if(pick4.size!==8){$('#rulesMsg').textContent='Tienes que elegir exactamente 8 normas.';return}
+    r4done=true;r4ok=[...pick4].filter(i=>RULES[i][1]).length;add(r4ok*2);
+    $$('#rules .rule').forEach(b=>{const i=+b.dataset.r,good=RULES[i][1];if(pick4.has(i))b.classList.add(good?'r':'w');else if(good)b.classList.add('r')});
+    $('#rulesMsg').textContent=`Has acertado ${r4ok} de 8. En verde, las normas buenas.`;
+    $('#poster').innerHTML=`<div class="poster"><span class="label">Para colgar en clase</span><h3>Decálogo de netiqueta de Radio La Piña</h3><ol>${RULES.filter(r=>r[1]).map(r=>`<li>${r[0]}.</li>`).join('')}<li>Antes de publicar, piensa si te gustaría que lo vieran tu familia y tu profe.</li><li>En la red, igual que en el cole: respeto siempre.</li></ol></div>`};
+}
+function p3(){
+  $('#bars3').innerHTML=SIT.map((_,i)=>`<i class="${res3[i]===true?'ok':res3[i]===false?'ko':i===i3?'now':''}"></i>`).join('');
+  if(i3>=SIT.length){$('#p3').innerHTML=`<h3>¡Videollamada superada! ${res3.filter(Boolean).length} de ${SIT.length}</h3><div class="tip"><b>Au revoir!</b> Micrófono silenciado, pide turno, respeta la imagen de los demás y despídete al salir.</div><button class="btn primary" style="align-self:flex-start" onclick="show('decalogo')">Ir a la misión 4</button>`;return}
+  const s=SIT[i3];
+  $('#p3').innerHTML=`<span class="label">Situación ${i3+1} de ${SIT.length}</span><h3>${s.q}</h3><div class="opts">${s.o.map((o,j)=>`<button data-o="${j}">${o}</button>`).join('')}</div><div id="fb3"></div>`;
+  $$('#p3 .opts button').forEach(b=>b.onclick=()=>{const ok=+b.dataset.o===s.a;res3[i3]=ok;if(ok)add(5);else fails3.push(`Videollamada: «${s.q}» → eligió «${s.o[+b.dataset.o]}»`);
+    $$('#p3 .opts button').forEach((x,j)=>{x.disabled=true;if(j===s.a)x.classList.add('r')});if(!ok)b.classList.add('w');
+    if(i3===0&&ok){$('#micS').textContent='🔇 Micrófono silenciado';$$('.tile .ic').forEach(x=>{if(x.dataset.n==='Tú')x.textContent='🔇'})}
+    $('#fb3').innerHTML=`<div class="feedback ${ok?'right':'wrong'}"><strong>${ok?'¡Así se hace!':'Mejor de otra forma.'}</strong><span>${s.why}</span></div><button class="btn primary" id="nx3" style="margin-top:8px">Siguiente →</button>`;
+    $('#nx3').onclick=()=>{i3++;p3()}});
+}
+const QUIZ=[
+ ['¿Qué es la netiqueta?',['Una etiqueta de ropa','Las normas de buena educación en internet','Un tipo de red social'],1],
+ ['Escribir TODO EN MAYÚSCULAS en un chat es como…',['Susurrar','Gritar','Cantar'],1],
+ ['Quieres compartir una foto en la que sale un amigo. ¿Qué haces primero?',['Pedirle permiso','Subirla rápido','Recortarle la cara'],0],
+ ['En una videollamada de clase, cuando no hablas…',['Dejas el micrófono abierto','Silencias el micrófono','Pones música'],1],
+ ['Alguien te insulta en un juego online. ¿Qué haces?',['Le insulto más fuerte','No contesto, lo bloqueo o lo denuncio y se lo cuento a un adulto','Me salgo para siempre de internet'],1],
+ ['¿Qué mensaje cumple la netiqueta?',['dame los apuntes ya','Hola, ¿me puedes pasar los apuntes, por favor? ¡Gracias!','APUNTES!!!'],1],
+ ['Te llega una cadena: «Reenvía a 20 personas o tendrás mala suerte».',['La reenvío por si acaso','No la reenvío','La reenvío solo a mi familia'],1],
+ ['¿A qué hora es mejor no escribir en el grupo de clase?',['A las 18:00','A las 23:30','A las 12:00 del sábado'],1]
+];
+const LEVELS=['Embajador/a de la netiqueta','Experto/a en netiqueta','Aprendiz de netiqueta'];
+const DIPLOMA_SVG='<svg width="70" height="70" viewBox="0 0 80 80" aria-hidden="true"><rect width="80" height="80" rx="18" fill="var(--accent)"/><path d="M22 41l12 12 25-26" fill="none" stroke="var(--accent-ink)" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+
+const VIDS=[{"src": "Lumio · tarea con evaluación", "t": "Netiqueta", "url": "https://lum.io/student/assign/8f31630e-b35a-4af0-841c-9346321b2592", "q": "Inicia sesión con tu cuenta del centro, haz la tarea y completa la evaluación del final.", "kind": "tarea"}, {"src": "Smile and Learn", "t": "¿Qué es la netiqueta? Normas de comportamiento en internet", "url": "https://www.youtube.com/watch?v=SrDvQCcNwWQ", "q": "Escribe tres normas de netiqueta para los correos de tu clase.", "kind": "video"}, {"src": "Smile and Learn", "t": "¿Qué es la netiqueta? Episodio 2", "url": "https://www.youtube.com/watch?v=B_LB6mHnjGc", "q": "¿Qué norma nueva has aprendido en este episodio?", "kind": "video"}, {"src": "Smile and Learn", "t": "¿Qué es la netiqueta? Normas de comportamiento en internet (recopilación)", "url": "https://www.youtube.com/watch?v=8UHumFPRKIE", "q": "Elige tres normas del vídeo y explica por qué son importantes.", "kind": "video"}, {"src": "IS4K · Internet Segura for Kids", "t": "Practica la netiqueta en internet", "url": "https://www.youtube.com/watch?v=sLmwnRIZLqg", "q": "¿Cómo te gustaría que te trataran en un chat?", "kind": "video"}, {"src": "PantallasAmigas", "t": "¿Qué es la netiqueta? ¡Netiquétate!", "url": "https://www.youtube.com/watch?v=qw3Y3c8SD7E", "q": "Inventa un eslogan corto para la netiqueta de tu clase.", "kind": "video"}, {"src": "Smile and Learn", "t": "Comunicación asertiva para niños: resolución de conflictos", "url": "https://www.youtube.com/watch?v=5q1-sqTopGc", "q": "¿Cómo dirías por chat que algo te ha molestado, sin ofender?", "kind": "video"}, {"src": "Smile and Learn", "t": "Correos electrónicos para niños: características y partes", "url": "https://www.youtube.com/watch?v=Kdn81wnb0gY", "q": "¿Qué partes del correo aparecen en el vídeo? ¿Cuál se te olvida más?", "kind": "video"}, {"src": "Smile and Learn", "t": "Ciberbullying: ¿cómo evitar el ciberacoso?", "url": "https://www.youtube.com/watch?v=ZHQ03fSn9J0", "q": "¿Qué puedes hacer si ves que alguien sufre ciberacoso? Escribe dos cosas.", "kind": "video"}, {"src": "PantallasAmigas", "t": "¿Cómo actuar ante el ciberacoso? Ignora, bloquea, pide ayuda y denuncia", "url": "https://www.youtube.com/watch?v=tVAjiyNzYq0", "q": "Explica con tus palabras los cuatro pasos del vídeo.", "kind": "video"}, {"src": "Lumio · tarea con evaluación", "t": "Uso responsable de la tecnología: primer móvil, ciberbullying, fake news y privacidad", "url": "https://lum.io/student/assign/30d9503e-d04c-484d-a197-406e4aaeeec9", "q": "Inicia sesión con tu cuenta del centro, haz la tarea y completa la evaluación del final.", "kind": "tarea"}, {"src": "Google · Sé genial en Internet", "t": "Juego Interland", "url": "https://beinternetawesome.withgoogle.com/es_es/interland", "q": "Juega a los cuatro mundos de Interland y apunta cuál te costó más.", "kind": "game"}, {"src": "Lumio · clase en directo", "t": "Entra en la clase de Lumio (ID 835883)", "url": "https://www.lumioclass.com/link/835883", "q": "Úsalo cuando tu profe abra la clase en directo en la pizarra.", "kind": "clase"}];
+const seenV={};
+(function(){const PLAY='<svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z" fill="currentColor"/></svg>';
+ const lab={video:'Vídeo',game:'Juego',lumio:'Lumio',tarea:'⭐ Tarea obligatoria con evaluación',clase:'Clase Lumio'},btn={video:PLAY+' Ver vídeo',game:'🎮 Jugar',lumio:'📒 Abrir en Lumio',tarea:'📒 Abrir la tarea',clase:'🏫 Entrar en la clase'},ckl={game:'He jugado',tarea:'He hecho la tarea y la evaluación',clase:'He entrado en la clase'};
+ document.querySelector('#vids').innerHTML=VIDS.map((v,i)=>`<div class="vid ${v.kind==='tarea'?'tarea':''}" id="v-${i}"><span class="src">${v.src}</span><span class="kindtag">${lab[v.kind]}</span><h3>${v.t}</h3><a class="go" href="${v.url}" target="_blank" rel="noopener">${btn[v.kind]}</a><p class="q"><b>Piensa:</b> ${v.q}</p><label class="ck" for="ck-${i}"><input type="checkbox" id="ck-${i}">${ckl[v.kind]||'Lo he visto'}</label></div>`).join('');
+ VIDS.forEach((v,i)=>document.querySelector('#ck-'+i).addEventListener('change',e=>{seenV[i]=e.target.checked;document.querySelector('#v-'+i).classList.toggle('seen',e.target.checked);if(typeof onVidChange==='function')onVidChange()}));})();
+function vidRow(label){const L=VIDS.map((v,i)=>[v,i]).filter(x=>x[0].kind!=='clase');const n=L.filter(x=>seenV[x[1]]).length;return {name:label,ok:n,max:L.length,done:n===L.length,fails:L.filter(x=>!seenV[x[1]]).map(([v])=>(v.kind==='tarea'?'Tarea Lumio sin hacer: ':'Sin marcar: ')+v.t)}}
+
+function onVidChange(){}
+
+const res6={};let q6=0;
+$('#quiz').innerHTML=QUIZ.map((q,i)=>`<div class="qitem"><p class="qq">${i+1}. ${q[0]}</p><div class="opts">${q[1].map((o,j)=>`<button data-q="${i}" data-o="${j}">${o}</button>`).join('')}</div></div>`).join('');
+$$('#quiz .opts button').forEach(b=>b.onclick=()=>{
+  const q=QUIZ[+b.dataset.q],ok=+b.dataset.o===q[2];res6[b.dataset.q]=ok;
+  [...b.parentElement.children].forEach((x,j)=>{x.disabled=true;if(j===q[2])x.classList.add('r')});
+  if(ok)add(5);else b.classList.add('w');
+  if(++q6===QUIZ.length){const okN=Object.values(res6).filter(Boolean).length;const d=$('#diploma');d.hidden=false;
+    const lvl=okN>=7?LEVELS[0]:okN>=5?LEVELS[1]:LEVELS[2];
+    d.innerHTML=`${DIPLOMA_SVG}<h3>Diploma de ${lvl}</h3><p>Examen: ${okN} de ${QUIZ.length} · Total: <b>${pts}</b></p>`}
+  setTimeout(renderInforme);
+});
+
+/* ---------- Informe para el profe ---------- */
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function initInforme(){['alNombre','alCurso'].forEach(id=>{const el=$('#'+id);try{el.value=localStorage.getItem(STORE+id)||''}catch(e){}
+  el.addEventListener('input',()=>{try{localStorage.setItem(STORE+id,el.value)}catch(e){};renderInforme()})})}
+function renderInforme(){
+  const rows=informeRows(),nomRaw=$('#alNombre').value.trim(),nom=nomRaw||'(sin nombre)',cur=$('#alCurso').value.trim()||'(sin curso)';
+  let ok=0,max=0;rows.forEach(r=>{ok+=r.ok;max+=r.max});const all=rows.every(r=>r.done);
+  const d=new Date(),fecha=d.toLocaleDateString('es-ES')+' '+d.toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'});
+  let t=`INFORME: ${TITULO}\nAlumno/a: ${nom}\nCurso: ${cur}\nFecha: ${fecha}\nAciertos: ${ok}/${max}${all?'':' (sin terminar)'} · ${PUNTOS()}\n\n`;
+  rows.forEach(r=>{t+=`- ${r.name}: ${r.ok}/${r.max}${r.done?'':' (sin terminar)'}\n`;r.fails.forEach(f=>t+=`    · ${f}\n`)});
+  $('#informe').innerHTML=`<h3>Informe para tu profe</h3>
+   ${nomRaw?'':'<div class="feedback wrong"><span>Escribe tu nombre y curso arriba, en la ficha, antes de entregar.</span></div>'}
+   <div class="rwrap"><table class="rtable"><thead><tr><th>Misión</th><th>Aciertos</th><th>A repasar</th></tr></thead><tbody>${rows.map(r=>`<tr><td>${r.name}${r.done?'':' <span class="pend">pendiente</span>'}</td><td>${r.ok} / ${r.max}</td><td class="rf">${r.fails.length?r.fails.map(esc).join('<br>'):'—'}</td></tr>`).join('')}</tbody></table></div>
+   <div class="copybox" id="copybox">${esc(t)}</div>
+   <div class="cbar"><button class="btn primary" id="copyBtn">Copiar informe</button><span id="copyMsg" class="cmsg"></span></div>
+   <div class="tip">Pega el informe en un correo a tu profe con el asunto «${TITULO} – ${esc(nom)}», o donde te diga tu profe.</div>`;
+  $('#copyBtn').onclick=()=>{const sel=()=>{const r=document.createRange();r.selectNodeContents($('#copybox'));const s=getSelection();s.removeAllRanges();s.addRange(r);$('#copyMsg').textContent='Texto seleccionado: pulsa Ctrl + C para copiarlo.'};
+    try{navigator.clipboard.writeText(t).then(()=>{$('#copyMsg').textContent='¡Copiado! Pégalo con Ctrl + V.'},sel)}catch(e){sel()}};
+}
+
+const STORE='netiqueta-',TITULO='Netiqueta',PUNTOS=()=>'Estrellas: '+pts;
+initInforme();
+function informeRows(){
+  const cnt=o=>Object.values(o).filter(x=>x===true).length,ans=o=>Object.values(o).filter(x=>x!==undefined).length;
+  return [
+   {name:'1. ¿Netiqueta sí o no?',ok:cnt(res1),max:M1.length,done:ans(res1)===M1.length,fails:fails1},
+   {name:'2. Arregla el mensaje',ok:fixOk(),max:FIX.length,done:FIX.every((f,i)=>fixTxt[i]),fails:FIX.map((f,i)=>fixTxt[i]?`Mensaje ${i+1}: «${fixTxt[i]}»${fixChecks(fixTxt[i]).every(x=>x[0])?'':' (mejorable)'}`:`Mensaje ${i+1}: sin escribir`)},
+   {name:'3. Videollamada con Lyon',ok:res3.filter(x=>x===true).length,max:SIT.length,done:res3.filter(x=>x!==undefined).length===SIT.length,fails:fails3},
+   {name:'4. Nuestro decálogo',ok:r4ok,max:8,done:r4done,fails:r4done?[...pick4].filter(i=>!RULES[i][1]).map(i=>'Eligió una norma mala: '+RULES[i][0]):['Sin comprobar']},
+   vidRow('5. Vídeos y juegos'),
+   {name:'6. Examen final',ok:cnt(res6),max:QUIZ.length,done:ans(res6)===QUIZ.length,fails:QUIZ.filter((q,i)=>res6[i]===false).map(q=>'Falló: '+q[0])}
+  ];
+}
+const ids=['sino','arregla','video','decalogo','videos','examen'];
+function show(t){
+  if(!ids.includes(t))t=ids[0];
+  ids.forEach(x=>$('#m-'+x).hidden=x!==t);
+  document.querySelector('.relato').hidden=t!==ids[0];
+  $$('#tabs button').forEach(b=>b.setAttribute('aria-selected',b.dataset.t===t));
+  if(location.hash!=='#'+t)history.replaceState(null,'','#'+t);
+  if(t==='examen')renderInforme();
+  scrollTo({top:0});
+}
+$$('#tabs button').forEach(b=>b.onclick=()=>show(b.dataset.t));
+addEventListener('hashchange',()=>show(location.hash.slice(1)));
+init();show(location.hash.slice(1));
+
+
+/* ---------- Valoración de indicadores y llave ---------- */
+const VAL_CFG={"pre": "NET", "i5": [["2.1.2", [1], "Deja en el blog BiblioPini o en La Piña 3.0 un comentario respetuoso, pertinente y bien escrito sobre una entrada.", "CCL5 · CCEC3"], ["2.1.4", [0, 3], "Participa en Teams (publicaciones, chat y tareas) con mensajes respetuosos y pertinentes y entrega las tareas con el archivo adjunto correcto.", "CCL5 · CPSAA3"]], "i6": [["2.1.3", [0, 1, 2, 3], "Aplica la netiqueta en chats, correos y videollamadas: saluda, pide por favor, no grita en mayúsculas, pide turno y pide permiso antes de compartir imágenes de otros.", "CPSAA3 · CC1"]], "vid": 4, "exam": 5};
+function valRows(){return typeof informeRows==='function'?informeRows():Object.values(R)}
+function valScore(rows,idx){let ok=0,max=0,att=false;idx.forEach(i=>{const r=rows[i];if(!r)return;ok+=r.ok;max+=r.max;if(r.ok>0||r.done)att=true});return att?Math.max(1,Math.round(5*ok/(max||1))):0}
+function valAll(){const rows=valRows();return {rows,s5:VAL_CFG.i5.map(x=>valScore(rows,x[1])),s6:VAL_CFG.i6.map(x=>valScore(rows,x[1]))}}
+function valComplete(rows){return rows.every((r,i)=>i===VAL_CFG.vid||r.done)}
+function valKey(v){const ex=VAL_CFG.exam!=null&&v.rows[VAL_CFG.exam]?v.rows[VAL_CFG.exam].ok:0;const raw=VAL_CFG.pre+'-'+v.s5.join('')+'-'+v.s6.join('')+'-'+ex;let h=0;for(let i=0;i<raw.length;i++)h=(h+raw.charCodeAt(i)*(i+7))%1296;return raw+'-'+h.toString(36).toUpperCase().padStart(2,'0')}
+function valCourse(){const c=(document.querySelector('#alCurso')||{}).value||'';return /6/.test(c)?'6':/5/.test(c)?'5':''}
+function valEsc(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
+function appendVal(){
+  const host=document.querySelector('#informe')||document.querySelector('#report');if(!host)return;
+  const old=host.querySelector('.valora');if(old)old.remove();
+  const v=valAll(),c=valCourse(),done=valComplete(v.rows),key=done?valKey(v):'';
+  const bar=n=>`<span class="vbar">${[1,2,3,4,5].map(i=>`<i class="${i<=n?'on':''}"></i>`).join('')}</span>`;
+  const tab=(k,list,sc)=>`<div><h4>${k}.º de Primaria</h4><table class="rtable"><thead><tr><th>Indicador</th><th>0-5</th></tr></thead><tbody>${list.map((x,i)=>`<tr><td><b>${x[0]}</b> ${valEsc(x[2])} <span style="color:var(--muted)">(${x[3]})</span></td><td><span class="vstar">${sc[i]}</span>${bar(sc[i])}</td></tr>`).join('')}</tbody></table></div>`;
+  const cols=(c!=='6'?tab(5,VAL_CFG.i5,v.s5):'')+(c!=='5'?tab(6,VAL_CFG.i6,v.s6):'');
+  const div=document.createElement('div');div.className='valora';
+  div.innerHTML=`<h3>Valoración de los indicadores de logro</h3><p style="font-size:.88rem;color:var(--muted)">Escala de 0 a 5: 0 = no realizado; 5 = realizado con éxito. Es una estimación automática a partir de las misiones relacionadas; tu profe la revisará.${c?'':' Escribe tu curso en la ficha para ver solo el tuyo.'}</p><div class="cols">${cols}</div>
+   <div class="llave">${done?`<b>🔑 ¡Has conseguido la llave de esta web!</b><code>${key}</code><span style="font-size:.88rem">Ya está guardada: vuelve al rincón Piensa de Rumbo a Europa y envía tus notas.</span><a href="../#piensa" style="align-self:flex-start;font-weight:700;color:var(--accent)">Volver al rincón Piensa · Pasaporte TIC ↗</a>`:`<b>🔒 Llave todavía cerrada</b><span style="font-size:.88rem">Termina todas las misiones${VAL_CFG.exam!=null?' y el examen final':''} (los vídeos no son obligatorios) para conseguir la llave de la siguiente parada.</span>`}</div>`;
+  const cb=host.querySelector('#copybox');
+  if(cb){host.insertBefore(div,cb.previousElementSibling&&cb.previousElementSibling.tagName==='H3'?cb.previousElementSibling:cb);
+    let t=cb.textContent.replace(/\nVALORACIÓN DE INDICADORES[\s\S]*$/,'');
+    t+='\nVALORACIÓN DE INDICADORES (0-5)\n'+(c!=='6'?VAL_CFG.i5.map((x,i)=>`  5.º ${x[0]}: ${v.s5[i]}`).join('\n')+'\n':'')+(c!=='5'?VAL_CFG.i6.map((x,i)=>`  6.º ${x[0]}: ${v.s6[i]}`).join('\n')+'\n':'')+'LLAVE: '+(key||'(sin conseguir)')+'\n';
+    cb.textContent=t;
+    const btn=host.querySelector('#copyBtn'),msg=host.querySelector('#copyMsg');
+    if(btn)btn.onclick=()=>{const sel=()=>{const r=document.createRange();r.selectNodeContents(cb);const s=getSelection();s.removeAllRanges();s.addRange(r);if(msg)msg.textContent='Texto seleccionado: pulsa Ctrl + C para copiarlo.'};try{navigator.clipboard.writeText(cb.textContent).then(()=>{if(msg)msg.textContent='¡Copiado! Pégalo con Ctrl + V.'},sel)}catch(e){sel()}};
+  }else host.appendChild(div);
+}
+(function(){
+  if(typeof renderInforme==='function'){const o=renderInforme;renderInforme=function(){o();appendVal()}}
+  else if(typeof renderReport==='function'){const o=renderReport;renderReport=function(){o();appendVal()}}
+})();
+</script>
+
+<script>
+/* Rumbo a Europa: rellena nombre y curso con los datos de la web y guarda la llave en el rincón Piensa */
+(function(){
+  try{
+    var a=(JSON.parse(localStorage.getItem("rumbo-a-europa-v1")||"{}")||{}).alumno||{};
+    [["alNombre",a.nombre],["alCurso",a.clase]].forEach(function(p){var el=document.getElementById(p[0]);if(el&&p[1]&&!el.value.trim()){el.value=p[1];el.dispatchEvent(new Event("input",{bubbles:true}));el.dispatchEvent(new Event("change",{bubbles:true}));}});
+  }catch(e){}
+  if(typeof valKey==="function"){
+    var orig=valKey;
+    valKey=function(v){var k=orig(v);try{var g=JSON.parse(localStorage.getItem("rumbo-piensa-llaves")||"{}")||{};var done=typeof valComplete==="function"?valComplete(v.rows):true;g[VAL_CFG.pre]={llave:k,completa:!!done,fecha:new Date().toISOString()};localStorage.setItem("rumbo-piensa-llaves",JSON.stringify(g));}catch(e){}return k;};
+  }
+})();
+</script>
+<style id="lectura-css">
+.lectura{margin-top:14px;border:2px solid var(--accent,#c8102e);border-radius:14px;padding:16px;background:var(--paper,#fff);color:var(--ink,#1a1f2e)}
+.lectura h3{margin:0 0 6px;font-size:1.25rem;color:var(--ink,#1a1f2e)}
+.lectura>p{font-size:1.05rem;color:var(--ink,#1a1f2e)}
+.lectura .lq{margin:14px 0 0}
+.lectura .lq p{margin:0 0 8px;font-weight:800;font-size:1.12rem;line-height:1.4;color:var(--ink,#1a1f2e)}
+.lectura .lops{display:grid;gap:8px}
+.lectura .lop{text-align:left;font:inherit;font-size:1.05rem;line-height:1.4;padding:10px 14px;border-radius:10px;border:2px solid var(--line,#bbb);background:var(--bg,#f4f4f4);color:var(--ink,#1a1f2e);cursor:pointer}
+.lectura .lop:hover{border-color:var(--accent,#c8102e)}
+.lectura .lop[aria-pressed="true"]{border-color:var(--accent,#c8102e);box-shadow:0 0 0 3px var(--accent,#c8102e);font-weight:700}
+.lectura .lq.mal .lop[aria-pressed="true"]{border-color:var(--bad,#c8102e);background:var(--bad-bg,#fdeaea);box-shadow:none}
+.lectura .lq.bien .lop[aria-pressed="true"]{border-color:var(--ok,#2f8f5b);background:var(--ok-bg,#e6f4ec);box-shadow:none}
+.lectura .lfb{margin-top:10px;font-weight:800;font-size:1.05rem}
+.lectura .lfb.mal{color:var(--bad,#c8102e)}.lectura .lfb.bien{color:var(--ok,#2f8f5b)}
+.lectura .lbtn{margin-top:12px;font:inherit;font-weight:800;font-size:1.05rem;padding:10px 20px;border-radius:12px;border:0;background:var(--accent,#c8102e);color:var(--accent-ink,#fff);cursor:pointer}
+body.lect-bloq section.mission,body.lect-bloq section.st{display:none!important}
+body.lect-bloq #tabs button:not(:first-child){opacity:.45}
+body.lect-bloq #tabs button:not(:first-child)::after{content:" 🔒"}
+.lect-aviso{border:2px dashed var(--accent,#c8102e);border-radius:12px;padding:12px;margin:12px 0;font-weight:700;text-align:center;color:var(--ink,#1a1f2e)}
+</style>
+<script>
+/* Rumbo a Europa: dos preguntas de comprensión de la lectura. Hasta acertar las dos no se abren las misiones. */
+(function(){
+  var PREG = [["En un chat, ¿qué parece que haces si escribes TODO EN MAYÚSCULAS?", ["Gritar", "Escribir más rápido", "Decir algo secreto"]], ["¿Qué es la netiqueta, según Pini?", ["La buena educación en internet", "Una etiqueta para la ropa", "Un programa de Radio La Piña"]]], CLAVE = "rumbo-lectura-" + "netiqueta";
+  var abierto = false; try { abierto = sessionStorage.getItem(CLAVE) === "1"; } catch (e) {}
+  var tabs = document.querySelectorAll("#tabs button");
+  var primera = (typeof ids !== "undefined" && ids[0]) || (tabs[0] && tabs[0].dataset.t);
+  var rt = document.querySelector(".relato .rt"), reto = rt && rt.querySelector(".reto");
+  if (!rt || typeof show !== "function") return;
+  var orig = show;
+  show = function (t) { if (!abierto && t !== primera) { t = primera; avisar(); } return orig(t); };
+  function avisar() { var c = document.getElementById("lectura"); if (c) { c.scrollIntoView({ behavior: "smooth", block: "center" }); var f = c.querySelector(".lfb"); f.className = "lfb mal"; f.textContent = "Primero contesta bien las dos preguntas de la lectura."; } }
+  var caja = document.createElement("div"); caja.className = "lectura"; caja.id = "lectura";
+  function mezclar(a) { a = a.slice(); for (var i = a.length - 1; i > 0; i--) { var j = Math.floor(Math.random() * (i + 1)); var x = a[i]; a[i] = a[j]; a[j] = x; } return a; }
+  function pintar() {
+    if (abierto) {
+      caja.innerHTML = '<h3>📖 Comprensión de la lectura</h3><p class="lfb bien">✓ ¡Lectura comprendida! Las misiones están abiertas.</p>';
+      return;
+    }
+    caja.innerHTML = '<h3>📖 Comprensión de la lectura</h3><p style="margin:0">Lee el texto y contesta las dos preguntas. Si aciertas las dos, se abren las misiones.</p>' +
+      PREG.map(function (q, k) {
+        return '<div class="lq" data-k="' + k + '"><p>' + (k + 1) + '. ' + q[0] + '</p><div class="lops">' +
+          mezclar(q[1].map(function (o, i) { return [o, i]; })).map(function (o) { return '<button type="button" class="lop" aria-pressed="false" data-ok="' + (o[1] === 0 ? 1 : 0) + '">' + o[0] + '</button>'; }).join("") + '</div></div>';
+      }).join("") + '<button type="button" class="lbtn">Comprobar</button><p class="lfb" aria-live="polite"></p>';
+  }
+  caja.addEventListener("click", function (e) {
+    var op = e.target.closest(".lop");
+    if (op) { var g = op.closest(".lq"); g.classList.remove("mal", "bien"); g.querySelectorAll(".lop").forEach(function (b) { b.setAttribute("aria-pressed", String(b === op)); }); return; }
+    if (!e.target.closest(".lbtn")) return;
+    var fb = caja.querySelector(".lfb"), grupos = caja.querySelectorAll(".lq"), bien = 0, faltan = 0;
+    grupos.forEach(function (g) {
+      var s = g.querySelector('[aria-pressed="true"]');
+      g.classList.remove("mal", "bien");
+      if (!s) { faltan++; return; }
+      if (s.dataset.ok === "1") { bien++; g.classList.add("bien"); } else g.classList.add("mal");
+    });
+    if (faltan) { fb.className = "lfb mal"; fb.textContent = "Contesta las dos preguntas."; return; }
+    if (bien === PREG.length) {
+      abierto = true; try { sessionStorage.setItem(CLAVE, "1"); } catch (x) {}
+      document.body.classList.remove("lect-bloq");
+      var av = document.getElementById("lect-aviso"); if (av) av.remove();
+      pintar(); orig(primera);
+      var t = document.getElementById("tabs"); if (t) t.scrollIntoView({ behavior: "smooth", block: "start" });
+    } else {
+      fb.className = "lfb mal";
+      fb.textContent = "Has acertado " + bien + " de " + PREG.length + ". Vuelve a leer el texto con calma y prueba otra vez.";
+      setTimeout(function () { var m = fb.textContent; pintar(); var f2 = caja.querySelector(".lfb"); f2.className = "lfb mal"; f2.textContent = m; }, 1800);
+    }
+  });
+  if (reto) rt.insertBefore(caja, reto); else rt.appendChild(caja);
+  pintar();
+  if (!abierto) {
+    document.body.classList.add("lect-bloq");
+    var t = document.getElementById("tabs");
+    if (t) { var av = document.createElement("div"); av.className = "lect-aviso"; av.id = "lect-aviso"; av.textContent = "🔒 Las misiones se abren cuando contestes bien las dos preguntas de la lectura (arriba)."; t.parentNode.insertBefore(av, t.nextSibling); }
+    orig(primera);
+  }
+})();
+</script>
+<script id="solo-curso">
+/* Rumbo a Europa: muestra solo los indicadores del curso del alumno (5.º o 6.º). */
+(function(){
+  function curso(){
+    var c = (document.getElementById("alCurso") || {}).value || "";
+    if (!c) { try { c = ((JSON.parse(localStorage.getItem("rumbo-a-europa-v1") || "{}") || {}).alumno || {}).clase || ""; } catch (e) {} }
+    return /6/.test(c) ? "6" : /5/.test(c) ? "5" : "";
+  }
+  function aplicar(){
+    var c = curso();
+    document.querySelectorAll(".indic .cols > div").forEach(function (d) {
+      var h = d.querySelector("h4"), k = h && /([56])/.exec(h.textContent);
+      d.style.display = c && k && k[1] !== c ? "none" : "";
+    });
+  }
+  aplicar();
+  var cu = document.getElementById("alCurso");
+  if (cu) { cu.addEventListener("input", aplicar); cu.addEventListener("change", aplicar); }
+  setTimeout(aplicar, 500);
+})();
+</script>
+</body></html>

@@ -1,0 +1,873 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>ITV de mi PC</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@600;700&family=Atkinson+Hyperlegible:wght@400;700&family=JetBrains+Mono:wght@500&display=swap">
+<style>
+/* Layout: estación de ITV. Ficha del alumno arriba, estaciones numeradas (orden real de la revisión), simulaciones de escritorio a la izquierda y panel de pruebas a la derecha */
+:root{
+  --bg:#eef1f4; --paper:#ffffff; --ink:#17202b; --muted:#56616e; --line:#d3d9e0;
+  --accent:#0b6bcb; --accent-ink:#ffffff; --hi:#ffd23f; --hi-ink:#2b2200;
+  --ok:#17834a; --ok-bg:#dff3e7; --bad:#c2372b; --bad-bg:#fbe4e1; --soft:#e6ebf1; --sel:#d7e8fb;
+  --desk1:#2a5d8f; --desk2:#5d3f8f; --task:#e9edf2; --task-ink:#1b2430;
+  --f-display:"Chakra Petch","Arial Narrow",system-ui,sans-serif;
+  --f-body:"Atkinson Hyperlegible",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"JetBrains Mono",ui-monospace,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#10161d; --paper:#18212b; --ink:#e5ebf2; --muted:#9aa7b5; --line:#2c3743;
+  --accent:#5aa9f5; --accent-ink:#06192b; --hi:#ffd84f; --hi-ink:#2b2200;
+  --ok:#5fd18e; --ok-bg:#163527; --bad:#ff8a7c; --bad-bg:#3a1d1a; --soft:#222d39; --sel:#1d3550;
+  --desk1:#1d4166; --desk2:#3d2a63; --task:#1f2833; --task-ink:#e5ebf2; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#10161d; --paper:#18212b; --ink:#e5ebf2; --muted:#9aa7b5; --line:#2c3743;
+  --accent:#5aa9f5; --accent-ink:#06192b; --hi:#ffd84f; --hi-ink:#2b2200;
+  --ok:#5fd18e; --ok-bg:#163527; --bad:#ff8a7c; --bad-bg:#3a1d1a; --soft:#222d39; --sel:#1d3550;
+  --desk1:#1d4166; --desk2:#3d2a63; --task:#1f2833; --task-ink:#e5ebf2; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:16px;line-height:1.5;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 48px}
+.wrap{max-width:1060px;margin:0 auto;display:flex;flex-direction:column;gap:20px}
+h1,h2,h3{font-family:var(--f-display);text-wrap:balance;margin:0;line-height:1.1}
+p{margin:0}
+button,input,select{font-family:inherit;font-size:inherit}
+button:focus-visible,[tabindex]:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid var(--hi);outline-offset:2px}
+
+header.hero{display:flex;gap:16px;align-items:center;flex-wrap:wrap}
+.sticker{width:82px;height:82px;flex:none}
+.hero-text{flex:1;min-width:0;display:flex;flex-direction:column;gap:4px}
+.hero h1{font-size:clamp(2rem,5.5vw,3.1rem);letter-spacing:.01em}
+.hero h1 span{color:var(--accent)}
+.hero p{color:var(--muted);max-width:62ch}
+.ficha{display:flex;gap:12px;flex-wrap:wrap;align-items:end;background:var(--paper);border:2px solid var(--line);border-radius:14px;padding:12px 14px}
+.ficha label{display:flex;flex-direction:column;gap:3px;font-size:.8rem;font-weight:700;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;flex:1 1 180px;min-width:0}
+.ficha input{border:2px solid var(--line);border-radius:10px;padding:8px 10px;background:var(--bg);color:var(--ink);text-transform:none;letter-spacing:0;font-weight:400;width:100%}
+.ficha .tot{font:700 1.05rem var(--f-display);background:var(--hi);color:var(--hi-ink);border-radius:10px;padding:8px 14px;white-space:nowrap;font-variant-numeric:tabular-nums}
+
+nav.tabs{display:flex;gap:6px;flex-wrap:wrap}
+nav.tabs button{font:700 .98rem var(--f-display);border:2px solid var(--line);background:var(--paper);color:var(--ink);padding:8px 12px;border-radius:10px;cursor:pointer;display:flex;gap:8px;align-items:center}
+nav.tabs .n{display:inline-grid;place-items:center;width:24px;height:24px;border-radius:6px;background:var(--soft);font-size:.85rem}
+nav.tabs .n.done{background:var(--ok);color:#fff}
+nav.tabs button[aria-selected="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+nav.tabs button[aria-selected="true"] .n:not(.done){background:var(--hi);color:var(--hi-ink)}
+
+section.st{display:flex;flex-direction:column;gap:16px}
+.intro{display:flex;flex-direction:column;gap:6px;border-left:6px solid var(--hi);padding:4px 0 4px 14px}
+.intro h2{font-size:1.7rem}
+.intro p{color:var(--muted);max-width:74ch}
+.label{font:700 .74rem var(--f-body);letter-spacing:.1em;text-transform:uppercase;color:var(--accent)}
+.grid2{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:16px;align-items:start}
+@media (max-width:820px){.grid2{grid-template-columns:minmax(0,1fr)}}
+.grid2>*{min-width:0}
+.panel{background:var(--paper);border:2px solid var(--line);border-radius:14px;padding:16px;display:flex;flex-direction:column;gap:12px}
+.panel h3{font-size:1.25rem}
+.btn{font:700 .98rem var(--f-display);border:2px solid var(--line);border-radius:10px;padding:8px 14px;cursor:pointer;background:var(--soft);color:var(--ink)}
+.btn.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.btn:disabled{opacity:.5;cursor:default}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.feedback{border-radius:12px;padding:10px 14px;display:flex;flex-direction:column;gap:4px}
+.feedback.right{background:var(--ok-bg)}.feedback.wrong{background:var(--bad-bg)}
+.feedback strong{font-family:var(--f-display);font-size:1.05rem}
+.tip{background:var(--soft);border-radius:12px;padding:10px 14px;font-size:.95rem}
+.prompt{font:700 1.35rem var(--f-display);color:var(--accent)}
+.bars{display:flex;gap:4px;flex-wrap:wrap}.bars i{width:22px;height:8px;border-radius:3px;background:var(--line);display:block}
+.bars i.ok{background:var(--ok)}.bars i.ko{background:var(--bad)}.bars i.now{background:var(--hi)}
+
+/* --- Escritorio simulado --- */
+.desk{border-radius:12px;overflow:hidden;border:2px solid var(--line);display:flex;flex-direction:column;background:linear-gradient(135deg,var(--desk1),var(--desk2))}
+.desk .wall{min-height:210px;padding:14px;display:flex;flex-direction:column;gap:12px;align-items:flex-start;color:#fff}
+.dicon{display:flex;flex-direction:column;align-items:center;gap:3px;font-size:.75rem;width:70px;text-align:center;text-shadow:0 1px 2px rgba(0,0,0,.6)}
+.taskbar{background:var(--task);color:var(--task-ink);display:flex;align-items:center;gap:4px;padding:5px 6px;overflow-x:auto}
+.taskbar .grp{display:flex;align-items:center;gap:2px}
+.taskbar .sp{flex:1;min-width:8px}
+.tb{min-width:38px;height:38px;border-radius:8px;display:grid;place-items:center;cursor:pointer;flex:none;padding:0 6px;border:2px solid transparent}
+.tb:hover{background:var(--soft)}
+.tb svg{width:22px;height:22px;display:block}
+.tb.search{display:flex;gap:6px;align-items:center;background:var(--paper);border:1.5px solid var(--line);border-radius:999px;padding:0 12px;font-size:.85rem;color:var(--muted);min-width:120px}
+.tb.search svg{width:16px;height:16px}
+.tb.clock{font-size:.72rem;line-height:1.15;text-align:right;font-variant-numeric:tabular-nums}
+.tb.good{border-color:var(--ok);background:var(--ok-bg)}
+.tb.nope{border-color:var(--bad);background:var(--bad-bg)}
+.tb.lit{border-color:var(--hi)}
+.ico{fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+
+/* --- Explorador simulado --- */
+.win{border:2px solid var(--line);border-radius:12px;overflow:hidden;background:var(--paper);display:flex;flex-direction:column}
+.win .title{background:var(--task);padding:7px 12px;font:700 .95rem var(--f-display);display:flex;justify-content:space-between;align-items:center;gap:8px}
+.win .title .wb{display:flex;gap:10px;color:var(--muted);font-weight:400}
+.ribbon{display:flex;gap:6px;flex-wrap:wrap;padding:8px;border-bottom:1px solid var(--line)}
+.ribbon button{font:700 .82rem var(--f-body);border:1.5px solid var(--line);background:var(--paper);color:var(--ink);border-radius:8px;padding:6px 9px;cursor:pointer;display:flex;gap:5px;align-items:center}
+.ribbon button:hover:not(:disabled){background:var(--soft)}
+.ribbon button:disabled{opacity:.45;cursor:default}
+.ribbon svg{width:16px;height:16px}
+.crumbs{display:flex;gap:4px;align-items:center;padding:6px 10px;border-bottom:1px solid var(--line);font-size:.88rem;flex-wrap:wrap}
+.crumbs button{border:none;background:none;color:var(--accent);cursor:pointer;padding:2px 4px;border-radius:4px;font-weight:700}
+.explo{display:grid;grid-template-columns:150px minmax(0,1fr);min-height:250px}
+@media (max-width:520px){.explo{grid-template-columns:110px minmax(0,1fr)}}
+.side{border-right:1px solid var(--line);padding:6px;display:flex;flex-direction:column;gap:2px;background:var(--bg)}
+.side button{display:flex;gap:6px;align-items:center;text-align:left;border:none;background:none;color:var(--ink);padding:6px;border-radius:6px;cursor:pointer;font-size:.86rem;overflow-wrap:anywhere}
+.side button.on{background:var(--sel);font-weight:700}
+.side svg{width:16px;height:16px;flex:none}
+.items{padding:10px;display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:8px;align-content:start}
+.item{display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px 4px;border-radius:8px;cursor:pointer;border:2px solid transparent;text-align:center;font-size:.8rem;overflow-wrap:anywhere;background:none;color:var(--ink)}
+.item:hover{background:var(--soft)}
+.item.sel{background:var(--sel);border-color:var(--accent)}
+.item.cut{opacity:.5}
+.item svg{width:40px;height:40px}
+.item input{width:100%;font-size:.8rem;padding:2px 4px;border:2px solid var(--accent);border-radius:4px;background:var(--paper);color:var(--ink)}
+.empty{color:var(--muted);font-size:.88rem;grid-column:1/-1;padding:20px 0;text-align:center}
+.status{padding:5px 10px;font-size:.78rem;color:var(--muted);border-top:1px solid var(--line)}
+.tasks{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+.tasks li{display:flex;gap:10px;align-items:flex-start;padding:8px 10px;border-radius:10px;background:var(--soft);font-size:.95rem}
+.tasks li .ck{width:22px;height:22px;border-radius:6px;border:2px solid var(--muted);flex:none;display:grid;place-items:center;margin-top:1px}
+.tasks li.done{background:var(--ok-bg)}
+.tasks li.done .ck{background:var(--ok);border-color:var(--ok)}
+.tasks li.done .ck::after{content:"";width:6px;height:11px;border:solid #fff;border-width:0 3px 3px 0;transform:rotate(45deg) translate(-1px,-1px)}
+
+/* --- OneDrive simulado --- */
+.syncgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px}
+.sync{display:flex;gap:10px;align-items:center;background:var(--paper);border:2px solid var(--line);border-radius:12px;padding:10px}
+.sync svg{width:34px;height:34px;flex:none}
+.sync select{flex:1;min-width:0;padding:6px;border-radius:8px;border:2px solid var(--line);background:var(--bg);color:var(--ink)}
+.sync.r{border-color:var(--ok);background:var(--ok-bg)}.sync.w{border-color:var(--bad);background:var(--bad-bg)}
+.odlist{display:flex;flex-direction:column}
+.odrow{display:grid;grid-template-columns:28px 34px minmax(0,1fr) auto;gap:8px;align-items:center;padding:8px 10px;border-bottom:1px solid var(--line);cursor:pointer;font-size:.92rem}
+.odrow:hover{background:var(--soft)}
+.odrow.sel{background:var(--sel)}
+.odrow .cb{width:18px;height:18px;border-radius:50%;border:2px solid var(--muted)}
+.odrow.sel .cb{background:var(--accent);border-color:var(--accent)}
+.odrow svg{width:26px;height:26px}
+.odrow .meta{color:var(--muted);font-size:.8rem}
+.dialog{border:2px solid var(--accent);border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:10px;background:var(--paper);margin:10px}
+.dialog label{display:flex;flex-direction:column;gap:4px;font-size:.85rem;font-weight:700;color:var(--muted)}
+.dialog input,.dialog select{padding:8px;border-radius:8px;border:2px solid var(--line);background:var(--bg);color:var(--ink);width:100%}
+
+/* --- Ordenar pasos --- */
+.steps{display:flex;flex-direction:column;gap:8px}
+.step{display:flex;gap:10px;align-items:center;text-align:left;border:2px solid var(--line);background:var(--paper);color:var(--ink);border-radius:10px;padding:9px 12px;cursor:pointer;font-size:.95rem}
+.step .num{width:26px;height:26px;border-radius:6px;background:var(--soft);display:grid;place-items:center;font:700 .9rem var(--f-display);flex:none}
+.step.picked{border-color:var(--accent);background:var(--sel)}
+.step.picked .num{background:var(--accent);color:var(--accent-ink)}
+.opts{display:flex;flex-direction:column;gap:8px}
+.opts button{text-align:left;font-size:.95rem;background:var(--bg);color:var(--ink);border:2px solid var(--line);border-radius:10px;padding:8px 12px;cursor:pointer}
+.opts button.r{background:var(--ok-bg);border-color:var(--ok)}.opts button.w{background:var(--bad-bg);border-color:var(--bad)}
+.filecard{display:flex;gap:10px;align-items:center;border:2px solid var(--ok);background:var(--ok-bg);border-radius:12px;padding:10px 12px}
+.filecard svg{width:36px;height:36px;flex:none}
+
+/* --- Informe --- */
+.report{background:var(--paper);border:2px solid var(--line);border-radius:16px;padding:18px;display:flex;flex-direction:column;gap:14px}
+.rhead{display:flex;gap:16px;align-items:center;flex-wrap:wrap}
+.rhead .who{flex:1;min-width:0}
+.rtable{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
+.rtable th,.rtable td{text-align:left;padding:8px 6px;border-bottom:1px solid var(--line);font-size:.95rem;vertical-align:top}
+.rtable th{font:700 .75rem var(--f-body);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.pill{display:inline-block;border-radius:999px;padding:2px 10px;font-weight:700;font-size:.82rem}
+.pill.ok{background:var(--ok-bg);color:var(--ok)}.pill.ko{background:var(--bad-bg);color:var(--bad)}.pill.pe{background:var(--soft);color:var(--muted)}
+.copybox{font:500 .82rem var(--f-mono);background:var(--bg);border:2px dashed var(--line);border-radius:10px;padding:10px;white-space:pre-wrap;overflow-wrap:anywhere;max-height:260px;overflow:auto}
+.relato{background:var(--paper);border:2px solid var(--line);border-radius:18px;padding:18px;display:grid;grid-template-columns:120px minmax(0,1fr);gap:20px;align-items:start}
+@media (max-width:620px){.relato{grid-template-columns:minmax(0,1fr)}.relato .pini{width:96px}}
+.relato .pini{width:120px;height:auto;display:block}
+.relato .rt{display:flex;flex-direction:column;gap:10px;min-width:0}
+.relato .cap{font-size:.74rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--accent)}
+.relato h2{font-size:clamp(1.5rem,3.6vw,2rem);text-wrap:balance}
+.relato p{max-width:68ch;line-height:1.65}
+.relato[hidden]{display:none}
+.relato .nw{white-space:nowrap}
+.relato .dlg{padding-left:14px;border-left:3px solid var(--line)}
+.relato .reto{border:2px dashed var(--accent);border-radius:14px;padding:12px 16px;display:flex;flex-direction:column;gap:6px;margin-top:4px}
+.relato .reto b.t{font-size:.8rem;letter-spacing:.08em;text-transform:uppercase;color:var(--accent)}
+.relato .reto ul{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:4px}
+.vids{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:14px}
+.vid{background:var(--paper);border:2px solid var(--line);border-radius:16px;padding:14px;display:flex;flex-direction:column;gap:8px}
+.vid.seen{border-color:var(--ok)}
+.vid .src{font-weight:800;font-size:.7rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.vid h3{font-size:1.08rem}
+.vid .kindtag{align-self:flex-start;font-size:.72rem;font-weight:800;border-radius:999px;padding:2px 9px;background:var(--bg);color:var(--muted)}
+.vid a.go{display:inline-flex;gap:8px;align-items:center;align-self:flex-start;background:var(--accent);color:var(--accent-ink);text-decoration:none;font-weight:800;border-radius:999px;padding:7px 14px}
+.vid a.go svg{width:16px;height:16px}
+.vid .q{font-size:.92rem;background:var(--bg);border-radius:10px;padding:8px 10px}
+.vid label.ck{display:flex;gap:8px;align-items:center;font-weight:700;font-size:.92rem;cursor:pointer;margin-top:auto}
+.vid label.ck input{width:20px;height:20px;accent-color:var(--ok)}
+.vid.tarea{border-color:var(--accent);border-width:3px}
+.vid.tarea .kindtag{background:var(--accent);color:var(--accent-ink)}
+.vfilter{display:flex;gap:8px;flex-wrap:wrap}
+.indic{border:2px solid var(--line);border-radius:14px;padding:12px 16px;display:flex;flex-direction:column;gap:10px;margin-top:4px;background:var(--bg)}
+.indic>b.t{font-size:.8rem;letter-spacing:.08em;text-transform:uppercase;color:var(--accent)}
+.indic .cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px}
+.indic h4{margin:0;font-size:.95rem}
+.indic ul{margin:0;padding-left:0;list-style:none;display:flex;flex-direction:column;gap:6px;font-size:.88rem;line-height:1.45}
+.indic li{overflow-wrap:anywhere}
+.indic .crit{display:inline-block;font-weight:800;border:1.5px solid var(--accent);color:var(--accent);border-radius:6px;padding:0 5px;margin-right:4px;font-size:.78rem;font-variant-numeric:tabular-nums}
+.indic .do{color:var(--muted);font-size:.8rem}
+.valora{border:2px solid var(--accent);border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:10px;background:var(--paper)}
+.valora h3{font-size:1.2rem}
+.valora .cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px}
+.valora h4{margin:0 0 4px;font-size:.95rem}
+.valora td{font-size:.85rem}
+.vstar{font-weight:800;white-space:nowrap;font-variant-numeric:tabular-nums}
+.vbar{display:inline-flex;gap:2px;margin-left:6px;vertical-align:middle}.vbar i{width:8px;height:8px;border-radius:2px;background:var(--line);display:block}.vbar i.on{background:var(--ok)}
+.llave{border:2px dashed var(--accent);border-radius:12px;padding:12px;display:flex;flex-direction:column;gap:6px}
+.llave code{font:700 1.3rem var(--f-mono,monospace);letter-spacing:.06em;color:var(--accent);overflow-wrap:anywhere}
+footer{color:var(--muted);font-size:.85rem;text-align:center}
+</style>
+
+<div class="wrap">
+  <header class="hero">
+    <svg class="sticker" viewBox="0 0 82 82" aria-hidden="true">
+      <circle cx="41" cy="41" r="38" fill="var(--hi)"/><circle cx="41" cy="41" r="31" fill="none" stroke="var(--hi-ink)" stroke-width="2" stroke-dasharray="3 3"/>
+      <rect x="22" y="26" width="38" height="25" rx="3" fill="none" stroke="var(--hi-ink)" stroke-width="3"/><path d="M33 58h16M41 51v7" stroke="var(--hi-ink)" stroke-width="3"/>
+      <path d="M31 39l6 6 13-12" fill="none" stroke="var(--ok)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+    <div class="hero-text">
+      <h1>ITV de <span>mi PC</span></h1>
+      <p>Pasa las cinco estaciones de la revisión: barra de tareas, explorador de archivos, OneDrive, de Word a PDF y el informe final para entregar a tu profe. Todo es una simulación: no se toca tu ordenador de verdad.</p>
+    </div>
+  </header>
+
+  <section class="relato" aria-labelledby="relato-t">
+    <svg class="pini" viewBox="0 0 120 150" aria-label="Pini, la mascota de Radio La Piña">
+  <path d="M60 14l6 12h-12z" fill="#5f8f3a"/>
+  <ellipse cx="60" cy="86" rx="36" ry="50" fill="#a5642f"/>
+  <g fill="none" stroke="#6e3a17" stroke-width="3" stroke-linecap="round">
+    <path d="M32 58q7 8 14 0q7 8 14 0q7 8 14 0q7 8 14 0"/>
+    <path d="M27 104q8 8 16 0q8 8 17 0q8 8 17 0q8 8 16 0"/>
+    <path d="M33 122q7 7 14 0q6 7 13 0q7 7 14 0q6 7 13 0"/>
+    <path d="M40 42q5 6 10 0q5 6 10 0q5 6 10 0q5 6 10 0"/>
+  </g>
+  <ellipse cx="48" cy="78" rx="8" ry="9" fill="#fff"/><ellipse cx="72" cy="78" rx="8" ry="9" fill="#fff"/>
+  <circle cx="50" cy="80" r="4" fill="#1d1d1d"/><circle cx="74" cy="80" r="4" fill="#1d1d1d"/>
+  <path d="M50 92q10 9 20 0" fill="none" stroke="#1d1d1d" stroke-width="3" stroke-linecap="round"/>
+  <path d="M22 76a38 42 0 0 1 76 0" fill="none" stroke="#2b2f3a" stroke-width="6"/>
+  <rect x="14" y="70" width="14" height="22" rx="5" fill="#e2553f"/><rect x="92" y="70" width="14" height="22" rx="5" fill="#e2553f"/>
+  <path d="M21 92q0 16 18 18" fill="none" stroke="#2b2f3a" stroke-width="3"/>
+  <rect x="38" y="104" width="12" height="9" rx="4" fill="#2b2f3a"/>
+</svg>
+    <div class="rt">
+      <span class="cap">Rumbo a Europa · Radio La Piña · Alemania</span>
+      <h2 id="relato-t">Pinitop no pasa la revisión</h2>
+      <p>Se acerca el gran programa de Radio La Piña dedicado a <b>Alemania</b>, y se emitirá desde el portátil de la radio, al que todos llaman <b>Pinitop</b>. Pero el lunes, al encenderlo, llega el susto: el escritorio está lleno de archivos sueltos, las grabaciones están en Descargas mezcladas con juegos, nadie encuentra la escaleta y el guion que hay que mandar a un cole alemán sigue en formato .docx.</p>
+      <p class="dlg">—En Alemania los coches pasan una revisión muy estricta antes de salir a la carretera —explica <span class="nw">Pini—</span>. Pinitop también necesita su ITV antes de poner rumbo a Europa.</p>
+      <p>Así que el equipo monta un taller con cinco estaciones, como uno de verdad. Primero, revisar la barra de tareas: ¿hay wifi?, ¿está el volumen silenciado?, ¿queda batería? Después, ordenar los archivos en carpetas. Luego, guardar las grabaciones en OneDrive para que no se pierdan y compartir el guion con el cole alemán. Por último, convertir el guion en PDF para que se vea igual en cualquier ordenador.</p>
+      <p class="dlg">—Si Pinitop pasa la ITV, le pegamos la pegatina de APTO y salimos al aire —promete <span class="nw">Pini—</span>. <i>Gute Fahrt!</i> ¡Buen viaje!</p>
+      <p>Ponte el mono de mecánico: Pinitop te espera en el taller.</p>
+      <div class="reto"><b class="t">Vuestro reto: superar las estaciones</b>
+        <ul>
+        <li><b>Estación 1:</b> Barra de tareas</li>
+        <li><b>Estación 2:</b> Explorador</li>
+        <li><b>Estación 3:</b> OneDrive</li>
+        <li><b>Estación 4:</b> De Word a PDF</li>
+        <li><b>Estación 5:</b> Vídeos y juegos</li>
+        <li><b>Estación 6:</b> Informe ITV</li>
+        </ul>
+      </div>
+      <div class="indic"><b class="t">Indicadores de logro · Programación de TIAC</b>
+        <div class="cols">
+          <div><h4>5.º de Primaria</h4><ul><li><span class="crit">Crit. 1.2</span><b>1.2.1</b> Guarda el PDF del dossier con un nombre reconocible (país_nombre) en la carpeta de TIAC y lo vuelve a localizar cuando se le pide. <span class="do">(CE3)</span></li><li><span class="crit">Crit. 1.2</span><b>1.2.2</b> Durante la ITV crea, mueve y elimina carpetas y archivos en el ordenador sin perder información y vacía la papelera de reciclaje. <span class="do">(CE3)</span></li><li><span class="crit">Crit. 2.2</span><b>2.2.1</b> Envía el PDF del dossier como adjunto del correo o, en la ruta avanzada, como enlace de OneDrive, y comprueba que se abre. <span class="do">(CCL5 · CE3)</span></li><li><span class="crit">Crit. 3.1</span><b>3.1.1</b> Da formato al dossier de su país en Word (título, viñetas, imagen y márgenes) y lo exporta a PDF comprobando que se ve completo y legible. <span class="do">(CD2 · CCEC4)</span></li><li><span class="crit">Crit. 4.3</span><b>4.3.1</b> Completa la ITV de su ordenador: comprueba sonido, wifi y brillo, cambia el fondo y ordena iconos y escritorio sin alterar la configuración del centro. <span class="do">(CD4 · CD5)</span></li><li><span class="crit">Crit. 5.2</span><b>5.2.2</b> Ante un fallo en la ITV (sin sonido, sin wifi, aplicación bloqueada) sigue la pauta de solución (comprobar, reiniciar, pedir ayuda) y explica qué ha probado. <span class="do">(CC2)</span></li></ul></div>
+          <div><h4>6.º de Primaria</h4><ul><li><span class="crit">Crit. 1.2</span><b>1.2.1</b> Guarda sus trabajos en la carpeta de OneDrive indicada (TIAC · curso · SA o subcarpeta) con un nombre claro. <span class="do">(CE3)</span></li><li><span class="crit">Crit. 1.2</span><b>1.2.2</b> Exporta su trabajo al formato pedido (Word a PDF, Audacity a MP3) y comprueba que se abre. <span class="do">(CE3)</span></li><li><span class="crit">Crit. 1.2</span><b>1.2.3</b> Organiza el escritorio y crea y nombra carpetas en su ordenador. <span class="do">(CE3)</span></li><li><span class="crit">Crit. 2.2</span><b>2.2.1</b> Comparte su trabajo por OneDrive o Teams con las personas adecuadas y comprueba que pueden abrirlo. <span class="do">(CCL5 · CE3)</span></li><li><span class="crit">Crit. 4.3</span><b>4.3.1</b> Ajusta su equipo (brillo, volumen, fondo) y explica cómo cuidar la postura y el tiempo de pantalla. <span class="do">(CD4)</span></li><li><span class="crit">Crit. 5.2</span><b>5.2.1</b> Resuelve problemas habituales del ordenador (sonido, wifi, pantalla o aplicación) siguiendo una lista de pasos. <span class="do">(CC2)</span></li></ul></div>
+        </div>
+      </div><!--/indic-->
+    </div>
+  </section>
+
+  <div class="ficha">
+    <label for="alNombre">Nombre y apellido<input id="alNombre" autocomplete="off" placeholder="Escribe tu nombre"></label>
+    <label for="alCurso">Curso y grupo<input id="alCurso" autocomplete="off" placeholder="Ej.: 5.º B"></label>
+    <span class="tot" id="tot">0 / 0 pruebas</span>
+  </div>
+
+  <nav class="tabs" role="tablist" id="tabs">
+    <button role="tab" data-t="barra" aria-selected="true"><span class="n" id="n-barra">1</span>Barra de tareas</button>
+    <button role="tab" data-t="explorador" aria-selected="false"><span class="n" id="n-explorador">2</span>Explorador</button>
+    <button role="tab" data-t="onedrive" aria-selected="false"><span class="n" id="n-onedrive">3</span>OneDrive</button>
+    <button role="tab" data-t="pdf" aria-selected="false"><span class="n" id="n-pdf">4</span>De Word a PDF</button>
+    <button role="tab" data-t="videos" aria-selected="false"><span class="n" id="n-videos">5</span>Vídeos y juegos</button>
+    <button role="tab" data-t="informe" aria-selected="false"><span class="n" id="n-informe">6</span>Informe ITV</button>
+  </nav>
+
+  <!-- ESTACIÓN 1 -->
+  <section class="st" id="s-barra">
+    <div class="intro"><span class="label">Estación 1</span><h2>La barra de tareas</h2>
+      <p>Es la franja de abajo del escritorio. Primero explora: pulsa cada icono para saber qué es. Cuando estés listo, empieza la prueba.</p></div>
+    <div class="grid2">
+      <div class="desk">
+        <div class="wall">
+          <div class="dicon"><svg width="34" height="34" viewBox="0 0 24 24"><path d="M3 6h7l2 2h9v11H3z" fill="#f4c542"/></svg>Mis trabajos</div>
+          <div class="dicon"><svg width="34" height="34" viewBox="0 0 24 24"><path d="M5 4h14v16H5z" fill="#eee"/><path d="M8 9h8M8 12h8M8 15h5" stroke="#999" stroke-width="1.5"/></svg>Papelera</div>
+        </div>
+        <div class="taskbar" id="taskbar">
+          <div class="grp">
+            <span class="tb" data-k="inicio" tabindex="0" aria-label="Inicio"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="8" height="8" rx="1.5" fill="var(--accent)"/><rect x="13" y="3" width="8" height="8" rx="1.5" fill="var(--accent)"/><rect x="3" y="13" width="8" height="8" rx="1.5" fill="var(--accent)"/><rect x="13" y="13" width="8" height="8" rx="1.5" fill="var(--accent)"/></svg></span>
+            <span class="tb search" data-k="buscar" tabindex="0" aria-label="Búsqueda"><svg viewBox="0 0 24 24" class="ico"><circle cx="10" cy="10" r="6"/><path d="M15 15l5 5"/></svg>Buscar</span>
+            <span class="tb" data-k="vista" tabindex="0" aria-label="Vista de tareas"><svg viewBox="0 0 24 24" class="ico"><rect x="3" y="5" width="8" height="14" rx="1.5"/><rect x="13" y="5" width="8" height="14" rx="1.5"/></svg></span>
+            <span class="tb" data-k="explorador" tabindex="0" aria-label="Explorador de archivos"><svg viewBox="0 0 24 24"><path d="M2 6h8l2 2h10v11H2z" fill="#f4c542"/><path d="M2 10h20v9H2z" fill="#e0a92a"/></svg></span>
+            <span class="tb" data-k="navegador" tabindex="0" aria-label="Navegador"><svg viewBox="0 0 24 24" class="ico" style="color:var(--accent)"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18"/></svg></span>
+            <span class="tb" data-k="word" tabindex="0" aria-label="Procesador de textos"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="3" fill="#2b5fb3"/><path d="M7 8l2 8 3-6 3 6 2-8" fill="none" stroke="#fff" stroke-width="1.8" stroke-linejoin="round"/></svg></span>
+          </div>
+          <span class="sp"></span>
+          <div class="grp">
+            <span class="tb" data-k="ocultos" tabindex="0" aria-label="Iconos ocultos"><svg viewBox="0 0 24 24" class="ico"><path d="M6 15l6-6 6 6"/></svg></span>
+            <span class="tb" data-k="wifi" tabindex="0" aria-label="Wifi"><svg viewBox="0 0 24 24" class="ico"><path d="M2 9a15 15 0 0 1 20 0M5 13a10 10 0 0 1 14 0M8.5 16.5a5 5 0 0 1 7 0"/><circle cx="12" cy="20" r="1" fill="currentColor"/></svg></span>
+            <span class="tb" data-k="volumen" tabindex="0" aria-label="Volumen"><svg viewBox="0 0 24 24" class="ico"><path d="M4 9h4l5-4v14l-5-4H4z"/><path d="M16 9a4 4 0 0 1 0 6M18.5 6.5a8 8 0 0 1 0 11"/></svg></span>
+            <span class="tb" data-k="bateria" tabindex="0" aria-label="Batería"><svg viewBox="0 0 24 24" class="ico"><rect x="2" y="7" width="18" height="10" rx="2"/><path d="M22 10v4"/><rect x="4" y="9" width="10" height="6" fill="currentColor" stroke="none"/></svg></span>
+            <span class="tb clock" data-k="reloj" tabindex="0" aria-label="Fecha y hora">10:35<br>03/11/2026</span>
+            <span class="tb" data-k="notif" tabindex="0" aria-label="Notificaciones"><svg viewBox="0 0 24 24" class="ico"><path d="M6 16V11a6 6 0 0 1 12 0v5l2 2H4z"/><path d="M10 20a2 2 0 0 0 4 0"/></svg></span>
+          </div>
+        </div>
+      </div>
+      <div class="panel" id="p1"></div>
+    </div>
+  </section>
+
+  <!-- ESTACIÓN 2 -->
+  <section class="st" id="s-explorador" hidden>
+    <div class="intro"><span class="label">Estación 2</span><h2>Explorador de archivos: carpetas en orden</h2>
+      <p>Un ordenador ordenado es como una mochila ordenada. Toca un elemento para seleccionarlo y tócalo dos veces (o pulsa «Abrir») para entrar en una carpeta. Completa las cuatro tareas.</p></div>
+    <div class="grid2">
+      <div class="win">
+        <div class="title"><span>Explorador de archivos</span><span class="wb"><span>—</span><span>☐</span><span>✕</span></span></div>
+        <div class="ribbon" id="ribbon">
+          <button data-a="nueva"><svg viewBox="0 0 24 24"><path d="M2 6h8l2 2h10v11H2z" fill="#f4c542"/><path d="M17 11v6M14 14h6" stroke="#2a7a2a" stroke-width="2.4"/></svg>Nueva carpeta</button>
+          <button data-a="abrir">Abrir</button>
+          <button data-a="renombrar">Cambiar nombre</button>
+          <button data-a="cortar">✂ Cortar</button>
+          <button data-a="copiar">⧉ Copiar</button>
+          <button data-a="pegar">📋 Pegar</button>
+          <button data-a="eliminar">🗑 Eliminar</button>
+        </div>
+        <div class="crumbs" id="crumbs"></div>
+        <div class="explo"><div class="side" id="side"></div><div class="items" id="items"></div></div>
+        <div class="status" id="status"></div>
+      </div>
+      <div class="panel">
+        <h3>Tareas</h3>
+        <ul class="tasks" id="tasks2"></ul>
+        <div class="tip"><b>Truco:</b> para <b>mover</b> un archivo, usa Cortar y Pegar. Para tenerlo en dos sitios, usa Copiar y Pegar. En un PC de verdad: Ctrl + X, Ctrl + C y Ctrl + V.</div>
+        <button class="btn" id="reset2">Empezar de nuevo</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ESTACIÓN 3 -->
+  <section class="st" id="s-onedrive" hidden>
+    <div class="intro"><span class="label">Estación 3</span><h2>OneDrive: tus archivos en la nube</h2>
+      <p>OneDrive guarda tus archivos en internet («en la nube»). Así puedes abrirlos desde otro ordenador entrando con tu cuenta educativa y compartirlos con tu profe sin usar un pendrive.</p></div>
+    <div class="panel">
+      <h3>Parte A · ¿Qué significa cada icono de estado?</h3>
+      <p style="color:var(--muted)">Estos iconos aparecen junto a tus archivos en el explorador. Elige el significado de cada uno.</p>
+      <div class="syncgrid" id="sync"></div>
+      <div class="row"><button class="btn primary" id="checkSync">Comprobar</button><span id="syncRes"></span></div>
+    </div>
+    <div class="grid2">
+      <div class="win">
+        <div class="title"><span>OneDrive · Mis archivos</span><span class="wb"><span>☁</span></span></div>
+        <div class="ribbon"><button id="odShare" disabled>Compartir</button><button disabled>Descargar</button><button disabled>Eliminar</button></div>
+        <div class="odlist" id="odlist"></div>
+        <div id="dlg"></div>
+      </div>
+      <div class="panel">
+        <h3>Parte B · Comparte un archivo</h3>
+        <div class="tip">Comparte <b>trabajo_volcanes.pdf</b> con tu profe, <b>profe.ana@cole-ejemplo.es</b>, para que <b>solo pueda verlo</b>, sin cambiarlo.</div>
+        <div id="fb3"></div>
+        <p style="font-size:.9rem;color:var(--muted)">Para entrar en OneDrive: abre el navegador, entra en tu cuenta educativa (Educacyl en Castilla y León) y busca OneDrive en el menú de aplicaciones. En el PC también aparece como una nube en el explorador de archivos.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ESTACIÓN 4 -->
+  <section class="st" id="s-pdf" hidden>
+    <div class="intro"><span class="label">Estación 4</span><h2>Convierte un documento .docx en PDF</h2>
+      <p>Un archivo <b>.docx</b> es un documento de Word que se puede editar. Un <b>.pdf</b> se ve igual en cualquier ordenador o móvil y es más difícil de cambiar sin querer. Es el formato ideal para entregar trabajos.</p></div>
+    <div class="grid2">
+      <div class="panel">
+        <h3>Parte A · Ordena los pasos</h3>
+        <p style="color:var(--muted)">Toca los pasos en el orden correcto.</p>
+        <div class="steps" id="steps"></div>
+        <div class="row"><button class="btn" id="stepsReset">Borrar orden</button><button class="btn primary" id="stepsCheck">Comprobar</button></div>
+        <div id="fbSteps"></div>
+      </div>
+      <div class="win">
+        <div class="title"><span>Guardar como</span><span class="wb"><span>✕</span></span></div>
+        <div class="dialog" style="border:none;margin:0">
+          <div class="tip">Parte B · Guarda <b>trabajo_volcanes.docx</b> como <b>PDF</b> en la carpeta <b>OneDrive</b>.</div>
+          <label for="gcLoc">Guardar en<select id="gcLoc"><option>Este equipo › Documentos</option><option>Este equipo › Descargas</option><option>Este equipo › Escritorio</option><option>OneDrive</option></select></label>
+          <label for="gcName">Nombre de archivo<input id="gcName" value="trabajo_volcanes"></label>
+          <label for="gcType">Tipo<select id="gcType"><option value="docx">Documento de Word (*.docx)</option><option value="txt">Texto sin formato (*.txt)</option><option value="pdf">PDF (*.pdf)</option><option value="odt">Texto de OpenDocument (*.odt)</option></select></label>
+          <div class="row"><button class="btn primary" id="gcSave">Guardar</button><button class="btn" id="gcCancel">Cancelar</button></div>
+          <div id="fbGc"></div>
+        </div>
+      </div>
+    </div>
+    <div class="panel">
+      <h3>Parte C · Otras formas de conseguir un PDF</h3>
+      <div class="opts" id="q4"></div>
+      <div id="fbQ4"></div>
+    </div>
+  </section>
+
+
+  <section class="st" id="s-videos" hidden>
+    <div class="intro"><span class="label">Estación 5 · Vídeos y juegos</span>
+      <h2>Mira, piensa y juega</h2>
+      <p>Abre cada vídeo o juego (se abre en una pestaña nueva), míralo con tu profe y responde en tu cuaderno a la pregunta. Marca la casilla al terminar: cuenta para tu informe.</p></div>
+    <div class="vids" id="vids"></div>
+  </section>
+
+  <!-- ESTACIÓN 5 -->
+  <section class="st" id="s-informe" hidden>
+    <div class="intro"><span class="label">Estación 6</span><h2>Informe de la ITV</h2>
+      <p>Revisa tus resultados. Copia el informe y envíaselo a tu profe por correo o pégalo en la tarea que te indique.</p></div>
+    <div class="report" id="report"></div>
+  </section>
+
+  <footer>Simulación educativa. Las ventanas imitan de forma simplificada un ordenador con Windows; las direcciones de correo son ficticias.</footer>
+</div>
+
+<script>
+const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const norm=s=>s.trim().toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'');
+const keyAct=(el,fn)=>{el.addEventListener('click',fn);el.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();fn(e)}})};
+
+const VIDS=[{"src": "Smile and Learn", "t": "Tecnología 1: vocabulario (ordenador portátil, altavoces, teclado…)", "url": "https://www.youtube.com/watch?v=egTWbikmo4A", "q": "Dibuja el ordenador de clase y escribe el nombre de cinco partes.", "kind": "video"}, {"src": "Smile and Learn", "t": "Tecnología 2: vocabulario (internet, página web, wifi, correo…)", "url": "https://www.youtube.com/watch?v=4iIDYca5hck", "q": "Explica con tus palabras qué es el wifi.", "kind": "video"}, {"src": "La Profe Mery", "t": "Conociendo la barra de tareas en Windows", "url": "https://www.youtube.com/watch?v=5-A8mvhQG7Y", "q": "¿Qué iconos de la barra de tareas usas más?", "kind": "video"}, {"src": "ValeClic", "t": "El explorador de archivos", "url": "https://www.youtube.com/watch?v=cz1zgct2ADw", "q": "¿Para qué sirve el explorador de archivos?", "kind": "video"}, {"src": "Informática Kids", "t": "Aprendiendo a crear carpetas", "url": "https://www.youtube.com/watch?v=RJ3VBzttVH4", "q": "¿Qué carpetas crearías para ordenar tus trabajos?", "kind": "video"}, {"src": "Saber Programas", "t": "Cómo crear carpetas en OneDrive y compartirlas", "url": "https://www.youtube.com/watch?v=AH9shd49T-8", "q": "¿Qué diferencia hay entre compartir con «Puede ver» y con «Puede editar»?", "kind": "video"}, {"src": "WissenSync", "t": "Cómo convertir un documento de Word a PDF", "url": "https://www.youtube.com/watch?v=0-Qg3DFtYw8", "q": "¿Qué pasos sigue el vídeo? ¿Coinciden con los de la estación 4?", "kind": "video"}, {"src": "Lumio · clase en directo", "t": "Entra en la clase de Lumio (ID 835883)", "url": "https://www.lumioclass.com/link/835883", "q": "Úsalo cuando tu profe abra la clase en directo en la pizarra.", "kind": "clase"}];
+const seenV={};
+(function(){const PLAY='<svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z" fill="currentColor"/></svg>';
+ const lab={video:'Vídeo',game:'Juego',lumio:'Lumio',tarea:'⭐ Tarea obligatoria con evaluación',clase:'Clase Lumio'},btn={video:PLAY+' Ver vídeo',game:'🎮 Jugar',lumio:'📒 Abrir en Lumio',tarea:'📒 Abrir la tarea',clase:'🏫 Entrar en la clase'},ckl={game:'He jugado',tarea:'He hecho la tarea y la evaluación',clase:'He entrado en la clase'};
+ document.querySelector('#vids').innerHTML=VIDS.map((v,i)=>`<div class="vid ${v.kind==='tarea'?'tarea':''}" id="v-${i}"><span class="src">${v.src}</span><span class="kindtag">${lab[v.kind]}</span><h3>${v.t}</h3><a class="go" href="${v.url}" target="_blank" rel="noopener">${btn[v.kind]}</a><p class="q"><b>Piensa:</b> ${v.q}</p><label class="ck" for="ck-${i}"><input type="checkbox" id="ck-${i}">${ckl[v.kind]||'Lo he visto'}</label></div>`).join('');
+ VIDS.forEach((v,i)=>document.querySelector('#ck-'+i).addEventListener('change',e=>{seenV[i]=e.target.checked;document.querySelector('#v-'+i).classList.toggle('seen',e.target.checked);if(typeof onVidChange==='function')onVidChange()}));})();
+function vidRow(label){const L=VIDS.map((v,i)=>[v,i]).filter(x=>x[0].kind!=='clase');const n=L.filter(x=>seenV[x[1]]).length;return {name:label,ok:n,max:L.length,done:n===L.length,fails:L.filter(x=>!seenV[x[1]]).map(([v])=>(v.kind==='tarea'?'Tarea Lumio sin hacer: ':'Sin marcar: ')+v.t)}}
+
+function onVidChange(){Object.assign(R.videos,vidRow('Vídeos y juegos'));refresh()}
+/* ---------- Resultados ---------- */
+const R={
+  barra:{name:'Barra de tareas',ok:0,max:10,done:false,fails:[]},
+  explorador:{name:'Explorador de archivos',ok:0,max:4,done:false,fails:[]},
+  onedrive:{name:'OneDrive',ok:0,max:6,done:false,fails:[]},
+  pdf:{name:'De Word a PDF',ok:0,max:3,done:false,fails:[]},
+  videos:{name:'Vídeos y juegos',ok:0,max:0,done:false,fails:[]}
+};
+Object.assign(R.videos,vidRow('Vídeos y juegos'));
+function refresh(){
+  let ok=0,max=0;Object.values(R).forEach(r=>{ok+=r.ok;max+=r.max});
+  $('#tot').textContent=`${ok} / ${max} pruebas`;
+  Object.entries(R).forEach(([k,r])=>{const n=$('#n-'+k);n.classList.toggle('done',r.done);n.textContent=r.done?'✓':n.dataset.num||(n.dataset.num=n.textContent)});
+  $$('#tabs .n').forEach(n=>{if(!n.dataset.num&&n.textContent!=='✓')n.dataset.num=n.textContent});
+  renderReport();
+}
+// Ficha (recordada en este navegador)
+['alNombre','alCurso'].forEach(id=>{
+  const el=$('#'+id);try{el.value=localStorage.getItem('itv-'+id)||''}catch(e){}
+  el.addEventListener('input',()=>{try{localStorage.setItem('itv-'+id,el.value)}catch(e){};renderReport()});
+});
+
+/* ---------- ESTACIÓN 1 ---------- */
+const TB={
+ inicio:['Botón de Inicio','Abre el menú con todas las aplicaciones, la configuración y el botón para apagar o reiniciar.'],
+ buscar:['Barra de búsqueda','Escribe el nombre de un programa, archivo o ajuste y el ordenador lo encuentra.'],
+ vista:['Vista de tareas','Muestra todas las ventanas abiertas para cambiar de una a otra.'],
+ explorador:['Explorador de archivos','La carpeta amarilla: aquí ves y ordenas tus carpetas y archivos.'],
+ navegador:['Navegador web','Programa para entrar en páginas de internet.'],
+ word:['Procesador de textos (Word)','Programa para escribir documentos. Sus archivos terminan en .docx.'],
+ ocultos:['Mostrar iconos ocultos','La flechita guarda iconos que no caben, como la nube de OneDrive.'],
+ wifi:['Wifi (red)','Muestra si estás conectado a internet. Púlsalo para elegir una red.'],
+ volumen:['Volumen','Sube, baja o silencia el sonido.'],
+ bateria:['Batería','Indica cuánta carga queda en un portátil. Si está baja, conecta el cargador.'],
+ reloj:['Fecha y hora','Muestra la hora y la fecha. Al pulsar se abre el calendario.'],
+ notif:['Notificaciones','Avisos del sistema y de las aplicaciones.']
+};
+const orders1=[['volumen','¿Dónde subes el VOLUMEN?'],['wifi','¿Qué icono muestra si tienes WIFI?'],['inicio','Pulsa el botón de INICIO.'],['buscar','Quieres encontrar la calculadora escribiendo su nombre. ¿Dónde?'],
+ ['bateria','El portátil se va a apagar. ¿Qué icono te avisa de la BATERÍA?'],['explorador','Abre el EXPLORADOR DE ARCHIVOS.'],['reloj','¿Dónde miras la FECHA de hoy?'],['ocultos','¿Dónde encuentras los ICONOS OCULTOS, como la nube?'],
+ ['navegador','Abre el NAVEGADOR para entrar en internet.'],['word','Abre el programa para ESCRIBIR UN DOCUMENTO.']].sort(()=>Math.random()-.5);
+let mode1='explore',o1=0,res1=[],lock1=false;const seen1=new Set();
+function p1(){
+  $$('#taskbar .tb').forEach(t=>t.classList.remove('good','nope','lit'));
+  if(mode1==='explore'){
+    $('#p1').innerHTML=`<span class="label">Modo exploración · ${seen1.size} de ${Object.keys(TB).length}</span><h3>Pulsa los iconos de la barra</h3>
+     <div id="tbInfo" class="tip">Empieza por la izquierda. ¿Para qué servirá el botón de los cuatro cuadrados?</div>
+     <button class="btn primary" id="go1">Empezar la prueba (10 preguntas)</button>`;
+    $('#go1').onclick=()=>{mode1='test';o1=0;res1=[];R.barra.ok=0;R.barra.fails=[];R.barra.done=false;p1();refresh()};return;
+  }
+  const bars=orders1.map((_,i)=>`<i class="${res1[i]===true?'ok':res1[i]===false?'ko':i===o1?'now':''}"></i>`).join('');
+  if(o1>=orders1.length){
+    R.barra.done=true;refresh();
+    $('#p1').innerHTML=`<div class="bars">${bars}</div><h3>Estación superada: ${R.barra.ok} de 10</h3><div class="tip">Los iconos de la derecha (wifi, volumen, batería y hora) forman el <b>área de notificación</b>.</div>
+     <div class="row"><button class="btn primary" onclick="show('explorador')">Ir a la estación 2</button><button class="btn" id="re1">Repetir</button></div>`;
+    $('#re1').onclick=()=>{mode1='explore';p1()};return;
+  }
+  lock1=false;
+  $('#p1').innerHTML=`<div class="bars">${bars}</div><span class="label">Pregunta ${o1+1} de 10</span><p class="prompt">${orders1[o1][1]}</p><div id="fb1"></div>`;
+}
+$$('#taskbar .tb').forEach(t=>keyAct(t,()=>{
+  const k=t.dataset.k;
+  if(mode1==='explore'){seen1.add(k);$$('#taskbar .tb').forEach(x=>x.classList.remove('lit'));t.classList.add('lit');
+    $('#p1 .label').textContent=`Modo exploración · ${seen1.size} de ${Object.keys(TB).length}`;
+    $('#tbInfo').innerHTML=`<b>${TB[k][0]}.</b> ${TB[k][1]}`;return}
+  if(lock1||o1>=orders1.length)return;lock1=true;
+  const want=orders1[o1][0],ok=k===want;res1[o1]=ok;
+  if(ok)R.barra.ok++;else R.barra.fails.push(`Confundió «${TB[want][0]}» con «${TB[k][0]}»`);
+  t.classList.add(ok?'good':'nope');if(!ok)$(`#taskbar .tb[data-k="${want}"]`).classList.add('good');
+  $('#fb1').innerHTML=`<div class="feedback ${ok?'right':'wrong'}"><strong>${ok?'¡Correcto!':'Era el icono marcado en verde.'}</strong><span>${TB[want][0]}: ${TB[want][1]}</span></div><button class="btn primary" id="nx1" style="margin-top:8px">Siguiente →</button>`;
+  $('#nx1').onclick=()=>{o1++;p1()};refresh();
+}));
+
+/* ---------- ESTACIÓN 2 ---------- */
+const FOLDER='<svg viewBox="0 0 24 24"><path d="M2 5h8l2 2h10v12H2z" fill="#f4c542"/><path d="M2 9h20v10H2z" fill="#e7b53a"/></svg>';
+const fileIco=n=>{const ext=n.split('.').pop();const c={docx:'#2b5fb3',jpg:'#2a9d6b',pdf:'#c4382d',txt:'#777'}[ext]||'#777';
+  return `<svg viewBox="0 0 24 24"><path d="M5 2h10l5 5v15H5z" fill="var(--paper)" stroke="${c}" stroke-width="1.5"/><rect x="4" y="12" width="13" height="7" rx="1" fill="${c}"/><text x="10.5" y="17.6" text-anchor="middle" font-size="4.6" fill="#fff" font-family="Arial" font-weight="700">${ext.toUpperCase()}</text></svg>`};
+const SIDE_ICO={'Escritorio':'<svg viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="13" rx="1.5" fill="#3a7bd5"/><path d="M8 21h8M12 17v4" stroke="#888" stroke-width="2"/></svg>','Documentos':'<svg viewBox="0 0 24 24"><path d="M5 2h10l5 5v15H5z" fill="#9ab"/></svg>','Descargas':'<svg viewBox="0 0 24 24"><path d="M12 3v12M6 10l6 6 6-6M4 20h16" stroke="#2a9d6b" stroke-width="2.4" fill="none"/></svg>','Imágenes':'<svg viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="2" fill="#5bb0e6"/><path d="M2 17l6-6 5 5 3-3 6 6" fill="#2a7a2a"/></svg>','OneDrive':'<svg viewBox="0 0 24 24"><path d="M7 18a5 5 0 0 1 .5-10A6 6 0 0 1 19 10a4 4 0 0 1-1 8z" fill="#3a8be0"/></svg>'};
+let fs,cwd,selN,clip,renaming;
+function initFS(){
+  fs={name:'Este equipo',kids:[
+    {name:'Escritorio',kids:[]},{name:'Documentos',kids:[{name:'Lengua',kids:[]}]},
+    {name:'Descargas',kids:[{name:'trabajo_volcanes.docx'},{name:'foto_excursion.jpg'},{name:'juego_gratis.exe'}]},
+    {name:'Imágenes',kids:[]},{name:'OneDrive',kids:[]}]};
+  cwd=[fs.kids[1]];selN=null;clip=null;renaming=null;
+}
+const cur=()=>cwd[cwd.length-1];
+const isDir=n=>!!n.kids;
+const find=(dir,name)=>dir&&dir.kids&&dir.kids.find(k=>norm(k.name)===norm(name));
+function render2(){
+  const here=cur();
+  $('#side').innerHTML=fs.kids.map((k,i)=>`<button data-i="${i}" class="${cwd[0]===k?'on':''}">${SIDE_ICO[k.name]||FOLDER}<span>${k.name}</span></button>`).join('');
+  $$('#side button').forEach(b=>b.onclick=()=>{cwd=[fs.kids[+b.dataset.i]];selN=null;renaming=null;render2()});
+  $('#crumbs').innerHTML=`<button data-up="1" aria-label="Subir">↑</button><span>Este equipo</span>`+cwd.map((d,i)=>` › <button data-c="${i}">${esc(d.name)}</button>`).join('');
+  $$('#crumbs [data-c]').forEach(b=>b.onclick=()=>{cwd=cwd.slice(0,+b.dataset.c+1);selN=null;renaming=null;render2()});
+  $('#crumbs [data-up]').onclick=()=>{if(cwd.length>1){cwd.pop();selN=null;renaming=null;render2()}};
+  const items=here.kids.slice().sort((a,b)=>(isDir(b)-isDir(a))||a.name.localeCompare(b.name));
+  $('#items').innerHTML=items.length?items.map(k=>{
+    const idx=here.kids.indexOf(k);
+    if(renaming===k)return `<div class="item sel">${isDir(k)?FOLDER:fileIco(k.name)}<form id="renForm"><input id="renInput" value="${esc(k.name)}" aria-label="Nuevo nombre"></form></div>`;
+    return `<button class="item ${selN===k?'sel':''} ${clip&&clip.node===k&&clip.mode==='cut'?'cut':''}" data-i="${idx}">${isDir(k)?FOLDER:fileIco(k.name)}<span>${esc(k.name)}</span></button>`}).join(''):'<div class="empty">Esta carpeta está vacía.</div>';
+  $$('#items button.item').forEach(b=>{
+    const node=here.kids[+b.dataset.i];
+    b.onclick=()=>{selN=node;render2()};
+    b.ondblclick=()=>openN(node);
+  });
+  const f=$('#renForm');if(f){const inp=$('#renInput');inp.focus();inp.select();
+    f.onsubmit=e=>{e.preventDefault();finishRename(inp.value)};inp.onblur=()=>finishRename(inp.value)}
+  const R2=$('#ribbon');
+  R2.querySelector('[data-a=abrir]').disabled=!(selN&&isDir(selN));
+  ['renombrar','cortar','copiar','eliminar'].forEach(a=>R2.querySelector(`[data-a=${a}]`).disabled=!selN);
+  R2.querySelector('[data-a=pegar]').disabled=!clip;
+  $('#status').textContent=`${here.kids.length} elementos${selN?' · 1 seleccionado: '+selN.name:''}${clip?' · En el portapapeles: '+clip.node.name+(clip.mode==='cut'?' (cortado)':' (copiado)'):''}`;
+  checkTasks();
+}
+function openN(n){if(isDir(n)){cwd.push(n);selN=null;renaming=null;render2()}else{$('#status').textContent=`Para abrir «${n.name}» haría falta su programa. Aquí solo ordenamos.`}}
+function finishRename(v){
+  if(!renaming)return;const n=renaming;renaming=null;v=v.trim();
+  if(v&&!cur().kids.some(k=>k!==n&&norm(k.name)===norm(v)))n.name=v;
+  selN=n;render2();
+}
+function uniq(dir,base){let n=base,i=2;while(find(dir,n))n=`${base} (${i++})`;return n}
+const clone=n=>isDir(n)?{name:n.name,kids:n.kids.map(clone)}:{name:n.name};
+const contains=(a,b)=>a===b||(a.kids||[]).some(k=>contains(k,b));
+$$('#ribbon button').forEach(b=>b.onclick=()=>{
+  const a=b.dataset.a,here=cur();
+  if(a==='nueva'){const n={name:uniq(here,'Nueva carpeta'),kids:[]};here.kids.push(n);selN=n;renaming=n}
+  if(a==='abrir'&&selN)return openN(selN);
+  if(a==='renombrar'&&selN)renaming=selN;
+  if(a==='cortar'&&selN)clip={node:selN,mode:'cut',from:here};
+  if(a==='copiar'&&selN)clip={node:selN,mode:'copy',from:here};
+  if(a==='pegar'&&clip){
+    if(isDir(clip.node)&&cwd.some(d=>contains(clip.node,d))){$('#status').textContent='No puedes pegar una carpeta dentro de sí misma.';return}
+    if(clip.mode==='cut'){if(clip.from!==here){if(find(here,clip.node.name)){$('#status').textContent='Ya hay un elemento con ese nombre aquí.';return}
+      clip.from.kids.splice(clip.from.kids.indexOf(clip.node),1);here.kids.push(clip.node)}selN=clip.node;clip=null}
+    else{const c=clone(clip.node);c.name=find(here,c.name)?uniq(here,c.name.replace(/(\.\w+)$/,' - copia$1')):c.name;here.kids.push(c);selN=c}
+  }
+  if(a==='eliminar'&&selN){here.kids.splice(here.kids.indexOf(selN),1);if(clip&&clip.node===selN)clip=null;selN=null}
+  render2();
+});
+const T2=[
+ ['Crea en <b>Documentos</b> una carpeta llamada <b>Ciencias</b>.',()=>!!find(fs.kids[1],'Ciencias')],
+ ['Dentro de <b>Ciencias</b>, crea otra carpeta llamada <b>Volcanes</b>.',()=>!!find(find(fs.kids[1],'Ciencias'),'Volcanes')],
+ ['<b>Mueve</b> (cortar y pegar) <b>trabajo_volcanes.docx</b> desde Descargas a Documentos › Ciencias › Volcanes.',()=>!!find(find(find(fs.kids[1],'Ciencias'),'Volcanes'),'trabajo_volcanes.docx')&&!find(fs.kids[2],'trabajo_volcanes.docx')],
+ ['Crea en <b>Imágenes</b> una carpeta <b>Excursión</b> y <b>copia</b> dentro foto_excursion.jpg (debe quedarse también en Descargas).',()=>!!find(find(fs.kids[3],'Excursion'),'foto_excursion.jpg')&&!!find(fs.kids[2],'foto_excursion.jpg')]
+];
+const got2=new Set();
+function checkTasks(){
+  T2.forEach((t,i)=>{if(!got2.has(i)&&t[1]())got2.add(i)});
+  R.explorador.ok=got2.size;R.explorador.done=got2.size===T2.length;
+  R.explorador.fails=T2.map((t,i)=>got2.has(i)?null:'Pendiente: '+t[0].replace(/<[^>]+>/g,'')).filter(Boolean);
+  $('#tasks2').innerHTML=T2.map((t,i)=>`<li class="${got2.has(i)?'done':''}"><span class="ck"></span><span>${t[0]}</span></li>`).join('')+
+   (R.explorador.done?`<li class="done" style="display:block"><b>¡Estación superada!</b> <button class="btn primary" style="margin-left:6px" onclick="show('onedrive')">Ir a la estación 3</button></li>`:'');
+  refresh();
+}
+$('#reset2').onclick=()=>{initFS();render2()};
+
+/* ---------- ESTACIÓN 3 ---------- */
+const SY=[
+ {svg:'<svg viewBox="0 0 34 34"><path d="M10 25a6 6 0 0 1 .6-12A8 8 0 0 1 26 15a5 5 0 0 1-1 10z" fill="none" stroke="#3a8be0" stroke-width="2.4"/></svg>',a:'nube'},
+ {svg:'<svg viewBox="0 0 34 34"><circle cx="17" cy="17" r="12" fill="none" stroke="#17834a" stroke-width="2.4"/><path d="M11 17l4 4 8-8" fill="none" stroke="#17834a" stroke-width="2.6"/></svg>',a:'local'},
+ {svg:'<svg viewBox="0 0 34 34"><path d="M9 14a9 9 0 0 1 16-3M25 20a9 9 0 0 1-16 3" fill="none" stroke="#3a8be0" stroke-width="2.6"/><path d="M25 6v6h-6M9 28v-6h6" fill="none" stroke="#3a8be0" stroke-width="2.6"/></svg>',a:'sync'},
+ {svg:'<svg viewBox="0 0 34 34"><circle cx="17" cy="17" r="12" fill="#c2372b"/><path d="M12 12l10 10M22 12l-10 10" stroke="#fff" stroke-width="3"/></svg>',a:'error'}
+];
+const SYO=[['','Elige…'],['nube','Solo en la nube: necesita internet para abrirse'],['local','Guardado también en este PC'],['sync','Se está sincronizando (subiendo o bajando)'],['error','Hay un problema y no se ha podido guardar']];
+$('#sync').innerHTML=SY.map((s,i)=>`<div class="sync" id="sy${i}">${s.svg}<select aria-label="Significado del icono ${i+1}" id="sel${i}">${SYO.map(o=>`<option value="${o[0]}">${o[1]}</option>`).join('')}</select></div>`).join('');
+let syncDone=false;
+$('#checkSync').onclick=()=>{
+  if(syncDone)return;
+  if(SY.some((_,i)=>!$('#sel'+i).value)){$('#syncRes').textContent='Elige un significado para los cuatro iconos.';return}
+  syncDone=true;let ok=0;
+  SY.forEach((s,i)=>{const r=$('#sel'+i).value===s.a;if(r)ok++;else R.onedrive.fails.push('Icono de OneDrive mal interpretado: '+SYO.find(o=>o[0]===s.a)[1]);
+    $('#sy'+i).classList.add(r?'r':'w');$('#sel'+i).value=s.a;$('#sel'+i).disabled=true});
+  R.onedrive.ok+=ok;$('#syncRes').textContent=`${ok} de 4 correctos. Ahora verás la respuesta correcta en cada uno.`;$('#checkSync').disabled=true;od3();refresh();
+};
+const OD=[{n:'Ciencias',t:'dir',m:'Carpeta'},{n:'presentacion_rios.pptx',m:'Hace 2 días'},{n:'trabajo_volcanes.docx',m:'Ayer'},{n:'trabajo_volcanes.pdf',m:'Hoy'},{n:'foto_excursion.jpg',m:'3 nov'}];
+let odSel=null,shareDone=false,shareTries=0;
+function odRender(){
+  $('#odlist').innerHTML=OD.map((f,i)=>`<div class="odrow ${odSel===i?'sel':''}" data-i="${i}" tabindex="0" role="button"><span class="cb"></span>${f.t==='dir'?FOLDER:fileIco(f.n)}<span style="overflow-wrap:anywhere">${f.n}</span><span class="meta">${f.m}</span></div>`).join('');
+  $$('.odrow').forEach(r=>keyAct(r,()=>{if(shareDone)return;odSel=odSel===+r.dataset.i?null:+r.dataset.i;$('#dlg').innerHTML='';odRender()}));
+  $('#odShare').disabled=odSel===null||shareDone;
+}
+$('#odShare').onclick=()=>{
+  const f=OD[odSel];
+  $('#dlg').innerHTML=`<form class="dialog" id="shForm"><h3 style="font-size:1.1rem">Compartir «${f.n}»</h3>
+   <label for="shTo">Para (nombre o correo)<input id="shTo" placeholder="correo@..." autocomplete="off"></label>
+   <label for="shPerm">Permiso<select id="shPerm"><option value="edit">Puede editar</option><option value="view">Puede ver</option></select></label>
+   <label for="shMsg">Mensaje (opcional)<input id="shMsg" placeholder="Hola, te comparto mi trabajo"></label>
+   <div class="row"><button class="btn primary" type="submit">Enviar</button><button class="btn" type="button" id="shCancel">Cancelar</button></div></form>`;
+  $('#shCancel').onclick=()=>{$('#dlg').innerHTML=''};
+  $('#shForm').onsubmit=e=>{e.preventDefault();
+    const errs=[];
+    if(f.n!=='trabajo_volcanes.pdf')errs.push(`Has elegido «${f.n}». Tenías que compartir trabajo_volcanes.pdf.`);
+    if(norm($('#shTo').value)!=='profe.ana@cole-ejemplo.es')errs.push('Revisa la dirección de correo: debe ser profe.ana@cole-ejemplo.es, letra por letra.');
+    if($('#shPerm').value!=='view')errs.push('Con «Puede editar» tu profe podría cambiar tu trabajo. Elige «Puede ver».');
+    shareTries++;
+    if(errs.length){if(shareTries===1)R.onedrive.fails.push('Compartir (1.er intento): '+errs.join(' '));
+      $('#fb3').innerHTML=`<div class="feedback wrong"><strong>Todavía no.</strong>${errs.map(x=>`<span>${x}</span>`).join('')}</div>`;return}
+    shareDone=true;R.onedrive.ok+=shareTries===1?2:1;if(shareTries>1)R.onedrive.fails.push(`Compartió bien al intento ${shareTries}`);
+    $('#dlg').innerHTML='';odSel=null;odRender();
+    $('#fb3').innerHTML=`<div class="feedback right"><strong>¡Compartido!</strong><span>Tu profe recibirá un aviso con un enlace para ver el PDF. «Puede ver» deja leer; «Puede editar» deja cambiar el archivo.</span><button class="btn primary" style="align-self:flex-start" onclick="show('pdf')">Ir a la estación 4</button></div>`;
+    od3();refresh();
+  };
+};
+function od3(){R.onedrive.done=syncDone&&shareDone}
+
+/* ---------- ESTACIÓN 4 ---------- */
+const STEPS=['Abrir el documento trabajo_volcanes.docx en Word.','Pulsar en el menú «Archivo».','Elegir «Guardar como» (o «Exportar»).','En «Tipo», elegir «PDF (*.pdf)».','Pulsar «Guardar».'];
+const shuf=STEPS.map((s,i)=>i).sort(()=>Math.random()-.5);
+let pick=[],stepsDone=false;
+function rSteps(){
+  $('#steps').innerHTML=shuf.map(i=>{const p=pick.indexOf(i);return `<button class="step ${p>=0?'picked':''}" data-i="${i}"><span class="num">${p>=0?p+1:'·'}</span>${STEPS[i]}</button>`}).join('');
+  $$('#steps .step').forEach(b=>b.onclick=()=>{if(stepsDone)return;const i=+b.dataset.i;if(pick.includes(i))pick=pick.filter(x=>x!==i);else pick.push(i);rSteps()});
+}
+$('#stepsReset').onclick=()=>{if(!stepsDone){pick=[];rSteps()}};
+$('#stepsCheck').onclick=()=>{
+  if(stepsDone)return;
+  if(pick.length<STEPS.length){$('#fbSteps').innerHTML='<div class="feedback wrong"><span>Ordena los cinco pasos antes de comprobar.</span></div>';return}
+  stepsDone=true;const ok=pick.every((v,i)=>v===i);if(ok)R.pdf.ok++;else R.pdf.fails.push('Orden de los pasos para crear un PDF incorrecto');
+  pick=[0,1,2,3,4];rSteps();
+  $('#fbSteps').innerHTML=`<div class="feedback ${ok?'right':'wrong'}"><strong>${ok?'¡Orden perfecto!':'Ese no era el orden. Ahora ves el correcto.'}</strong></div>`;pdfDone();refresh();
+};
+let gcDone=false,gcTries=0;
+$('#gcSave').onclick=()=>{
+  if(gcDone)return;gcTries++;
+  const loc=$('#gcLoc').value,type=$('#gcType').value,name=$('#gcName').value.trim()||'sin_nombre';const errs=[];
+  if(type!=='pdf')errs.push(`Así se guardaría como .${type}. En «Tipo» elige PDF (*.pdf).`);
+  if(loc!=='OneDrive')errs.push(`Lo guardarías en «${loc}». Elige OneDrive para tenerlo en la nube.`);
+  if(errs.length){if(gcTries===1)R.pdf.fails.push('Guardar como (1.er intento): '+errs.join(' '));$('#fbGc').innerHTML=`<div class="feedback wrong"><strong>Revisa:</strong>${errs.map(x=>`<span>${x}</span>`).join('')}</div>`;return}
+  gcDone=true;if(gcTries===1)R.pdf.ok++;
+  $('#fbGc').innerHTML=`<div class="filecard">${fileIco('x.pdf')}<div><b>${esc(name)}.pdf</b><br><span style="font-size:.85rem">Guardado en OneDrive${gcTries>1?' (al intento '+gcTries+')':''}</span></div></div>`;pdfDone();refresh();
+};
+$('#gcCancel').onclick=()=>{$('#fbGc').innerHTML='<div class="tip">Cancelado. Vuelve a intentarlo.</div>'};
+const Q4={q:'Estás en Word en el navegador (Word en línea). ¿Cómo consigues un PDF?',o:['Archivo › Descargar como › Descargar como PDF','Cambiar a mano la terminación .docx por .pdf en el nombre','Hacer una captura de pantalla'],a:0,why:'Cambiar la terminación del nombre no convierte el archivo: solo lo estropea. Otra opción en el PC es Imprimir y elegir la impresora «Microsoft Print to PDF».'};
+let q4Done=false;
+$('#q4').innerHTML=`<p style="font-weight:700">${Q4.q}</p>`+Q4.o.map((o,j)=>`<button data-o="${j}">${o}</button>`).join('');
+$$('#q4 button').forEach(b=>b.onclick=()=>{if(q4Done)return;q4Done=true;const ok=+b.dataset.o===Q4.a;
+  $$('#q4 button').forEach((x,j)=>{x.disabled=true;if(j===Q4.a)x.classList.add('r')});if(!ok){b.classList.add('w');R.pdf.fails.push('Pensó que '+Q4.o[+b.dataset.o].toLowerCase()+' crea un PDF')}else R.pdf.ok++;
+  $('#fbQ4').innerHTML=`<div class="feedback ${ok?'right':'wrong'}"><strong>${ok?'¡Correcto!':'¡Ojo!'}</strong><span>${Q4.why}</span></div>`;pdfDone();refresh()});
+function pdfDone(){R.pdf.done=stepsDone&&gcDone&&q4Done;if(R.pdf.done&&!$('#goInf')){$('#fbQ4').insertAdjacentHTML('beforeend','<button class="btn primary" id="goInf" style="margin-top:10px" onclick="show(\'informe\')">Ver mi informe ITV</button>')}}
+
+/* ---------- ESTACIÓN 5 ---------- */
+function reportText(){
+  const nom=$('#alNombre').value.trim()||'(sin nombre)',cur_=$('#alCurso').value.trim()||'(sin curso)';
+  let ok=0,max=0;Object.entries(R).forEach(([k,r])=>{if(k!=='videos'){ok+=r.ok;max+=r.max}});
+  const allDone=Object.entries(R).every(([k,r])=>k==='videos'||r.done),apto=allDone&&ok/max>=.7;
+  const d=new Date();const fecha=d.toLocaleDateString('es-ES')+' '+d.toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'});
+  let t=`INFORME ITV DE MI PC\nAlumno/a: ${nom}\nCurso: ${cur_}\nFecha: ${fecha}\nResultado: ${allDone?(apto?'APTO':'NO APTO'):'SIN TERMINAR'} (${ok}/${max})\n\n`;
+  Object.values(R).forEach(r=>{t+=`- ${r.name}: ${r.ok}/${r.max}${r.done?'':' (sin terminar)'}\n`;r.fails.forEach(f=>t+=`    · ${f}\n`)});
+  return {t,ok,max,allDone,apto,nom,cur_};
+}
+function renderReport(){
+  const x=reportText();
+  const st=x.allDone?(x.apto?'<span class="pill ok">APTO</span>':'<span class="pill ko">NO APTO</span>'):'<span class="pill pe">SIN TERMINAR</span>';
+  $('#report').innerHTML=`<div class="rhead">
+    <svg width="74" height="74" viewBox="0 0 82 82" aria-hidden="true"><circle cx="41" cy="41" r="38" fill="${x.allDone?(x.apto?'var(--ok)':'var(--bad)'):'var(--line)'}"/><text x="41" y="47" text-anchor="middle" font-size="${x.allDone?16:12}" font-weight="700" fill="#fff" font-family="Chakra Petch,Arial">${x.allDone?(x.apto?'APTO':'NO APTO'):'EN CURSO'}</text></svg>
+    <div class="who"><h3 style="font-size:1.4rem">${esc(x.nom)}</h3><p style="color:var(--muted)">${esc(x.cur_)} · ${x.ok} de ${x.max} pruebas superadas ${st}</p></div></div>
+   <div style="overflow-x:auto"><table class="rtable"><thead><tr><th>Estación</th><th>Aciertos</th><th>Estado</th><th>A repasar</th></tr></thead><tbody>
+   ${Object.entries(R).map(([k,r])=>`<tr><td><button class="btn" style="padding:4px 8px;font-size:.85rem" onclick="show('${k}')">${r.name}</button></td><td>${r.ok} / ${r.max}</td><td>${r.done?'<span class="pill ok">Hecha</span>':'<span class="pill pe">Pendiente</span>'}</td><td style="font-size:.85rem;color:var(--muted)">${r.fails.length?r.fails.map(esc).join('<br>'):'—'}</td></tr>`).join('')}
+   </tbody></table></div>
+   ${!$('#alNombre').value.trim()?'<div class="feedback wrong"><span>Escribe tu nombre y curso arriba, en la ficha, antes de entregar.</span></div>':''}
+   <h3 style="font-size:1.1rem">Informe para entregar</h3>
+   <div class="copybox" id="copybox">${esc(x.t)}</div>
+   <div class="row"><button class="btn primary" id="copyBtn">Copiar informe</button><span id="copyMsg" style="font-size:.9rem;color:var(--muted)"></span></div>
+   <div class="tip">Pega el informe en un correo a tu profe. Pon como <b>asunto</b>: «ITV de mi PC – ${esc(x.nom)}». ¡Así practicas lo que aprendiste con el correo electrónico!</div>`;
+  $('#copyBtn').onclick=()=>{const txt=reportText().t;
+    const sel=()=>{const r=document.createRange();r.selectNodeContents($('#copybox'));const s=getSelection();s.removeAllRanges();s.addRange(r);$('#copyMsg').textContent='Texto seleccionado: pulsa Ctrl + C para copiarlo.'};
+    try{navigator.clipboard.writeText(txt).then(()=>$('#copyMsg').textContent='¡Copiado! Ahora pégalo con Ctrl + V.',sel)}catch(e){sel()}};
+}
+
+/* ---------- Pestañas ---------- */
+const ids=['barra','explorador','onedrive','pdf','videos','informe'];
+function show(t){
+  if(!ids.includes(t))t='barra';
+  ids.forEach(x=>$('#s-'+x).hidden=x!==t);
+  document.querySelector('.relato').hidden=t!==ids[0];
+  $$('#tabs button').forEach(b=>b.setAttribute('aria-selected',b.dataset.t===t));
+  if(location.hash!=='#'+t)history.replaceState(null,'','#'+t);
+  if(t==='informe')renderReport();
+  scrollTo({top:0});
+}
+$$('#tabs button').forEach(b=>b.onclick=()=>show(b.dataset.t));
+addEventListener('hashchange',()=>show(location.hash.slice(1)));
+$$('#tabs .n').forEach(n=>n.dataset.num=n.textContent);
+initFS();render2();p1();rSteps();odRender();refresh();show(location.hash.slice(1));
+
+
+/* ---------- Valoración de indicadores y llave ---------- */
+const VAL_CFG={"pre": "ITV", "i5": [["1.2.1", [3], "Guarda el PDF del dossier con un nombre reconocible (país_nombre) en la carpeta de TIAC y lo vuelve a localizar cuando se le pide.", "CE3"], ["1.2.2", [1], "Durante la ITV crea, mueve y elimina carpetas y archivos en el ordenador sin perder información y vacía la papelera de reciclaje.", "CE3"], ["2.2.1", [2], "Envía el PDF del dossier como adjunto del correo o, en la ruta avanzada, como enlace de OneDrive, y comprueba que se abre.", "CCL5 · CE3"], ["3.1.1", [3], "Da formato al dossier de su país en Word (título, viñetas, imagen y márgenes) y lo exporta a PDF comprobando que se ve completo y legible.", "CD2 · CCEC4"], ["4.3.1", [0], "Completa la ITV de su ordenador: comprueba sonido, wifi y brillo, cambia el fondo y ordena iconos y escritorio sin alterar la configuración del centro.", "CD4 · CD5"], ["5.2.2", [0], "Ante un fallo en la ITV (sin sonido, sin wifi, aplicación bloqueada) sigue la pauta de solución (comprobar, reiniciar, pedir ayuda) y explica qué ha probado.", "CC2"]], "i6": [["1.2.1", [2], "Guarda sus trabajos en la carpeta de OneDrive indicada (TIAC · curso · SA o subcarpeta) con un nombre claro.", "CE3"], ["1.2.2", [3], "Exporta su trabajo al formato pedido (Word a PDF, Audacity a MP3) y comprueba que se abre.", "CE3"], ["1.2.3", [1], "Organiza el escritorio y crea y nombra carpetas en su ordenador.", "CE3"], ["2.2.1", [2], "Comparte su trabajo por OneDrive o Teams con las personas adecuadas y comprueba que pueden abrirlo.", "CCL5 · CE3"], ["4.3.1", [0], "Ajusta su equipo (brillo, volumen, fondo) y explica cómo cuidar la postura y el tiempo de pantalla.", "CD4"], ["5.2.1", [0], "Resuelve problemas habituales del ordenador (sonido, wifi, pantalla o aplicación) siguiendo una lista de pasos.", "CC2"]], "vid": 4, "exam": null};
+function valRows(){return typeof informeRows==='function'?informeRows():Object.values(R)}
+function valScore(rows,idx){let ok=0,max=0,att=false;idx.forEach(i=>{const r=rows[i];if(!r)return;ok+=r.ok;max+=r.max;if(r.ok>0||r.done)att=true});return att?Math.max(1,Math.round(5*ok/(max||1))):0}
+function valAll(){const rows=valRows();return {rows,s5:VAL_CFG.i5.map(x=>valScore(rows,x[1])),s6:VAL_CFG.i6.map(x=>valScore(rows,x[1]))}}
+function valComplete(rows){return rows.every((r,i)=>i===VAL_CFG.vid||r.done)}
+function valKey(v){const ex=VAL_CFG.exam!=null&&v.rows[VAL_CFG.exam]?v.rows[VAL_CFG.exam].ok:0;const raw=VAL_CFG.pre+'-'+v.s5.join('')+'-'+v.s6.join('')+'-'+ex;let h=0;for(let i=0;i<raw.length;i++)h=(h+raw.charCodeAt(i)*(i+7))%1296;return raw+'-'+h.toString(36).toUpperCase().padStart(2,'0')}
+function valCourse(){const c=(document.querySelector('#alCurso')||{}).value||'';return /6/.test(c)?'6':/5/.test(c)?'5':''}
+function valEsc(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
+function appendVal(){
+  const host=document.querySelector('#informe')||document.querySelector('#report');if(!host)return;
+  const old=host.querySelector('.valora');if(old)old.remove();
+  const v=valAll(),c=valCourse(),done=valComplete(v.rows),key=done?valKey(v):'';
+  const bar=n=>`<span class="vbar">${[1,2,3,4,5].map(i=>`<i class="${i<=n?'on':''}"></i>`).join('')}</span>`;
+  const tab=(k,list,sc)=>`<div><h4>${k}.º de Primaria</h4><table class="rtable"><thead><tr><th>Indicador</th><th>0-5</th></tr></thead><tbody>${list.map((x,i)=>`<tr><td><b>${x[0]}</b> ${valEsc(x[2])} <span style="color:var(--muted)">(${x[3]})</span></td><td><span class="vstar">${sc[i]}</span>${bar(sc[i])}</td></tr>`).join('')}</tbody></table></div>`;
+  const cols=(c!=='6'?tab(5,VAL_CFG.i5,v.s5):'')+(c!=='5'?tab(6,VAL_CFG.i6,v.s6):'');
+  const div=document.createElement('div');div.className='valora';
+  div.innerHTML=`<h3>Valoración de los indicadores de logro</h3><p style="font-size:.88rem;color:var(--muted)">Escala de 0 a 5: 0 = no realizado; 5 = realizado con éxito. Es una estimación automática a partir de las misiones relacionadas; tu profe la revisará.${c?'':' Escribe tu curso en la ficha para ver solo el tuyo.'}</p><div class="cols">${cols}</div>
+   <div class="llave">${done?`<b>🔑 ¡Has conseguido la llave de esta web!</b><code>${key}</code><span style="font-size:.88rem">Ya está guardada: vuelve al rincón Piensa de Rumbo a Europa y envía tus notas.</span><a href="../#piensa" style="align-self:flex-start;font-weight:700;color:var(--accent)">Volver al rincón Piensa · Pasaporte TIC ↗</a>`:`<b>🔒 Llave todavía cerrada</b><span style="font-size:.88rem">Termina todas las misiones${VAL_CFG.exam!=null?' y el examen final':''} (los vídeos no son obligatorios) para conseguir la llave de la siguiente parada.</span>`}</div>`;
+  const cb=host.querySelector('#copybox');
+  if(cb){host.insertBefore(div,cb.previousElementSibling&&cb.previousElementSibling.tagName==='H3'?cb.previousElementSibling:cb);
+    let t=cb.textContent.replace(/\nVALORACIÓN DE INDICADORES[\s\S]*$/,'');
+    t+='\nVALORACIÓN DE INDICADORES (0-5)\n'+(c!=='6'?VAL_CFG.i5.map((x,i)=>`  5.º ${x[0]}: ${v.s5[i]}`).join('\n')+'\n':'')+(c!=='5'?VAL_CFG.i6.map((x,i)=>`  6.º ${x[0]}: ${v.s6[i]}`).join('\n')+'\n':'')+'LLAVE: '+(key||'(sin conseguir)')+'\n';
+    cb.textContent=t;
+    const btn=host.querySelector('#copyBtn'),msg=host.querySelector('#copyMsg');
+    if(btn)btn.onclick=()=>{const sel=()=>{const r=document.createRange();r.selectNodeContents(cb);const s=getSelection();s.removeAllRanges();s.addRange(r);if(msg)msg.textContent='Texto seleccionado: pulsa Ctrl + C para copiarlo.'};try{navigator.clipboard.writeText(cb.textContent).then(()=>{if(msg)msg.textContent='¡Copiado! Pégalo con Ctrl + V.'},sel)}catch(e){sel()}};
+  }else host.appendChild(div);
+}
+(function(){
+  if(typeof renderInforme==='function'){const o=renderInforme;renderInforme=function(){o();appendVal()}}
+  else if(typeof renderReport==='function'){const o=renderReport;renderReport=function(){o();appendVal()}}
+})();
+</script>
+
+<script>
+/* Rumbo a Europa: rellena nombre y curso con los datos de la web y guarda la llave en el rincón Piensa */
+(function(){
+  try{
+    var a=(JSON.parse(localStorage.getItem("rumbo-a-europa-v1")||"{}")||{}).alumno||{};
+    [["alNombre",a.nombre],["alCurso",a.clase]].forEach(function(p){var el=document.getElementById(p[0]);if(el&&p[1]&&!el.value.trim()){el.value=p[1];el.dispatchEvent(new Event("input",{bubbles:true}));el.dispatchEvent(new Event("change",{bubbles:true}));}});
+  }catch(e){}
+  if(typeof valKey==="function"){
+    var orig=valKey;
+    valKey=function(v){var k=orig(v);try{var g=JSON.parse(localStorage.getItem("rumbo-piensa-llaves")||"{}")||{};var done=typeof valComplete==="function"?valComplete(v.rows):true;g[VAL_CFG.pre]={llave:k,completa:!!done,fecha:new Date().toISOString()};localStorage.setItem("rumbo-piensa-llaves",JSON.stringify(g));}catch(e){}return k;};
+  }
+})();
+</script>
+<style id="lectura-css">
+.lectura{margin-top:14px;border:2px solid var(--accent,#c8102e);border-radius:14px;padding:16px;background:var(--paper,#fff);color:var(--ink,#1a1f2e)}
+.lectura h3{margin:0 0 6px;font-size:1.25rem;color:var(--ink,#1a1f2e)}
+.lectura>p{font-size:1.05rem;color:var(--ink,#1a1f2e)}
+.lectura .lq{margin:14px 0 0}
+.lectura .lq p{margin:0 0 8px;font-weight:800;font-size:1.12rem;line-height:1.4;color:var(--ink,#1a1f2e)}
+.lectura .lops{display:grid;gap:8px}
+.lectura .lop{text-align:left;font:inherit;font-size:1.05rem;line-height:1.4;padding:10px 14px;border-radius:10px;border:2px solid var(--line,#bbb);background:var(--bg,#f4f4f4);color:var(--ink,#1a1f2e);cursor:pointer}
+.lectura .lop:hover{border-color:var(--accent,#c8102e)}
+.lectura .lop[aria-pressed="true"]{border-color:var(--accent,#c8102e);box-shadow:0 0 0 3px var(--accent,#c8102e);font-weight:700}
+.lectura .lq.mal .lop[aria-pressed="true"]{border-color:var(--bad,#c8102e);background:var(--bad-bg,#fdeaea);box-shadow:none}
+.lectura .lq.bien .lop[aria-pressed="true"]{border-color:var(--ok,#2f8f5b);background:var(--ok-bg,#e6f4ec);box-shadow:none}
+.lectura .lfb{margin-top:10px;font-weight:800;font-size:1.05rem}
+.lectura .lfb.mal{color:var(--bad,#c8102e)}.lectura .lfb.bien{color:var(--ok,#2f8f5b)}
+.lectura .lbtn{margin-top:12px;font:inherit;font-weight:800;font-size:1.05rem;padding:10px 20px;border-radius:12px;border:0;background:var(--accent,#c8102e);color:var(--accent-ink,#fff);cursor:pointer}
+body.lect-bloq section.mission,body.lect-bloq section.st{display:none!important}
+body.lect-bloq #tabs button:not(:first-child){opacity:.45}
+body.lect-bloq #tabs button:not(:first-child)::after{content:" 🔒"}
+.lect-aviso{border:2px dashed var(--accent,#c8102e);border-radius:12px;padding:12px;margin:12px 0;font-weight:700;text-align:center;color:var(--ink,#1a1f2e)}
+</style>
+<script>
+/* Rumbo a Europa: dos preguntas de comprensión de la lectura. Hasta acertar las dos no se abren las misiones. */
+(function(){
+  var PREG = [["¿Por qué el portátil Pinitop tiene que pasar la ITV?", ["Porque tiene el escritorio desordenado, las grabaciones perdidas y el guion sin pasar a PDF", "Porque se le ha roto la pantalla", "Porque Pini lo quiere vender"]], ["¿Para qué convierten el guion en PDF?", ["Para que se vea igual en cualquier ordenador", "Para que ocupe más espacio", "Para poder borrarlo después"]]], CLAVE = "rumbo-lectura-" + "itv";
+  var abierto = false; try { abierto = sessionStorage.getItem(CLAVE) === "1"; } catch (e) {}
+  var tabs = document.querySelectorAll("#tabs button");
+  var primera = (typeof ids !== "undefined" && ids[0]) || (tabs[0] && tabs[0].dataset.t);
+  var rt = document.querySelector(".relato .rt"), reto = rt && rt.querySelector(".reto");
+  if (!rt || typeof show !== "function") return;
+  var orig = show;
+  show = function (t) { if (!abierto && t !== primera) { t = primera; avisar(); } return orig(t); };
+  function avisar() { var c = document.getElementById("lectura"); if (c) { c.scrollIntoView({ behavior: "smooth", block: "center" }); var f = c.querySelector(".lfb"); f.className = "lfb mal"; f.textContent = "Primero contesta bien las dos preguntas de la lectura."; } }
+  var caja = document.createElement("div"); caja.className = "lectura"; caja.id = "lectura";
+  function mezclar(a) { a = a.slice(); for (var i = a.length - 1; i > 0; i--) { var j = Math.floor(Math.random() * (i + 1)); var x = a[i]; a[i] = a[j]; a[j] = x; } return a; }
+  function pintar() {
+    if (abierto) {
+      caja.innerHTML = '<h3>📖 Comprensión de la lectura</h3><p class="lfb bien">✓ ¡Lectura comprendida! Las misiones están abiertas.</p>';
+      return;
+    }
+    caja.innerHTML = '<h3>📖 Comprensión de la lectura</h3><p style="margin:0">Lee el texto y contesta las dos preguntas. Si aciertas las dos, se abren las misiones.</p>' +
+      PREG.map(function (q, k) {
+        return '<div class="lq" data-k="' + k + '"><p>' + (k + 1) + '. ' + q[0] + '</p><div class="lops">' +
+          mezclar(q[1].map(function (o, i) { return [o, i]; })).map(function (o) { return '<button type="button" class="lop" aria-pressed="false" data-ok="' + (o[1] === 0 ? 1 : 0) + '">' + o[0] + '</button>'; }).join("") + '</div></div>';
+      }).join("") + '<button type="button" class="lbtn">Comprobar</button><p class="lfb" aria-live="polite"></p>';
+  }
+  caja.addEventListener("click", function (e) {
+    var op = e.target.closest(".lop");
+    if (op) { var g = op.closest(".lq"); g.classList.remove("mal", "bien"); g.querySelectorAll(".lop").forEach(function (b) { b.setAttribute("aria-pressed", String(b === op)); }); return; }
+    if (!e.target.closest(".lbtn")) return;
+    var fb = caja.querySelector(".lfb"), grupos = caja.querySelectorAll(".lq"), bien = 0, faltan = 0;
+    grupos.forEach(function (g) {
+      var s = g.querySelector('[aria-pressed="true"]');
+      g.classList.remove("mal", "bien");
+      if (!s) { faltan++; return; }
+      if (s.dataset.ok === "1") { bien++; g.classList.add("bien"); } else g.classList.add("mal");
+    });
+    if (faltan) { fb.className = "lfb mal"; fb.textContent = "Contesta las dos preguntas."; return; }
+    if (bien === PREG.length) {
+      abierto = true; try { sessionStorage.setItem(CLAVE, "1"); } catch (x) {}
+      document.body.classList.remove("lect-bloq");
+      var av = document.getElementById("lect-aviso"); if (av) av.remove();
+      pintar(); orig(primera);
+      var t = document.getElementById("tabs"); if (t) t.scrollIntoView({ behavior: "smooth", block: "start" });
+    } else {
+      fb.className = "lfb mal";
+      fb.textContent = "Has acertado " + bien + " de " + PREG.length + ". Vuelve a leer el texto con calma y prueba otra vez.";
+      setTimeout(function () { var m = fb.textContent; pintar(); var f2 = caja.querySelector(".lfb"); f2.className = "lfb mal"; f2.textContent = m; }, 1800);
+    }
+  });
+  if (reto) rt.insertBefore(caja, reto); else rt.appendChild(caja);
+  pintar();
+  if (!abierto) {
+    document.body.classList.add("lect-bloq");
+    var t = document.getElementById("tabs");
+    if (t) { var av = document.createElement("div"); av.className = "lect-aviso"; av.id = "lect-aviso"; av.textContent = "🔒 Las misiones se abren cuando contestes bien las dos preguntas de la lectura (arriba)."; t.parentNode.insertBefore(av, t.nextSibling); }
+    orig(primera);
+  }
+})();
+</script>
+<script id="solo-curso">
+/* Rumbo a Europa: muestra solo los indicadores del curso del alumno (5.º o 6.º). */
+(function(){
+  function curso(){
+    var c = (document.getElementById("alCurso") || {}).value || "";
+    if (!c) { try { c = ((JSON.parse(localStorage.getItem("rumbo-a-europa-v1") || "{}") || {}).alumno || {}).clase || ""; } catch (e) {} }
+    return /6/.test(c) ? "6" : /5/.test(c) ? "5" : "";
+  }
+  function aplicar(){
+    var c = curso();
+    document.querySelectorAll(".indic .cols > div").forEach(function (d) {
+      var h = d.querySelector("h4"), k = h && /([56])/.exec(h.textContent);
+      d.style.display = c && k && k[1] !== c ? "none" : "";
+    });
+  }
+  aplicar();
+  var cu = document.getElementById("alCurso");
+  if (cu) { cu.addEventListener("input", aplicar); cu.addEventListener("change", aplicar); }
+  setTimeout(aplicar, 500);
+})();
+</script>
+</body></html>
