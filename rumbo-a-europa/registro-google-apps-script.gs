@@ -9,10 +9,16 @@
     e indicador de los cuatro rincones (Crea, Programa, Robótica, Piensa), con la última nota enviada. Las casillas vacías son 0 (no hecho).
   - "Medias por indicador": la media de cada indicador por alumno (se recalcula sola).
 */
+// CLAVE DEL PANEL DEL PROFESOR: cámbiala por una tuya (la pedirá la página "Profe" de la web).
+// Está solo aquí, en el script, así que el alumnado no la puede ver.
+const CLAVE_PROFE = "47001559";
+
 const COLUMNAS = ["Fecha", "Nombre", "Usuario Educacyl", "Clase", "Actividad", "Ciudad / reto", "Estrellas", "Bloques", "Intentos", "Personaje / robot", "Programa", "Nº indicador", "Valoración (0-5)"];
 
 function doPost(e) {
   const libro = SpreadsheetApp.getActiveSpreadsheet();
+  const pedido = JSON.parse(e.postData.contents);
+  if (pedido.accion === "datos") return datosProfe(libro, pedido);
   const hoja = libro.getSheetByName("Resultados") || libro.insertSheet("Resultados");
   if (hoja.getLastRow() === 0) {
     hoja.appendRow(COLUMNAS);
@@ -23,7 +29,7 @@ function doPost(e) {
     hoja.insertColumnAfter(2);
     hoja.getRange(1, 3).setValue("Usuario Educacyl").setFontWeight("bold");
   }
-  const d = JSON.parse(e.postData.contents);
+  const d = pedido;
   const limpiar = (v, max) => String(v == null ? "" : v).slice(0, max);
   const nombre = limpiar(d.nombre, 30), usuario = limpiar(d.usuario, 60), clase = limpiar(d.clase, 12);
   const nota = d.valoracion === "" || d.valoracion == null ? "" : Number(d.valoracion);
@@ -37,6 +43,17 @@ function doPost(e) {
     actualizarValoraciones(libro, nombre, usuario, clase, columna, nota);
   }
   return ContentService.createTextOutput("ok");
+}
+
+// Panel del profesor: devuelve la pestaña "Valoraciones" (solo con la clave correcta).
+function datosProfe(libro, d) {
+  const salida = (o) => ContentService.createTextOutput(JSON.stringify(o)).setMimeType(ContentService.MimeType.JSON);
+  if (CLAVE_PROFE === "cambia-esta-clave") return salida({ ok: false, error: "Primero cambia CLAVE_PROFE en el script de la hoja y crea una nueva versión." });
+  if (String(d.clave || "") !== CLAVE_PROFE) return salida({ ok: false, error: "Clave incorrecta." });
+  const hoja = libro.getSheetByName("Valoraciones");
+  if (!hoja || hoja.getLastRow() < 1) return salida({ ok: true, cab: [], filas: [] });
+  const v = hoja.getDataRange().getValues();
+  return salida({ ok: true, cab: v[0], filas: v.slice(1) });
 }
 
 // Prueba: abre la URL de la aplicación web en el navegador. Si todo está bien verás

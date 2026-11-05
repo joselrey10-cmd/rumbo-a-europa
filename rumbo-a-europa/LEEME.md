@@ -26,6 +26,14 @@ En cada actividad se elige una nota de 0 a 5 por indicador y se pulsa **Enviar n
 indicador a la misma hoja de Google. En Programa y Robótica la nota se pone sola al jugar; en **Mis notas** se
 puede revisar y volver a enviar. El Excel de la portada recoge los cuatro rincones.
 
+## Panel del profesor (pestaña Profe)
+1. En el script de la hoja (`registro-google-apps-script.gs`) cambia `CLAVE_PROFE = "cambia-esta-clave"` por una clave tuya.
+2. Pega el script en Apps Script y crea una **nueva versión** (Gestionar implementaciones → Editar → Nueva versión).
+3. En la web, pestaña **Profe**, escribe la clave. Verás cada grupo (5ºA, 5ºB, 6ºA, 6ºB) con la media de cada
+   rincón por alumno y la media de cada indicador. Pulsa un alumno para ver todas sus actividades, poner o corregir
+   notas y enviarlas: llegan a la hoja como "Nota del profe" y sustituyen a la anterior.
+La clave solo está en el script, así que el alumnado no puede leer las notas de los demás.
+
 ## Pantalla de Robótica
 En el menú de arriba hay dos pantallas: **Programación · Rumbo a Europa** (el juego con Pini) y **Robótica**.
 En Robótica se programa un robot sobre un mapa de Europa con todos los países, dividido en 6 × 6 casillas de 15 × 15 cm.

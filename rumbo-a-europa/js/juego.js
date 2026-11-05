@@ -602,7 +602,7 @@
   }
   function enrutar() {
     const h = location.hash;
-    const sec = /^#robotica/.test(h) ? "robotica" : /^#(destino-\d+|programa)$/.test(h) ? "programa" : /^#crea/.test(h) ? "crea" : /^#piensa/.test(h) ? "piensa" : "inicio";
+    const sec = /^#robotica/.test(h) ? "robotica" : /^#(destino-\d+|programa)$/.test(h) ? "programa" : /^#crea/.test(h) ? "crea" : /^#piensa/.test(h) ? "piensa" : h === "#profe" ? "profe" : "inicio";
     document.body.dataset.seccion = sec;
     const rob = sec === "robotica";
     document.body.classList.toggle("en-robotica", rob);
@@ -638,6 +638,7 @@
   window.addEventListener("hashchange", enrutar);
 
   window.PiniEspalda = espaldaSVG;
+  window.PROG_NIVELES = NIVELES;
   if (window.Valoraciones) window.Valoraciones.definirActividades("prog", NIVELES.map((n, i) => ({ clave: "prog-" + i, pantalla: "Programación", actividad: `${AVENTURAS[n.aventura].nombre} · ${n.ciudad}`, destino: `Programación · ${i + 1}. ${n.ciudad}`, ciudad: n.ciudad, tipo: "prog", ref: n.ciudad })));
   const bx = $("#btn-excel"); if (bx) bx.onclick = descargarExcel;
   pintarMarca();

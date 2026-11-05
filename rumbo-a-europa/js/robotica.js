@@ -554,5 +554,5 @@
   }
 
   iniciar();
-  window.Robotica = { ruta, ocultar, RETOS, get ws() { return ws; } };
+  window.Robotica = { ruta, ocultar, RETOS, MODOS, get ws() { return ws; } };
 })();

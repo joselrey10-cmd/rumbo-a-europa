@@ -291,7 +291,7 @@ footer { padding-block: 28px; color: var(--ink-soft); font-size: 14px; border-to
 .nav-tab { color: #c9d2f2; text-decoration: none; font-weight: 800; font-size: 14px; padding: 6px 14px; border-radius: 999px; }
 .nav-tab:hover { color: #fff; }
 body[data-seccion="inicio"] [data-tab="inicio"], body[data-seccion="crea"] [data-tab="crea"], body[data-seccion="programa"] [data-tab="programa"],
-body[data-seccion="robotica"] [data-tab="robotica"], body[data-seccion="piensa"] [data-tab="piensa"] { background: var(--gold); color: var(--navy); }
+body[data-seccion="robotica"] [data-tab="robotica"], body[data-seccion="piensa"] [data-tab="piensa"], body[data-seccion="profe"] [data-tab="profe"] { background: var(--gold); color: var(--navy); }
 a.volver { text-decoration: none; }
 
 /* Robótica */
@@ -406,3 +406,27 @@ a.volver { text-decoration: none; }
   .rincones, .escala, .rutas { grid-template-columns: 1fr; }
   .chips button { width: 38px; height: 38px; }
 }
+
+/* ---------- Panel del profesor ---------- */
+.nav-profe { margin-left: auto; border: 1px solid #3a4a8a; }
+.p-barra { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin: 0 0 12px; }
+.p-grupos { display: flex; gap: 8px; }
+.p-grupo { padding: 8px 16px; }
+.p-barra .btn { padding: 8px 16px; font-size: 15px; }
+.tabla-scroll { overflow-x: auto; background: #fff; border: 2px solid var(--line); border-radius: 14px; }
+.p-tabla { border-collapse: collapse; width: 100%; font-size: 15px; }
+.p-tabla th, .p-tabla td { padding: 8px 12px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
+.p-tabla th { font-family: var(--f-display); font-size: 16px; color: var(--navy); background: var(--paper-2); white-space: nowrap; }
+.p-tabla td small { display: block; font-family: var(--f-mono); font-size: 11px; color: var(--ink-soft); }
+.p-tabla tr:last-child td { border-bottom: 0; }
+.p-alumno { background: none; border: 0; padding: 0; color: var(--navy-2); font-weight: 800; text-decoration: underline; text-align: left; }
+.cod-p { font-family: var(--f-mono); font-size: 12px; background: var(--navy); color: #fff; border-radius: 6px; padding: 1px 6px; white-space: nowrap; }
+.p-nuevo { margin-top: 16px; }
+.p-resumen { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin-bottom: 12px; }
+.p-resumen div { background: #fff; border: 2px solid var(--line); border-top: 6px solid var(--rc); border-radius: 12px; padding: 10px 14px; display: grid; }
+.p-resumen b { color: var(--rc); font-family: var(--f-display); font-size: 18px; }
+.p-resumen span { font-family: var(--f-display); font-size: 30px; line-height: 1.1; }
+.p-resumen small { color: var(--ink-soft); }
+.p-rincon { margin-top: 16px; }
+.p-rincon summary { font-family: var(--f-display); font-size: 26px; font-weight: 800; cursor: pointer; margin-bottom: 10px; }
+@media (max-width: 560px) { .p-resumen { grid-template-columns: repeat(2, minmax(0, 1fr)); } .nav-profe { margin-left: 0; } }

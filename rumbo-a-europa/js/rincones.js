@@ -267,6 +267,7 @@ window.Rincones = (function () {
     else if (h === "#piensa") pintarPiensa();
     else if (h === "#notas-prog") pintarNotas("prog");
     else if (h === "#notas-rob") pintarNotas("rob");
+    else if (h === "#profe" && window.Profe) window.Profe.pintar(raiz);
     else hecho = false;
     raiz.hidden = !hecho;
     if (hecho) window.scrollTo(0, 0);
