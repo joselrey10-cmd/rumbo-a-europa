@@ -297,14 +297,14 @@ window.Profe = (function () {
         <span class="estado" id="p-correo-est">${a.usuario ? "Con cualquiera de estos correos la familia puede ver los resultados en la pestaña Familias." : "Este alumno no tiene usuario de Educacyl: impórtalo con su usuario."}</span>
       </form>
       <div class="p-resumen">${RINC.map((r) => `<div style="--rc:${r.color}"><b>${r.nombre}</b><span>${res[r.id].media === null ? "–" : res[r.id].media}</span><small>${res[r.id].hechas} de ${res[r.id].total} con nota${r.id === "crea" ? ` · ✓ ${res.crea.retos}/${res.crea.nRetos} retos terminados` : ""}</small></div>`).join("")}</div>
-      <p class="intro">Las casillas marcadas son las notas que ya hay en la hoja. En Crea, el alumno solo marca el reto como terminado: la nota de cada indicador la pones tú aquí. Cambia las que quieras y pulsa Enviar en esa actividad.</p>
+      <p class="intro">Las casillas marcadas son las notas que ya hay en la hoja. En Crea, el alumno solo marca el reto como terminado: la nota de cada indicador la pones tú aquí. Al pulsar una nota se guarda sola en la hoja (verás «✓ Guardada»).</p>
       ${autoTabla(a, c)}
       ${RINC.map((r) => `<details class="p-rincon" ${r.id === "crea" ? "open" : ""}><summary style="color:${r.color}">${r.nombre}</summary>
         <div class="retos-r">${cat.map((x, k) => ({ x, k })).filter(({ x }) => x.rincon === r.id && x.inds.length).map(({ x, k }) => `
           <article class="reto-r" data-k="${k}">
             <div class="reto-r-cab"><h3>${esc(x.titulo)}</h3>${x.rincon === "crea" ? (() => { const t = (a.terminados || {})[x.destino.slice(0, 60)]; return t ? `<span class="p-hecho">✓ Terminado${t.ruta && t.ruta !== "Todos" ? " · " + esc(t.ruta) : ""}${t.fecha && !isNaN(new Date(t.fecha)) ? " · " + new Date(t.fecha).toLocaleDateString("es-ES") : ""}</span>` : `<span class="p-hecho no">Sin terminar</span>`; })() : ""}</div>
             <div class="inds">${x.inds.map((cod) => { const col = columna(x.destino, cod); return `<div class="fila-ind"><div class="fila-ind-t"><span class="cod">Ind. ${cod}</span> ${esc(textoInd(c, cod))}</div>${chips(col, a.notas[col])}</div>`; }).join("")}</div>
-            <div class="enviar-fila"><button type="button" class="btn enviar-p">Enviar</button><span class="estado" aria-live="polite"></span></div>
+            <div class="enviar-fila"><button type="button" class="btn sec enviar-p">Volver a enviar</button><span class="estado" aria-live="polite"></span></div>
           </article>`).join("")}</div></details>`).join("")}
       </div>`;
     $("#p-volver").onclick = pintarGrupo;
@@ -332,21 +332,21 @@ window.Profe = (function () {
       pintarGrupo();
   }
 
-  async function enviarProfe(caja) {
+  async function enviarProfe(caja, todas) {
     const a = alumnoSel, x = catalogo(cursoDe(a.clase))[+caja.dataset.k], est = $(".estado", caja), filas = [];
     caja.querySelectorAll(".chips").forEach((g, i) => {
       const b = g.querySelector('[aria-checked="true"]');
       if (!b) return;
       const nota = +b.dataset.n, cod = x.inds[i];
-      if (a.notas[g.dataset.col] === nota) return;   // sin cambios
+      if (!todas && a.notas[g.dataset.col] === nota) return;   // sin cambios
       filas.push({ col: g.dataset.col, nota, d: { nombre: a.nombre, usuario: a.usuario, clase: a.clase, destino: x.destino, ciudad: x.ciudad, personaje: "Profe", programa: "Nota del profe", indicador: cod, valoracion: nota } });
     });
-    if (!filas.length) { est.textContent = "No hay notas nuevas o cambiadas."; est.dataset.tipo = "error"; return; }
+    if (!filas.length) { if (todas) { est.textContent = "Elige al menos una nota."; est.dataset.tipo = "error"; } return; }
     const btn = $(".enviar-p", caja); btn.disabled = true; est.textContent = "Enviando…"; est.dataset.tipo = "";
     const ok = await window.Valoraciones.enviarVarias(filas.map((f) => f.d));
     btn.disabled = false;
     if (ok) filas.forEach((f) => { a.notas[f.col] = f.nota; });
-    est.textContent = ok ? `✓ Enviado: ${filas.length} ${filas.length === 1 ? "nota" : "notas"}.` : "No se ha podido enviar. Revisa la conexión.";
+    est.textContent = ok ? `✓ Guardada${filas.length > 1 ? "s " + filas.length + " notas" : ""} en la hoja · ${new Date().toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" })}` : "No se ha podido guardar. Revisa la conexión y pulsa «Volver a enviar».";
     est.dataset.tipo = ok ? "ok" : "error";
   }
 
@@ -357,11 +357,11 @@ window.Profe = (function () {
       r.addEventListener("click", (e) => {
         if (location.hash !== "#profe") return;
         const chip = e.target.closest(".chips button");
-        if (chip) { chip.parentElement.querySelectorAll("button").forEach((b) => b.setAttribute("aria-checked", String(b === chip))); return; }
+        if (chip) { chip.parentElement.querySelectorAll("button").forEach((b) => b.setAttribute("aria-checked", String(b === chip))); const caja = chip.closest(".reto-r"); if (caja && alumnoSel) enviarProfe(caja); return; }
         const g = e.target.closest(".p-grupo"); if (g) { grupo = g.dataset.g; pintarGrupo(); return; }
         if (e.target.closest("#p-recargar")) { let k = ""; try { k = sessionStorage.getItem(CLAVE_SES) || ""; } catch (x) {} datos = null; pintarClave(); cargar(k); return; }
         if (e.target.closest("#p-salir")) { try { sessionStorage.removeItem(CLAVE_SES); } catch (x) {} datos = null; pintarClave(); return; }
-        const env = e.target.closest(".enviar-p"); if (env) enviarProfe(env.closest(".reto-r"));
+        const env = e.target.closest(".enviar-p"); if (env) enviarProfe(env.closest(".reto-r"), true);
       }, true);
     }
     if (!datos) pintarClave();
