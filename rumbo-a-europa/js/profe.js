@@ -46,9 +46,15 @@ window.Profe = (function () {
     const lista = datos.filas.map((f) => {
       const notas = {};
       cab.forEach((t, i) => { if (/ · Ind\. /.test(t) && f[i] !== "" && f[i] != null) notas[t] = Number(f[i]); });
-      return { nombre: String(f[iN] || ""), usuario: iU >= 0 ? String(f[iU] || "") : "", clase: String(f[iC] || ""), notas };
+      return { nombre: String(f[iN] || ""), usuario: iU >= 0 ? String(f[iU] || "") : "", clase: String(f[iC] || ""), notas, terminados: {} };
     });
-    extra.forEach((x) => { if (!lista.some((a) => igual(a.nombre, x.nombre) && igual(a.clase, x.clase))) lista.push(x); });
+    // Retos de Crea terminados (aunque el alumno aún no tenga notas)
+    (datos.hechos || []).forEach(([nombre, usuario, clase, destino, programa, fecha]) => {
+      let a = lista.find((x) => usuario ? igual(x.usuario, usuario) : (igual(x.nombre, nombre) && igual(x.clase, clase)));
+      if (!a) { a = { nombre: String(nombre || ""), usuario: String(usuario || ""), clase: String(clase || ""), notas: {}, terminados: {} }; lista.push(a); }
+      a.terminados[String(destino)] = { ruta: String(programa || "").replace(/^Terminado ·\s*/, ""), fecha };
+    });
+    extra.forEach((x) => { x.terminados = x.terminados || {}; if (!lista.some((a) => igual(a.nombre, x.nombre) && igual(a.clase, x.clase))) lista.push(x); });
     return lista;
   }
   const delGrupo = () => alumnos().filter((a) => igual(a.clase, grupo)).sort((a, b) => a.nombre.localeCompare(b.nombre, "es"));
@@ -58,7 +64,7 @@ window.Profe = (function () {
     RINC.forEach((r) => {
       const notas = [], total = cat.filter((x) => x.rincon === r.id).reduce((n, x) => n + x.inds.length, 0);
       cat.filter((x) => x.rincon === r.id).forEach((x) => x.inds.forEach((cod) => { const v = a.notas[columna(x.destino, cod)]; if (v !== undefined) notas.push(v); }));
-      out[r.id] = { hechas: notas.length, total, media: notas.length ? Math.round(notas.reduce((s, v) => s + v, 0) / notas.length * 10) / 10 : null };
+      out[r.id] = { retos: r.id === "crea" ? cat.filter((x) => x.rincon === "crea" && a.terminados && a.terminados[x.destino.slice(0, 60)]).length : 0, nRetos: cat.filter((x) => x.rincon === r.id).length, hechas: notas.length, total, media: notas.length ? Math.round(notas.reduce((s, v) => s + v, 0) / notas.length * 10) / 10 : null };
     });
     return out;
   }
@@ -124,7 +130,7 @@ window.Profe = (function () {
           const hechas = todas.reduce((s, x) => s + x.hechas, 0);
           const media = hechas ? Math.round(todas.reduce((s, x) => s + x.media * x.hechas, 0) / hechas * 10) / 10 : "–";
           return `<tr><td><button type="button" class="p-alumno" data-i="${i}">${esc(a.nombre || "(sin nombre)")}</button></td><td>${esc(a.usuario)}</td>
-            ${RINC.map((r) => `<td>${res[r.id].media === null ? "–" : `<b>${res[r.id].media}</b>`}<small>${res[r.id].hechas}/${res[r.id].total}</small></td>`).join("")}<td><b>${media}</b></td></tr>`;
+            ${RINC.map((r) => `<td>${res[r.id].media === null ? "–" : `<b>${res[r.id].media}</b>`}<small>${res[r.id].hechas}/${res[r.id].total} notas</small>${r.id === "crea" ? `<small>✓ ${res.crea.retos}/${res.crea.nRetos} retos</small>` : ""}</td>`).join("")}<td><b>${media}</b></td></tr>`;
         }).join("")}</tbody></table></div>` : `<p class="intro">Todavía no hay notas de este grupo en la hoja.</p>`}
       <form class="alumno p-nuevo" id="p-nuevo" autocomplete="off">
         <label>Añadir alumno a ${grupo}<input id="p-n-nombre" maxlength="30" placeholder="Nombre y apellido"></label>
@@ -159,12 +165,12 @@ window.Profe = (function () {
     raiz.innerHTML = cab(`${esc(a.nombre)} · ${esc(a.clase)}${a.usuario ? " · " + esc(a.usuario) : ""} · indicadores de ${c}`) +
       `<div class="envoltura seccion">
       <p class="p-barra"><button type="button" class="btn sec" id="p-volver">← Volver a ${esc(a.clase)}</button></p>
-      <div class="p-resumen">${RINC.map((r) => `<div style="--rc:${r.color}"><b>${r.nombre}</b><span>${res[r.id].media === null ? "–" : res[r.id].media}</span><small>${res[r.id].hechas} de ${res[r.id].total} con nota</small></div>`).join("")}</div>
-      <p class="intro">Las casillas marcadas son las notas que ya hay en la hoja. Cambia las que quieras y pulsa Enviar en esa actividad.</p>
+      <div class="p-resumen">${RINC.map((r) => `<div style="--rc:${r.color}"><b>${r.nombre}</b><span>${res[r.id].media === null ? "–" : res[r.id].media}</span><small>${res[r.id].hechas} de ${res[r.id].total} con nota${r.id === "crea" ? ` · ✓ ${res.crea.retos}/${res.crea.nRetos} retos terminados` : ""}</small></div>`).join("")}</div>
+      <p class="intro">Las casillas marcadas son las notas que ya hay en la hoja. En Crea, el alumno solo marca el reto como terminado: la nota de cada indicador la pones tú aquí. Cambia las que quieras y pulsa Enviar en esa actividad.</p>
       ${RINC.map((r) => `<details class="p-rincon" ${r.id === "crea" ? "open" : ""}><summary style="color:${r.color}">${r.nombre}</summary>
         <div class="retos-r">${cat.map((x, k) => ({ x, k })).filter(({ x }) => x.rincon === r.id && x.inds.length).map(({ x, k }) => `
           <article class="reto-r" data-k="${k}">
-            <div class="reto-r-cab"><h3>${esc(x.titulo)}</h3></div>
+            <div class="reto-r-cab"><h3>${esc(x.titulo)}</h3>${x.rincon === "crea" ? (() => { const t = (a.terminados || {})[x.destino.slice(0, 60)]; return t ? `<span class="p-hecho">✓ Terminado${t.ruta && t.ruta !== "Todos" ? " · " + esc(t.ruta) : ""}${t.fecha && !isNaN(new Date(t.fecha)) ? " · " + new Date(t.fecha).toLocaleDateString("es-ES") : ""}</span>` : `<span class="p-hecho no">Sin terminar</span>`; })() : ""}</div>
             <div class="inds">${x.inds.map((cod) => { const col = columna(x.destino, cod); return `<div class="fila-ind"><div class="fila-ind-t"><span class="cod">Ind. ${cod}</span> ${esc(textoInd(c, cod))}</div>${chips(col, a.notas[col])}</div>`; }).join("")}</div>
             <div class="enviar-fila"><button type="button" class="btn enviar-p">Enviar</button><span class="estado" aria-live="polite"></span></div>
           </article>`).join("")}</div></details>`).join("")}

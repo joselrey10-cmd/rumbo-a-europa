@@ -28,16 +28,18 @@ window.Rincones = (function () {
   const cursoN = () => (V().curso() === "6º" ? "6" : "5");
   const crea = () => (window.CREA || {})[V().curso()] || [];
   const destinoCrea = (a) => `Crea · ${a.sa} ${a.s} · ${a.titulo}`;
-  const claveCrea = (a, cod) => `crea-${cursoN()}-${a.sa}-${a.s}|${cod}`;
+  const claveHecho = (a) => `crea-hecho-${cursoN()}-${a.sa}-${a.s}`;
+  const hecho = (a) => !!(a && (V().leer()[claveHecho(a)] || {}).hecho);
   const indPiensa = (p) => (cursoN() === "6" ? p.i6 : p.i5);
   const destinoPiensa = (p) => `Piensa · ${p.titulo}`;
   const clavePiensa = (p, cod) => `piensa-${cursoN()}-${p.pre}|${cod}`;
   const textoInd = (cod) => ((window.INDICADORES || {})[V().curso()] || {})[cod] || "";
 
   function definir() {
-    V().definirActividades("crea", () => [].concat(...crea().map((a) => a.ind.map((cod) => ({
-      clave: claveCrea(a, cod), pantalla: "Crea", actividad: `${a.sa} ${a.s} · ${a.titulo}`, destino: destinoCrea(a), ciudad: a.titulo, tipo: "fijo", ref: cod
-    })))));
+    // En Crea el alumno solo marca el reto como terminado; la nota de los indicadores la pone el profe (panel Profe).
+    V().definirActividades("crea", () => crea().map((a) => ({
+      clave: claveHecho(a), pantalla: "Crea", actividad: `${a.sa} ${a.s} · ${a.titulo}`, destino: destinoCrea(a), ciudad: a.titulo, tipo: "fijo", ref: ""
+    })));
     V().definirActividades("piensa", () => [].concat(...(window.PIENSA || []).map((p) => indPiensa(p).map(([cod]) => ({
       clave: clavePiensa(p, cod), pantalla: "Piensa", actividad: p.titulo, destino: destinoPiensa(p), ciudad: p.titulo, tipo: "fijo", ref: cod
     })))));
@@ -76,6 +78,7 @@ window.Rincones = (function () {
 
   /* ---------- Portada ---------- */
   function contar(id) {
+    if (id === "crea") { const l = crea(); return { crea: true, total: l.length, hechas: l.filter(hecho).length }; }
     const f = V().filas().filter((r) => r.grupo === id);
     const hechas = f.filter((r) => r.nota > 0);
     const media = hechas.length ? hechas.reduce((s, r) => s + r.nota, 0) / hechas.length : 0;
@@ -87,7 +90,7 @@ window.Rincones = (function () {
     <header class="portada"><div class="envoltura">
       <div class="marca">${C.logo ? `<img src="${esc(C.logo)}" alt="Escudo del colegio">` : ""}<span>${esc(C.nombre || "")}</span></div>
       <h1 style="margin-top:20px">Rincones TIC <span>Rumbo a Europa</span></h1>
-      <p class="sub">Cuatro rincones para 5.º y 6.º. En cada actividad verás los indicadores de tu curso y podrás enviar tu nota de 0 a 5.</p>
+      <p class="sub">Cuatro rincones para 5.º y 6.º. En cada actividad verás los indicadores de tu curso. En Crea marcas los retos que terminas y tu profe pone la nota; en los demás rincones envías tu nota de 0 a 5.</p>
     </div></header>
     <section class="seccion"><div class="envoltura">
       <span class="etiqueta">Paso 1</span>
@@ -128,7 +131,7 @@ window.Rincones = (function () {
         <div class="rincon-ico" aria-hidden="true">${r.icono}</div>
         <h3>${r.nombre}</h3>
         <p>${r.texto}</p>
-        <div class="rincon-dato">${k.hechas} de ${k.total} indicadores con nota${k.hechas ? ` · media ${k.media}` : ""}</div>
+        <div class="rincon-dato">${k.crea ? `${k.hechas} de ${k.total} retos terminados` : `${k.hechas} de ${k.total} indicadores con nota${k.hechas ? ` · media ${k.media}` : ""}`}</div>
         <div class="rincon-acc"><a class="btn" href="${r.ir}">${r.accion}</a>${r.notas ? `<a class="btn sec" href="${r.notas}">Mis notas</a>` : ""}</div>
       </article>`;
     }).join("");
@@ -139,13 +142,21 @@ window.Rincones = (function () {
     const r = RINCONES[0], lista = crea();
     const porSA = {};
     lista.forEach((a, i) => (porSA[a.sa] = porSA[a.sa] || []).push(i));
-    raiz.innerHTML = cabecera(r, "Crea", `Retos de ${V().curso()} para cada situación de aprendizaje. Elige tu ruta, haz el reto y envía tu nota de cada indicador.`) +
+    raiz.innerHTML = cabecera(r, "Crea", `Retos de ${V().curso()} en orden. Elige tu ruta, haz el reto y pulsa «He terminado el reto» para abrir el siguiente. La nota de los indicadores la pone tu profe.`) +
       `<div class="envoltura seccion">${Object.keys(porSA).map((sa) => `
         <h2 class="sa-tit">${sa}</h2>
         <div class="retos-r">${porSA[sa].map((i) => tarjetaCrea(lista[i], i)).join("")}</div>`).join("")}</div>`;
   }
   function tarjetaCrea(a, i) {
-    const rutaGuardada = (V().leer()[`crea-ruta-${cursoN()}-${a.sa}-${a.s}`] || {}).ruta;
+    const lista = crea(), h = V().leer()[claveHecho(a)] || {};
+    if (i > 0 && !hecho(lista[i - 1])) {
+      return `<article class="reto-r bloqueado" data-tipo="crea" data-i="${i}">
+      <div class="reto-r-cab"><span class="ses">${a.sa} · ${a.s}</span><h3>🔒 ${esc(a.titulo)}</h3></div>
+      <p>${esc(a.que)}</p>
+      <p class="aviso-bloq">Se abre cuando termines el reto anterior: <b>${esc(lista[i - 1].titulo)}</b>.</p>
+    </article>`;
+    }
+    const rutaGuardada = h.ruta || (V().leer()[`crea-ruta-${cursoN()}-${a.sa}-${a.s}`] || {}).ruta;
     const nombres = ["Ruta sencilla", "Ruta intermedia", "Ruta avanzada"];
     const rutas = a.rutas.length === 1
       ? `<p class="rutas-todos"><b>Todos:</b> la misma tarea para toda la clase.</p>`
@@ -155,8 +166,10 @@ window.Rincones = (function () {
       <p>${esc(a.que)}</p>
       ${rutas}
       ${a.extra ? `<p class="extra"><b>ExtraTIC:</b> ${esc(a.extra)}</p>` : ""}
-      <div class="inds">${a.ind.map((cod) => filaInd(claveCrea(a, cod), cod, textoInd(cod), valorDe(claveCrea(a, cod)))).join("")}</div>
-      <div class="enviar-fila"><button type="button" class="btn enviar">Enviar notas</button><span class="estado" aria-live="polite"></span></div>
+      <div class="inds"><p class="inds-t">Indicadores que valorará tu profe</p>${a.ind.map((cod) => `<div class="fila-ind"><div class="fila-ind-t"><span class="cod">Ind. ${esc(cod)}</span> ${esc(textoInd(cod))}</div></div>`).join("")}</div>
+      ${h.hecho
+        ? `<p class="hecho-ok">✓ Reto terminado${h.ruta && h.ruta !== "Todos" ? ` · ${esc(h.ruta)}` : ""}${h.fecha ? ` · ${new Date(h.fecha).toLocaleDateString("es-ES")}` : ""}</p>`
+        : `<div class="enviar-fila"><button type="button" class="btn terminar">He terminado el reto</button><span class="estado" aria-live="polite"></span></div>`}
     </article>`;
   }
 
@@ -218,6 +231,21 @@ window.Rincones = (function () {
       if (res.error) { estado(caja, res.error, "error"); return; }
       caja.querySelectorAll(".chips").forEach((g, k) => g.querySelectorAll("button").forEach((b) => b.setAttribute("aria-checked", String(+b.dataset.n === res.notas[k]))));
       estado(caja, "Notas puestas con la llave. Ahora pulsa Enviar notas.", "ok");
+      return;
+    }
+    const fin = e.target.closest(".terminar");
+    if (fin) {
+      const caja = fin.closest(".reto-r"), a = crea()[+caja.dataset.i];
+      if (faltanDatos()) { estado(caja, avisoDatos, "error"); return; }
+      const rb = caja.querySelector('.ruta[aria-checked="true"]');
+      const ruta = a.rutas.length === 1 ? "Todos" : rb ? rb.dataset.ruta : "";
+      if (!ruta) { estado(caja, "Marca primero la ruta que has hecho.", "error"); return; }
+      fin.disabled = true; estado(caja, "Enviando…", "");
+      V().registrar(claveHecho(a), { nota: "✓ Terminado", hecho: true, ruta, pantalla: "Crea", actividad: a.titulo }, true);
+      await V().enviar({ destino: destinoCrea(a), ciudad: a.titulo, personaje: "Crea", programa: "Terminado · " + ruta });
+      pintarCrea();
+      const sig = raiz.querySelector(`.reto-r[data-i="${+caja.dataset.i + 1}"]`);
+      if (sig) sig.scrollIntoView({ behavior: "smooth", block: "center" });
       return;
     }
     const env = e.target.closest(".enviar");

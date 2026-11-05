@@ -430,3 +430,9 @@ a.volver { text-decoration: none; }
 .p-rincon { margin-top: 16px; }
 .p-rincon summary { font-family: var(--f-display); font-size: 26px; font-weight: 800; cursor: pointer; margin-bottom: 10px; }
 @media (max-width: 560px) { .p-resumen { grid-template-columns: repeat(2, minmax(0, 1fr)); } .nav-profe { margin-left: 0; } }
+.reto-r.bloqueado { opacity: .6; background: var(--paper-2); }
+.aviso-bloq { font-weight: 700; color: var(--ink-soft); }
+.inds-t { font-family: var(--f-mono); font-size: 12px; letter-spacing: .06em; text-transform: uppercase; color: var(--ink-soft); }
+.hecho-ok { font-weight: 800; color: var(--green); font-size: 17px; }
+.p-hecho { display: inline-block; font-size: 13px; font-weight: 800; border-radius: 999px; padding: 2px 10px; background: #e6f4ec; color: var(--green); }
+.p-hecho.no { background: var(--paper-2); color: var(--ink-soft); }

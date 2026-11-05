@@ -16,11 +16,14 @@ Pini camina de frente, de lado o de espaldas según hacia dónde vaya. El editor
 La web se abre en **Rincones**: el alumno escribe su nombre, su **usuario de Educacyl** y elige su **curso**
 (5ºA, 5ºB, 6ºA o 6ºB). El curso decide qué indicadores ve: los de 5.º o los de 6.º. Hay cuatro rincones:
 - **Crea**: los retos de las sesiones 1 y 2 de cada SA (Word, PDF y correo, Excel, Canva, pódcast), con ruta
-  sencilla, intermedia o avanzada y ExtraTIC. Datos en `js/rincones-datos.js` (`CREA`).
+  sencilla, intermedia o avanzada y ExtraTIC. Datos en `js/rincones-datos.js` (`CREA`). Van en orden: el alumno
+  marca la ruta y pulsa «He terminado el reto», y así se abre el siguiente. No pone nota: la nota de los
+  indicadores la pone el profe en el panel Profe, donde ve qué retos ha terminado cada alumno.
 - **Programa**: los 17 destinos de Rumbo a Europa (pantalla de Programación).
 - **Robótica**: los retos de Robot, SPIKE Essential y SPIKE Prime.
 - **Piensa**: las 10 paradas del Pasaporte TIC, copiadas en la carpeta `piensa/`. Al terminar una actividad su
   llave se guarda sola y, al volver al rincón, pone las notas de cada indicador (también se puede pegar la llave).
+  Cada actividad empieza con una lectura y dos preguntas de comprensión: hasta acertar las dos no se abren las misiones.
 
 En cada actividad se elige una nota de 0 a 5 por indicador y se pulsa **Enviar notas**: se manda una fila por
 indicador a la misma hoja de Google. En Programa y Robótica la nota se pone sola al jugar; en **Mis notas** se

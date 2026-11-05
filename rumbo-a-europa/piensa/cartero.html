@@ -689,4 +689,81 @@ function appendVal(){
   }
 })();
 </script>
+<style id="lectura-css">
+.lectura{margin-top:14px;border:2px solid var(--accent,#c8102e);border-radius:14px;padding:14px;background:#fff}
+.lectura h3{margin:0 0 4px;font-size:1.15rem}
+.lectura .lq{margin:12px 0 0}
+.lectura .lq p{margin:0 0 6px;font-weight:700}
+.lectura .lops{display:grid;gap:6px}
+.lectura .lop{text-align:left;font:inherit;padding:8px 12px;border-radius:10px;border:2px solid var(--line,#ccc);background:var(--paper,#f6f6f6);color:inherit;cursor:pointer}
+.lectura .lop[aria-pressed="true"]{border-color:var(--ink,#222);box-shadow:0 0 0 3px rgba(0,0,0,.12);background:#fff}
+.lectura .lq.mal .lop[aria-pressed="true"]{border-color:#c8102e;background:#fdeaea}
+.lectura .lq.bien .lop[aria-pressed="true"]{border-color:#2f8f5b;background:#e6f4ec}
+.lectura .lfb{margin-top:10px;font-weight:700}
+.lectura .lfb.mal{color:#c8102e}.lectura .lfb.bien{color:#2f8f5b}
+.lectura .lbtn{margin-top:10px;font:inherit;font-weight:800;padding:10px 18px;border-radius:12px;border:0;background:var(--accent,#c8102e);color:#fff;cursor:pointer}
+body.lect-bloq section.mission,body.lect-bloq section.st{display:none!important}
+body.lect-bloq #tabs button:not(:first-child){opacity:.45}
+body.lect-bloq #tabs button:not(:first-child)::after{content:" 🔒"}
+.lect-aviso{border:2px dashed var(--accent,#c8102e);border-radius:12px;padding:12px;margin:12px 0;font-weight:700;text-align:center}
+</style>
+<script>
+/* Rumbo a Europa: dos preguntas de comprensión de la lectura. Hasta acertar las dos no se abren las misiones. */
+(function(){
+  var PREG = [["¿Por qué deciden mandar un correo electrónico y no una carta por correo postal?", ["Porque llega en segundos", "Porque es más bonito", "Porque en Italia no hay buzones"]], ["¿Qué recuerda Pini antes de pegar la foto de los pinares?", ["Que las imágenes tienen autor: hay que usar una con licencia Creative Commons y citarla", "Que las fotos no se pueden mandar por correo", "Que la foto tiene que ser en blanco y negro"]]], CLAVE = "rumbo-lectura-" + "cartero";
+  var abierto = false; try { abierto = sessionStorage.getItem(CLAVE) === "1"; } catch (e) {}
+  var tabs = document.querySelectorAll("#tabs button");
+  var primera = (typeof ids !== "undefined" && ids[0]) || (tabs[0] && tabs[0].dataset.t);
+  var rt = document.querySelector(".relato .rt"), reto = rt && rt.querySelector(".reto");
+  if (!rt || typeof show !== "function") return;
+  var orig = show;
+  show = function (t) { if (!abierto && t !== primera) { t = primera; avisar(); } return orig(t); };
+  function avisar() { var c = document.getElementById("lectura"); if (c) { c.scrollIntoView({ behavior: "smooth", block: "center" }); var f = c.querySelector(".lfb"); f.className = "lfb mal"; f.textContent = "Primero contesta bien las dos preguntas de la lectura."; } }
+  var caja = document.createElement("div"); caja.className = "lectura"; caja.id = "lectura";
+  function mezclar(a) { a = a.slice(); for (var i = a.length - 1; i > 0; i--) { var j = Math.floor(Math.random() * (i + 1)); var x = a[i]; a[i] = a[j]; a[j] = x; } return a; }
+  function pintar() {
+    if (abierto) {
+      caja.innerHTML = '<h3>📖 Comprensión de la lectura</h3><p class="lfb bien">✓ ¡Lectura comprendida! Las misiones están abiertas.</p>';
+      return;
+    }
+    caja.innerHTML = '<h3>📖 Comprensión de la lectura</h3><p style="margin:0">Lee el texto y contesta las dos preguntas. Si aciertas las dos, se abren las misiones.</p>' +
+      PREG.map(function (q, k) {
+        return '<div class="lq" data-k="' + k + '"><p>' + (k + 1) + '. ' + q[0] + '</p><div class="lops">' +
+          mezclar(q[1].map(function (o, i) { return [o, i]; })).map(function (o) { return '<button type="button" class="lop" aria-pressed="false" data-ok="' + (o[1] === 0 ? 1 : 0) + '">' + o[0] + '</button>'; }).join("") + '</div></div>';
+      }).join("") + '<button type="button" class="lbtn">Comprobar</button><p class="lfb" aria-live="polite"></p>';
+  }
+  caja.addEventListener("click", function (e) {
+    var op = e.target.closest(".lop");
+    if (op) { var g = op.closest(".lq"); g.classList.remove("mal", "bien"); g.querySelectorAll(".lop").forEach(function (b) { b.setAttribute("aria-pressed", String(b === op)); }); return; }
+    if (!e.target.closest(".lbtn")) return;
+    var fb = caja.querySelector(".lfb"), grupos = caja.querySelectorAll(".lq"), bien = 0, faltan = 0;
+    grupos.forEach(function (g) {
+      var s = g.querySelector('[aria-pressed="true"]');
+      g.classList.remove("mal", "bien");
+      if (!s) { faltan++; return; }
+      if (s.dataset.ok === "1") { bien++; g.classList.add("bien"); } else g.classList.add("mal");
+    });
+    if (faltan) { fb.className = "lfb mal"; fb.textContent = "Contesta las dos preguntas."; return; }
+    if (bien === PREG.length) {
+      abierto = true; try { sessionStorage.setItem(CLAVE, "1"); } catch (x) {}
+      document.body.classList.remove("lect-bloq");
+      var av = document.getElementById("lect-aviso"); if (av) av.remove();
+      pintar(); orig(primera);
+      var t = document.getElementById("tabs"); if (t) t.scrollIntoView({ behavior: "smooth", block: "start" });
+    } else {
+      fb.className = "lfb mal";
+      fb.textContent = "Has acertado " + bien + " de " + PREG.length + ". Vuelve a leer el texto con calma y prueba otra vez.";
+      setTimeout(function () { var m = fb.textContent; pintar(); var f2 = caja.querySelector(".lfb"); f2.className = "lfb mal"; f2.textContent = m; }, 1800);
+    }
+  });
+  if (reto) rt.insertBefore(caja, reto); else rt.appendChild(caja);
+  pintar();
+  if (!abierto) {
+    document.body.classList.add("lect-bloq");
+    var t = document.getElementById("tabs");
+    if (t) { var av = document.createElement("div"); av.className = "lect-aviso"; av.id = "lect-aviso"; av.textContent = "🔒 Las misiones se abren cuando contestes bien las dos preguntas de la lectura (arriba)."; t.parentNode.insertBefore(av, t.nextSibling); }
+    orig(primera);
+  }
+})();
+</script>
 </body></html>

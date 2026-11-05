@@ -50,10 +50,21 @@ function datosProfe(libro, d) {
   const salida = (o) => ContentService.createTextOutput(JSON.stringify(o)).setMimeType(ContentService.MimeType.JSON);
   if (CLAVE_PROFE === "cambia-esta-clave") return salida({ ok: false, error: "Primero cambia CLAVE_PROFE en el script de la hoja y crea una nueva versión." });
   if (String(d.clave || "") !== CLAVE_PROFE) return salida({ ok: false, error: "Clave incorrecta." });
+  // Retos de Crea terminados (filas de Resultados cuyo Programa empieza por "Terminado").
+  const hechos = [];
+  const res = libro.getSheetByName("Resultados");
+  if (res && res.getLastRow() > 1) {
+    const r = res.getDataRange().getValues(), c = r[0];
+    const i = (t) => c.indexOf(t);
+    const iF = i("Fecha"), iN = i("Nombre"), iU = i("Usuario Educacyl"), iC = i("Clase"), iA = i("Actividad"), iP = i("Programa");
+    r.slice(1).forEach((f) => {
+      if (String(f[iP]).indexOf("Terminado") === 0) hechos.push([f[iN], iU >= 0 ? f[iU] : "", f[iC], f[iA], f[iP], f[iF] instanceof Date ? f[iF].toISOString() : String(f[iF])]);
+    });
+  }
   const hoja = libro.getSheetByName("Valoraciones");
-  if (!hoja || hoja.getLastRow() < 1) return salida({ ok: true, cab: [], filas: [] });
+  if (!hoja || hoja.getLastRow() < 1) return salida({ ok: true, cab: [], filas: [], hechos });
   const v = hoja.getDataRange().getValues();
-  return salida({ ok: true, cab: v[0], filas: v.slice(1) });
+  return salida({ ok: true, cab: v[0], filas: v.slice(1), hechos });
 }
 
 // Prueba: abre la URL de la aplicación web en el navegador. Si todo está bien verás
