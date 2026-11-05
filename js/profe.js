@@ -14,7 +14,7 @@ window.Profe = (function () {
     { id: "rob", nombre: "Robótica", color: "#2f8f5b" }, { id: "piensa", nombre: "Piensa", color: "#8a4fd8" }
   ];
   const CLAVE_SES = "rumbo-profe-clave";
-  let raiz = null, datos = null, grupo = "P5A", alumnoSel = null, extra = [];
+  let raiz = null, datos = null, grupo = "P5A", alumnoSel = null, extra = [], cambios = {};
 
   const G = (t) => (window.normGrupo ? window.normGrupo(t) : String(t || ""));
   const cursoDe = (g) => (/6/.test(g || "") ? "6º" : "5º");
@@ -75,9 +75,12 @@ window.Profe = (function () {
       if (!a) { a = { nombre: String(nombre || ""), usuario: String(usuario || ""), clase: String(clase || ""), notas: {}, terminados: {} }; lista.push(a); }
       a.terminados[String(destino)] = { ruta: String(programa || "").replace(/^Terminado ·\s*/, ""), fecha };
     });
+    // Notas puestas en esta sesión (aún no recargadas de la hoja)
+    lista.forEach((a) => Object.assign(a.notas, cambios[idDe(a)] || {}));
     extra.forEach((x) => { x.terminados = x.terminados || {}; if (!lista.some((a) => igual(a.nombre, x.nombre) && igual(a.clase, x.clase))) lista.push(x); });
     return lista;
   }
+  const idDe = (a) => (a.usuario ? "u:" + String(a.usuario).trim().toLowerCase() : "n:" + String(a.nombre || "").trim().toLowerCase() + "|" + G(a.clase));
   function notasDe(cab, f) {
     const notas = {};
     (cab || []).forEach((t, i) => { t = String(t); if (/ · Ind\. /.test(t) && f && f[i] !== "" && f[i] != null) notas[t] = Number(f[i]); });
@@ -345,7 +348,7 @@ window.Profe = (function () {
     const btn = $(".enviar-p", caja); btn.disabled = true; est.textContent = "Enviando…"; est.dataset.tipo = "";
     const ok = await window.Valoraciones.enviarVarias(filas.map((f) => f.d));
     btn.disabled = false;
-    if (ok) filas.forEach((f) => { a.notas[f.col] = f.nota; });
+    if (ok) filas.forEach((f) => { a.notas[f.col] = f.nota; (cambios[idDe(a)] = cambios[idDe(a)] || {})[f.col] = f.nota; });
     est.textContent = ok ? `✓ Guardada${filas.length > 1 ? "s " + filas.length + " notas" : ""} en la hoja · ${new Date().toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" })}` : "No se ha podido guardar. Revisa la conexión y pulsa «Volver a enviar».";
     est.dataset.tipo = ok ? "ok" : "error";
   }
@@ -360,7 +363,7 @@ window.Profe = (function () {
         if (chip) { chip.parentElement.querySelectorAll("button").forEach((b) => b.setAttribute("aria-checked", String(b === chip))); const caja = chip.closest(".reto-r"); if (caja && alumnoSel) enviarProfe(caja); return; }
         const g = e.target.closest(".p-grupo"); if (g) { grupo = g.dataset.g; pintarGrupo(); return; }
         if (e.target.closest("#p-recargar")) { let k = ""; try { k = sessionStorage.getItem(CLAVE_SES) || ""; } catch (x) {} datos = null; pintarClave(); cargar(k); return; }
-        if (e.target.closest("#p-salir")) { try { sessionStorage.removeItem(CLAVE_SES); } catch (x) {} datos = null; pintarClave(); return; }
+        if (e.target.closest("#p-salir")) { try { sessionStorage.removeItem(CLAVE_SES); } catch (x) {} datos = null; cambios = {}; pintarClave(); return; }
         const env = e.target.closest(".enviar-p"); if (env) enviarProfe(env.closest(".reto-r"), true);
       }, true);
     }
