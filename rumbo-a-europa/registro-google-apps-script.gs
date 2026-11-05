@@ -3,7 +3,9 @@
   Pega este código en Extensiones → Apps Script de tu hoja de Google
   y publícalo como aplicación web (mira LEEME.md).
 
-  Crea dos pestañas:
+  Pestañas que crea:
+  - "Autoevaluación": lo que cada alumno dice que sabe hacer en Programa y Robótica (aparte de las notas).
+  - "Alumnado": la lista importada por el profe (con el correo de la familia).
   - "Resultados": una fila cada vez que un alumno termina (o intenta) una actividad.
   - "Valoraciones": una fila por alumno (usuario Educacyl, o nombre + clase) y una columna por actividad
     e indicador de los cuatro rincones (Crea, Programa, Robótica, Piensa), con la última nota enviada. Las casillas vacías son 0 (no hecho).
@@ -19,6 +21,10 @@ function doPost(e) {
   const libro = SpreadsheetApp.getActiveSpreadsheet();
   const pedido = JSON.parse(e.postData.contents);
   if (pedido.accion === "datos") return datosProfe(libro, pedido);
+  if (pedido.accion === "importar") return importarAlumnado(libro, pedido);
+  if (pedido.accion === "autoevaluacion") return guardarAutoevaluacion(libro, pedido);
+  if (pedido.accion === "familiaCodigo") return familiaCodigo(libro, pedido);
+  if (pedido.accion === "familiaDatos") return familiaDatos(libro, pedido);
   const hoja = libro.getSheetByName("Resultados") || libro.insertSheet("Resultados");
   if (hoja.getLastRow() === 0) {
     hoja.appendRow(COLUMNAS);
@@ -61,10 +67,129 @@ function datosProfe(libro, d) {
       if (String(f[iP]).indexOf("Terminado") === 0) hechos.push([f[iN], iU >= 0 ? f[iU] : "", f[iC], f[iA], f[iP], f[iF] instanceof Date ? f[iF].toISOString() : String(f[iF])]);
     });
   }
+  const au = libro.getSheetByName("Autoevaluación");
+  const autoeval = au && au.getLastRow() > 0 ? au.getDataRange().getValues() : [];
+  const al = libro.getSheetByName("Alumnado");
+  const alumnado = al && al.getLastRow() > 1 ? al.getRange(2, 1, al.getLastRow() - 1, ALUMNADO.length).getValues() : [];
   const hoja = libro.getSheetByName("Valoraciones");
-  if (!hoja || hoja.getLastRow() < 1) return salida({ ok: true, cab: [], filas: [], hechos });
+  if (!hoja || hoja.getLastRow() < 1) return salida({ ok: true, cab: [], filas: [], hechos, alumnado, autoeval });
   const v = hoja.getDataRange().getValues();
-  return salida({ ok: true, cab: v[0], filas: v.slice(1), hechos });
+  return salida({ ok: true, cab: v[0], filas: v.slice(1), hechos, alumnado, autoeval });
+}
+
+/* ---------- Autoevaluación (Programa y Robótica) ---------- */
+// Pestaña "Autoevaluación": una fila por alumno y una columna por rincón e indicador ("Programa · Ind. 3.2.1"),
+// con lo que el alumno dice que sabe hacer (0-5). Va aparte: no cuenta en las medias de las notas.
+function guardarAutoevaluacion(libro, d) {
+  const limpiar = (v, max) => String(v == null ? "" : v).slice(0, max);
+  const nombre = limpiar(d.nombre, 30), usuario = limpiar(d.usuario, 60), clase = limpiar(d.clase, 12), rincon = limpiar(d.rincon, 20);
+  const lock = LockService.getScriptLock(); lock.waitLock(10000);
+  try {
+    const h = libro.getSheetByName("Autoevaluación") || libro.insertSheet("Autoevaluación");
+    if (h.getLastRow() === 0) { h.appendRow(["Fecha", "Nombre", "Usuario Educacyl", "Clase"]); h.setFrozenRows(1); h.setFrozenColumns(4); h.getRange(1, 1, 1, 4).setFontWeight("bold"); }
+    const cab = h.getRange(1, 1, 1, h.getLastColumn()).getValues()[0];
+    const filas = h.getLastRow() > 1 ? h.getRange(2, 1, h.getLastRow() - 1, 4).getValues() : [];
+    const igual = (a, b) => String(a).trim().toLowerCase() === String(b).trim().toLowerCase();
+    let fila = filas.findIndex((f) => usuario ? igual(f[2], usuario) : (igual(f[1], nombre) && igual(f[3], clase))) + 2;
+    if (fila < 2) fila = h.getLastRow() + 1;
+    h.getRange(fila, 1, 1, 4).setValues([[new Date(), nombre, usuario || (filas[fila - 2] || [])[2] || "", clase]]);
+    Object.keys(d.notas || {}).slice(0, 60).forEach((cod) => {
+      const n = Number(d.notas[cod]); if (!(n >= 0 && n <= 5)) return;
+      const t = rincon + " · Ind. " + limpiar(cod, 10);
+      let col = cab.indexOf(t) + 1;
+      if (!col) { cab.push(t); col = cab.length; h.getRange(1, col).setValue(t).setFontWeight("bold"); }
+      h.getRange(fila, col).setValue(n);
+    });
+    return ContentService.createTextOutput("ok");
+  } finally { lock.releaseLock(); }
+}
+
+/* ---------- Alumnado (importado por el profe desde un CSV) ---------- */
+const ALUMNADO = ["Nombre", "Apellidos", "Usuario Educacyl", "Clase", "Correo familia"];
+const json = (o) => ContentService.createTextOutput(JSON.stringify(o)).setMimeType(ContentService.MimeType.JSON);
+const minus = (v) => String(v == null ? "" : v).trim().toLowerCase();
+
+function hojaAlumnado(libro) {
+  const h = libro.getSheetByName("Alumnado") || libro.insertSheet("Alumnado");
+  if (h.getLastRow() === 0) { h.appendRow(ALUMNADO); h.setFrozenRows(1); h.getRange(1, 1, 1, ALUMNADO.length).setFontWeight("bold"); }
+  return h;
+}
+
+// Añade o actualiza alumnos por su usuario de Educacyl. El correo de la familia solo se cambia si viene escrito.
+function importarAlumnado(libro, d) {
+  if (CLAVE_PROFE === "cambia-esta-clave" || String(d.clave || "") !== CLAVE_PROFE) return json({ ok: false, error: "Clave incorrecta." });
+  const lock = LockService.getScriptLock(); lock.waitLock(20000);
+  try {
+    const h = hojaAlumnado(libro);
+    const filas = h.getLastRow() > 1 ? h.getRange(2, 1, h.getLastRow() - 1, ALUMNADO.length).getValues() : [];
+    const pos = {}; filas.forEach((f, i) => { if (f[2]) pos[minus(f[2])] = i; });
+    let nuevos = 0, cambiados = 0, sinUsuario = 0;
+    (d.alumnos || []).slice(0, 2000).forEach((a) => {
+      const u = String(a.usuario || "").trim().slice(0, 60);
+      if (!u) { sinUsuario++; return; }
+      const fila = [String(a.nombre || "").trim().slice(0, 40), String(a.apellidos || "").trim().slice(0, 60), u, String(a.clase || "").trim().slice(0, 12), String(a.correo || "").trim().slice(0, 120)];
+      const i = pos[minus(u)];
+      if (i === undefined) { pos[minus(u)] = filas.length; filas.push(fila); nuevos++; }
+      else {
+        const v = filas[i];
+        filas[i] = [fila[0] || v[0], fila[1] || v[1], v[2], fila[3] || v[3], fila[4] || v[4]];
+        cambiados++;
+      }
+    });
+    if (filas.length) h.getRange(2, 1, filas.length, ALUMNADO.length).setValues(filas);
+    return json({ ok: true, nuevos, cambiados, sinUsuario });
+  } finally { lock.releaseLock(); }
+}
+
+/* ---------- Consulta de las familias ---------- */
+// 1) La familia escribe su correo: si está en la pestaña Alumnado, se le envía un código de 6 cifras (vale 15 minutos).
+function familiaCodigo(libro, d) {
+  const correo = minus(d.correo);
+  const resp = { ok: true, mensaje: "Si ese correo está registrado en el colegio, recibirás un código en unos minutos." };
+  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(correo)) return json({ ok: false, error: "Escribe un correo válido." });
+  const cache = CacheService.getScriptCache();
+  if (cache.get("espera_" + correo)) return json(resp);
+  const h = libro.getSheetByName("Alumnado");
+  const filas = h && h.getLastRow() > 1 ? h.getRange(2, 1, h.getLastRow() - 1, ALUMNADO.length).getValues() : [];
+  const hijos = filas.filter((f) => minus(f[4]).split(/[;,\s]+/).indexOf(correo) >= 0);
+  if (!hijos.length) return json(resp);
+  const codigo = String(Math.floor(100000 + Math.random() * 900000));
+  cache.put("codigo_" + correo, JSON.stringify({ codigo, fallos: 0 }), 900);
+  cache.put("espera_" + correo, "1", 60);
+  MailApp.sendEmail({
+    to: correo, name: "Rumbo a Europa · CEIP Tierra de Pinares",
+    subject: "Tu código para ver los resultados de Rumbo a Europa",
+    body: "Hola:\n\nTu código para ver los resultados de " + hijos.map((f) => f[0]).join(" y ") + " en Rumbo a Europa es: " + codigo +
+      "\n\nEl código vale 15 minutos. Si no lo has pedido tú, no hagas nada.\n\nCEIP Tierra de Pinares"
+  });
+  return json(resp);
+}
+
+// 2) Con el código correcto devuelve solo los datos de sus hijos.
+function familiaDatos(libro, d) {
+  const correo = minus(d.correo), cache = CacheService.getScriptCache();
+  const g = JSON.parse(cache.get("codigo_" + correo) || "null");
+  if (!g) return json({ ok: false, error: "El código ha caducado. Pide uno nuevo." });
+  if (String(d.codigo || "").trim() !== g.codigo) {
+    g.fallos++;
+    if (g.fallos >= 5) cache.remove("codigo_" + correo); else cache.put("codigo_" + correo, JSON.stringify(g), 900);
+    return json({ ok: false, error: g.fallos >= 5 ? "Demasiados intentos. Pide un código nuevo." : "Código incorrecto." });
+  }
+  const h = libro.getSheetByName("Alumnado");
+  const filas = h && h.getLastRow() > 1 ? h.getRange(2, 1, h.getLastRow() - 1, ALUMNADO.length).getValues() : [];
+  const hijos = filas.filter((f) => minus(f[4]).split(/[;,\s]+/).indexOf(correo) >= 0);
+  const val = libro.getSheetByName("Valoraciones");
+  const v = val && val.getLastRow() > 0 ? val.getDataRange().getValues() : [[]];
+  const cab = v[0], iU = cab.indexOf("Usuario Educacyl");
+  const res = libro.getSheetByName("Resultados");
+  const r = res && res.getLastRow() > 1 ? res.getDataRange().getValues() : [[]];
+  const rc = r[0], rU = rc.indexOf("Usuario Educacyl"), rA = rc.indexOf("Actividad"), rP = rc.indexOf("Programa"), rF = rc.indexOf("Fecha");
+  return json({ ok: true, cab, hijos: hijos.map((f) => ({
+    nombre: f[0], apellidos: f[1], usuario: f[2], clase: f[3],
+    fila: iU >= 0 ? (v.slice(1).find((x) => minus(x[iU]) === minus(f[2])) || null) : null,
+    hechos: rU >= 0 ? r.slice(1).filter((x) => minus(x[rU]) === minus(f[2]) && String(x[rP]).indexOf("Terminado") === 0)
+      .map((x) => [x[rA], x[rP], x[rF] instanceof Date ? x[rF].toISOString() : String(x[rF])]) : []
+  })) });
 }
 
 // Prueba: abre la URL de la aplicación web en el navegador. Si todo está bien verás

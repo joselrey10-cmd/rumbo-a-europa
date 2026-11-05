@@ -545,3 +545,22 @@ window.PIENSA = [
   ]
  }
 ];
+
+/* AUTOEVALUACIÓN de Programa y Robótica: frase en primera persona de cada indicador
+   (6.º: tomadas de la programación; 5.º: redactadas a partir del indicador). */
+window.AUTOEVAL = {
+  "5º": {
+    "3.2.1": "Programo secuencias de direcciones y giros para llegar a la meta y digo los pasos en voz alta antes de ejecutar.",
+    "3.2.2": "Uso bucles (repetir) en lugar de repetir bloques, y condiciones cuando hacen falta.",
+    "3.2.3": "Programo el robot para ir de un sitio a otro del tablero, midiendo antes los avances y los giros.",
+    "3.2.6": "Planifico la ruta en el tablero, la programo y la amplío a ida y vuelta reutilizando el programa.",
+    "3.2.9": "Mido distancias y calculo avances y giros para programar con SPIKE la ruta de vuelta."
+  },
+  "6º": {
+    "3.2.2": "Programo personajes que se mueven o hablan por turnos siguiendo una secuencia ordenada.",
+    "3.2.3": "Uso «repetir» (bucles) para no repetir bloques.",
+    "3.2.5": "Programo el robot para llegar al país del tablero: mido, avanzo y giro.",
+    "3.2.6": "Pruebo mi programa, encuentro el error y lo arreglo cambiando una cosa cada vez."
+  }
+};
+window.ESCALA_AUTO = ["Todavía no lo he probado", "Me cuesta mucho", "Lo hago con ayuda", "Lo hago casi siempre", "Lo sé hacer", "Lo sé hacer muy bien y puedo explicarlo"];

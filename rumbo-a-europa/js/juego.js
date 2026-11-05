@@ -602,7 +602,7 @@
   }
   function enrutar() {
     const h = location.hash;
-    const sec = /^#robotica/.test(h) ? "robotica" : /^#(destino-\d+|programa)$/.test(h) ? "programa" : /^#crea/.test(h) ? "crea" : /^#piensa/.test(h) ? "piensa" : h === "#profe" ? "profe" : "inicio";
+    const sec = /^#robotica/.test(h) ? "robotica" : /^#(destino-\d+|programa)$/.test(h) ? "programa" : /^#crea/.test(h) ? "crea" : /^#piensa/.test(h) ? "piensa" : h === "#profe" ? "profe" : h === "#familias" ? "familias" : "inicio";
     document.body.dataset.seccion = sec;
     const rob = sec === "robotica";
     document.body.classList.toggle("en-robotica", rob);

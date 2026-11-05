@@ -507,22 +507,24 @@ function appendVal(){
 })();
 </script>
 <style id="lectura-css">
-.lectura{margin-top:14px;border:2px solid var(--accent,#c8102e);border-radius:14px;padding:14px;background:#fff}
-.lectura h3{margin:0 0 4px;font-size:1.15rem}
-.lectura .lq{margin:12px 0 0}
-.lectura .lq p{margin:0 0 6px;font-weight:700}
-.lectura .lops{display:grid;gap:6px}
-.lectura .lop{text-align:left;font:inherit;padding:8px 12px;border-radius:10px;border:2px solid var(--line,#ccc);background:var(--paper,#f6f6f6);color:inherit;cursor:pointer}
-.lectura .lop[aria-pressed="true"]{border-color:var(--ink,#222);box-shadow:0 0 0 3px rgba(0,0,0,.12);background:#fff}
-.lectura .lq.mal .lop[aria-pressed="true"]{border-color:#c8102e;background:#fdeaea}
-.lectura .lq.bien .lop[aria-pressed="true"]{border-color:#2f8f5b;background:#e6f4ec}
-.lectura .lfb{margin-top:10px;font-weight:700}
-.lectura .lfb.mal{color:#c8102e}.lectura .lfb.bien{color:#2f8f5b}
-.lectura .lbtn{margin-top:10px;font:inherit;font-weight:800;padding:10px 18px;border-radius:12px;border:0;background:var(--accent,#c8102e);color:#fff;cursor:pointer}
+.lectura{margin-top:14px;border:2px solid var(--accent,#c8102e);border-radius:14px;padding:16px;background:var(--paper,#fff);color:var(--ink,#1a1f2e)}
+.lectura h3{margin:0 0 6px;font-size:1.25rem;color:var(--ink,#1a1f2e)}
+.lectura>p{font-size:1.05rem;color:var(--ink,#1a1f2e)}
+.lectura .lq{margin:14px 0 0}
+.lectura .lq p{margin:0 0 8px;font-weight:800;font-size:1.12rem;line-height:1.4;color:var(--ink,#1a1f2e)}
+.lectura .lops{display:grid;gap:8px}
+.lectura .lop{text-align:left;font:inherit;font-size:1.05rem;line-height:1.4;padding:10px 14px;border-radius:10px;border:2px solid var(--line,#bbb);background:var(--bg,#f4f4f4);color:var(--ink,#1a1f2e);cursor:pointer}
+.lectura .lop:hover{border-color:var(--accent,#c8102e)}
+.lectura .lop[aria-pressed="true"]{border-color:var(--accent,#c8102e);box-shadow:0 0 0 3px var(--accent,#c8102e);font-weight:700}
+.lectura .lq.mal .lop[aria-pressed="true"]{border-color:var(--bad,#c8102e);background:var(--bad-bg,#fdeaea);box-shadow:none}
+.lectura .lq.bien .lop[aria-pressed="true"]{border-color:var(--ok,#2f8f5b);background:var(--ok-bg,#e6f4ec);box-shadow:none}
+.lectura .lfb{margin-top:10px;font-weight:800;font-size:1.05rem}
+.lectura .lfb.mal{color:var(--bad,#c8102e)}.lectura .lfb.bien{color:var(--ok,#2f8f5b)}
+.lectura .lbtn{margin-top:12px;font:inherit;font-weight:800;font-size:1.05rem;padding:10px 20px;border-radius:12px;border:0;background:var(--accent,#c8102e);color:var(--accent-ink,#fff);cursor:pointer}
 body.lect-bloq section.mission,body.lect-bloq section.st{display:none!important}
 body.lect-bloq #tabs button:not(:first-child){opacity:.45}
 body.lect-bloq #tabs button:not(:first-child)::after{content:" 🔒"}
-.lect-aviso{border:2px dashed var(--accent,#c8102e);border-radius:12px;padding:12px;margin:12px 0;font-weight:700;text-align:center}
+.lect-aviso{border:2px dashed var(--accent,#c8102e);border-radius:12px;padding:12px;margin:12px 0;font-weight:700;text-align:center;color:var(--ink,#1a1f2e)}
 </style>
 <script>
 /* Rumbo a Europa: dos preguntas de comprensión de la lectura. Hasta acertar las dos no se abren las misiones. */
@@ -581,6 +583,27 @@ body.lect-bloq #tabs button:not(:first-child)::after{content:" 🔒"}
     if (t) { var av = document.createElement("div"); av.className = "lect-aviso"; av.id = "lect-aviso"; av.textContent = "🔒 Las misiones se abren cuando contestes bien las dos preguntas de la lectura (arriba)."; t.parentNode.insertBefore(av, t.nextSibling); }
     orig(primera);
   }
+})();
+</script>
+<script id="solo-curso">
+/* Rumbo a Europa: muestra solo los indicadores del curso del alumno (5.º o 6.º). */
+(function(){
+  function curso(){
+    var c = (document.getElementById("alCurso") || {}).value || "";
+    if (!c) { try { c = ((JSON.parse(localStorage.getItem("rumbo-a-europa-v1") || "{}") || {}).alumno || {}).clase || ""; } catch (e) {} }
+    return /6/.test(c) ? "6" : /5/.test(c) ? "5" : "";
+  }
+  function aplicar(){
+    var c = curso();
+    document.querySelectorAll(".indic .cols > div").forEach(function (d) {
+      var h = d.querySelector("h4"), k = h && /([56])/.exec(h.textContent);
+      d.style.display = c && k && k[1] !== c ? "none" : "";
+    });
+  }
+  aplicar();
+  var cu = document.getElementById("alCurso");
+  if (cu) { cu.addEventListener("input", aplicar); cu.addEventListener("change", aplicar); }
+  setTimeout(aplicar, 500);
 })();
 </script>
 </body></html>

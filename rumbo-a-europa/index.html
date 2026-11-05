@@ -18,7 +18,8 @@
     <a href="#programa" class="nav-tab" data-tab="programa">Programa</a>
     <a href="#robotica" class="nav-tab" data-tab="robotica">Robótica</a>
     <a href="#piensa" class="nav-tab" data-tab="piensa">Piensa</a>
-    <a href="#profe" class="nav-tab nav-profe" data-tab="profe">Profe</a>
+    <a href="#familias" class="nav-tab nav-profe" data-tab="familias">Familias</a>
+    <a href="#profe" class="nav-tab" data-tab="profe">Profe</a>
   </div>
 </nav>
 
@@ -74,7 +75,7 @@
       <h2>Destinos</h2>
       <p class="intro">Tres aventuras, de más fácil a más difícil. Completa cada ciudad para desbloquear la siguiente de su aventura. Con menos bloques consigues más estrellas.</p>
       <div id="lista-destinos"></div>
-      <div class="excel-fila"><button class="btn sec" id="btn-excel">Descargar mi valoración (Excel)</button><span>Nombre, clase y nota de 0 a 5 de cada indicador en cada actividad (Programación y Robótica).</span></div>
+      <div class="excel-fila"><a class="btn sec" href="#notas-prog" style="text-decoration:none">Mi autoevaluación</a><button class="btn sec" id="btn-excel">Descargar mi valoración (Excel)</button><span>Nombre, clase y nota de 0 a 5 de cada indicador en cada actividad (Programación y Robótica).</span></div>
     </div>
   </section>
 
@@ -173,6 +174,7 @@
         <label for="rb-in-nombre">Nombre<input id="rb-in-nombre" maxlength="30" placeholder="Por ejemplo: Lucía"></label>
         <label for="rb-in-usuario">Usuario Educacyl<input id="rb-in-usuario" maxlength="60" placeholder="nombre.apellido"></label>
         <label for="rb-in-clase">Curso<select id="rb-in-clase"><option value="">Elige</option><option>5ºA</option><option>5ºB</option><option>6ºA</option><option>6ºB</option></select></label>
+        <a class="btn sec" href="#notas-rob" style="text-decoration:none">Mi autoevaluación</a>
         <button type="button" class="btn sec" id="rb-btn-excel">Descargar mi valoración (Excel)</button>
       </form>
       <div class="modos" id="rb-modos"></div>
@@ -255,6 +257,7 @@
 <script src="js/mapa-europa.js"></script>
 <script src="js/robotica.js"></script>
 <script src="js/profe.js"></script>
+<script src="js/familias.js"></script>
 <script src="js/rincones.js"></script>
 <script src="js/juego.js"></script>
 </body>

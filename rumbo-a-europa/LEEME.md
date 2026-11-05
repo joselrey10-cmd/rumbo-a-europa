@@ -37,6 +37,23 @@ puede revisar y volver a enviar. El Excel de la portada recoge los cuatro rincon
    notas y enviarlas: llegan a la hoja como "Nota del profe" y sustituyen a la anterior.
 La clave solo está en el script, así que el alumnado no puede leer las notas de los demás.
 
+**Importar alumnado (CSV):** en el panel Profe → "Importar alumnado desde un CSV". Columnas `nombre;apellidos;usuario`
+y, si quieres, `curso` y `correo` (de la familia). Hay una plantilla para descargar. Se guarda en la pestaña **Alumnado** de la hoja.
+También puedes escribir o cambiar el correo de la familia en la ficha de cada alumno.
+
+## Autoevaluación (Programa y Robótica)
+En la portada, los botones **Autoevaluación** de Programa y Robótica llevan a una página donde el alumno elige de 0 a 5
+lo que sabe hacer en cada indicador de su curso. Va a una pestaña aparte de la hoja, **Autoevaluación** (no cuenta en
+las medias de las notas), y el profe la ve en la ficha de cada alumno del panel Profe. Las notas automáticas de esos
+rincones ya no las puede cambiar el alumno: solo las consulta.
+
+## Familias (pestaña Familias)
+La familia escribe su correo; si está en la pestaña Alumnado, recibe un código de 6 cifras (vale 15 minutos) y con él
+ve solo los resultados de su hijo o hija (o de sus hijos, si tiene varios con el mismo correo). Si el correo no está
+registrado no se envía nada. El correo lo manda tu cuenta de Google (límite de unos 100 correos al día con Gmail).
+Al pegar el script nuevo hay que darle permiso para enviar correos: en Apps Script elige la función `doGet`, pulsa
+**Ejecutar** y acepta los permisos; después crea la nueva versión.
+
 ## Pantalla de Robótica
 En el menú de arriba hay dos pantallas: **Programación · Rumbo a Europa** (el juego con Pini) y **Robótica**.
 En Robótica se programa un robot sobre un mapa de Europa con todos los países, dividido en 6 × 6 casillas de 15 × 15 cm.

@@ -291,7 +291,7 @@ footer { padding-block: 28px; color: var(--ink-soft); font-size: 14px; border-to
 .nav-tab { color: #c9d2f2; text-decoration: none; font-weight: 800; font-size: 14px; padding: 6px 14px; border-radius: 999px; }
 .nav-tab:hover { color: #fff; }
 body[data-seccion="inicio"] [data-tab="inicio"], body[data-seccion="crea"] [data-tab="crea"], body[data-seccion="programa"] [data-tab="programa"],
-body[data-seccion="robotica"] [data-tab="robotica"], body[data-seccion="piensa"] [data-tab="piensa"], body[data-seccion="profe"] [data-tab="profe"] { background: var(--gold); color: var(--navy); }
+body[data-seccion="robotica"] [data-tab="robotica"], body[data-seccion="piensa"] [data-tab="piensa"], body[data-seccion="profe"] [data-tab="profe"], body[data-seccion="familias"] [data-tab="familias"] { background: var(--gold); color: var(--navy); }
 a.volver { text-decoration: none; }
 
 /* Robótica */
@@ -436,3 +436,14 @@ a.volver { text-decoration: none; }
 .hecho-ok { font-weight: 800; color: var(--green); font-size: 17px; }
 .p-hecho { display: inline-block; font-size: 13px; font-weight: 800; border-radius: 999px; padding: 2px 10px; background: #e6f4ec; color: var(--green); }
 .p-hecho.no { background: var(--paper-2); color: var(--ink-soft); }
+
+.p-import { background: #fff; border: 2px solid var(--line); border-radius: 14px; padding: 12px 16px; margin-top: 16px; }
+.p-import summary { font-family: var(--f-display); font-weight: 800; font-size: 18px; color: var(--navy); cursor: pointer; }
+.p-correo { margin-bottom: 12px; }
+.f-hijo { margin-bottom: 28px; }
+.f-ind { display: inline-flex; align-items: center; gap: 4px; margin: 2px 8px 2px 0; white-space: nowrap; }
+.p-tabla td small { display: block; }
+.auto-r { border-color: var(--navy); }
+.escala-auto { grid-template-columns: repeat(3, minmax(0, 1fr)); font-size: 14px; margin: 0; }
+.nota-fija { font-size: 16px; color: var(--ink-soft); }
+.nota-fija b { color: var(--navy); font-size: 20px; }

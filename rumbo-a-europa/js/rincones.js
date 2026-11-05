@@ -20,8 +20,8 @@ window.Rincones = (function () {
 
   const RINCONES = [
     { id: "crea", nombre: "Crea", color: "#e07a1f", icono: "🎨", texto: "Busca, escribe, diseña y graba: Word, PDF, correo, Excel, Canva y pódcast.", ir: "#crea", accion: "Ver los retos" },
-    { id: "prog", nombre: "Programa", color: "#3a7bd5", icono: "💻", texto: "Rumbo a Europa: programa con bloques el camino de ciudad en ciudad.", ir: "#programa", accion: "Jugar", notas: "#notas-prog" },
-    { id: "rob", nombre: "Robótica", color: "#2f8f5b", icono: "🤖", texto: "Programa el robot por el tapete de Europa: Robot, SPIKE Essential y SPIKE Prime.", ir: "#robotica", accion: "Ir a los retos", notas: "#notas-rob" },
+    { id: "prog", nombre: "Programa", color: "#3a7bd5", icono: "💻", texto: "Rumbo a Europa: programa con bloques el camino de ciudad en ciudad.", ir: "#programa", accion: "Jugar", notas: "#notas-prog", notasTxt: "Autoevaluación" },
+    { id: "rob", nombre: "Robótica", color: "#2f8f5b", icono: "🤖", texto: "Programa el robot por el tapete de Europa: Robot, SPIKE Essential y SPIKE Prime.", ir: "#robotica", accion: "Ir a los retos", notas: "#notas-rob", notasTxt: "Autoevaluación" },
     { id: "piensa", nombre: "Piensa", color: "#8a4fd8", icono: "🧠", texto: "Pasaporte TIC: ciberseguridad, contraseñas, correo, netiqueta, redes y uso responsable.", ir: "#piensa", accion: "Ver las paradas" }
   ];
 
@@ -132,7 +132,7 @@ window.Rincones = (function () {
         <h3>${r.nombre}</h3>
         <p>${r.texto}</p>
         <div class="rincon-dato">${k.crea ? `${k.hechas} de ${k.total} retos terminados` : `${k.hechas} de ${k.total} indicadores con nota${k.hechas ? ` · media ${k.media}` : ""}`}</div>
-        <div class="rincon-acc"><a class="btn" href="${r.ir}">${r.accion}</a>${r.notas ? `<a class="btn sec" href="${r.notas}">Mis notas</a>` : ""}</div>
+        <div class="rincon-acc"><a class="btn" href="${r.ir}">${r.accion}</a>${r.notas ? `<a class="btn sec" href="${r.notas}">${r.notasTxt || "Mis notas"}</a>` : ""}</div>
       </article>`;
     }).join("");
   }
@@ -186,18 +186,20 @@ window.Rincones = (function () {
     if (cifras.length !== indPiensa(p).length) return { error: "La llave no corresponde a esta actividad." };
     return { notas: cifras.split("").map((d) => Math.min(5, +d)), llave: m[0] };
   }
+  const enviada = (p) => indPiensa(p).every(([cod]) => valorDe(clavePiensa(p, cod)) !== null);
   function pintarPiensa() {
     const r = RINCONES[3], L = llaves();
-    raiz.innerHTML = cabecera(r, "Piensa · Pasaporte TIC", `Diez paradas de ciudadanía digital. Abre la actividad, termínala y vuelve aquí: la llave se rellena sola (o pégala). Después envía tus notas.`) +
+    raiz.innerHTML = cabecera(r, "Piensa · Pasaporte TIC", `Diez paradas de ciudadanía digital. Abre la actividad, termínala y vuelve aquí: la llave se rellena sola (o pégala). Pulsa «Enviar mi llave» y tu profe verá tu resultado.`) +
       `<div class="envoltura seccion"><div class="retos-r">${(window.PIENSA || []).map((p, i) => {
         const g = L[p.pre], auto = g ? leerLlave(g.llave, p) : {};
         return `<article class="reto-r" data-tipo="piensa" data-i="${i}">
           <div class="reto-r-cab"><span class="ses">Parada ${i + 1}</span><h3>${esc(p.titulo)}</h3></div>
           <p><a class="btn sec abrir" href="piensa/${p.slug}.html" target="_blank" rel="noopener">Abrir la actividad ↗</a></p>
-          <div class="llave-fila"><label>Llave<input class="llave" placeholder="${p.pre}-…" value="${esc(g ? g.llave : "")}" autocomplete="off" spellcheck="false"></label><button type="button" class="btn sec usar">Usar la llave</button></div>
-          ${g ? `<p class="nota-llave">${g.completa ? "🔑 Llave conseguida en la actividad." : "Llave de una actividad sin terminar: puedes terminarla para subir la nota."}</p>` : ""}
-          <div class="inds">${indPiensa(p).map(([cod, t], k) => { const v = valorDe(clavePiensa(p, cod)); return filaInd(clavePiensa(p, cod), cod, t, v !== null ? v : auto.notas ? auto.notas[k] : null); }).join("")}</div>
-          <div class="enviar-fila"><button type="button" class="btn enviar">Enviar notas</button><span class="estado" aria-live="polite"></span></div>
+          <div class="llave-fila"><label>Llave<input class="llave" placeholder="${p.pre}-…" value="${esc(g ? g.llave : "")}" autocomplete="off" spellcheck="false"></label></div>
+          ${g ? `<p class="nota-llave">${g.completa ? "🔑 Llave conseguida en la actividad." : "Llave de una actividad sin terminar: termínala para conseguir la llave completa."}</p>` : ""}
+          <div class="inds"><p class="inds-t">Indicadores de tu curso</p>${indPiensa(p).map(([cod, t]) => `<div class="fila-ind"><div class="fila-ind-t"><span class="cod">Ind. ${esc(cod)}</span> ${esc(t)}</div></div>`).join("")}</div>
+          ${enviada(p) ? `<p class="hecho-ok">✓ Llave enviada a tu profe</p>` : ""}
+          <div class="enviar-fila"><button type="button" class="btn enviar-llave">${enviada(p) ? "Volver a enviar la llave" : "Enviar mi llave"}</button><span class="estado" aria-live="polite"></span></div>
         </article>`;
       }).join("")}</div></div>`;
   }
@@ -206,13 +208,23 @@ window.Rincones = (function () {
   function pintarNotas(id) {
     const r = RINCONES.find((x) => x.id === id);
     const f = V().filas().filter((x) => x.grupo === id);
-    raiz.innerHTML = cabecera(r, `Mis notas · ${r.nombre}`, `La nota de cada actividad se pone sola al jugar y se envía a la hoja. Aquí puedes revisarla, cambiarla y volver a enviarla.`) +
+    const cods = [...new Set(f.map((x) => x.codigo).filter(Boolean))].sort();
+    const frases = (window.AUTOEVAL || {})[V().curso()] || {}, ESC = window.ESCALA_AUTO || ESCALA;
+    const guardada = (cod) => { const g = V().leer()[`auto-${cursoN()}-${id}|${cod}`]; return g ? g.nota : null; };
+    raiz.innerHTML = cabecera(r, `Mis notas y autoevaluación · ${r.nombre}`, `Primero dinos lo que sabes hacer. Debajo tienes las notas que has conseguido jugando (se ponen solas).`) +
       `<div class="envoltura seccion">
+        <article class="reto-r auto-r" data-tipo="auto" data-rincon="${id}">
+          <div class="reto-r-cab"><span class="ses">Autoevaluación</span><h3>¿Qué sé hacer en ${r.nombre}?</h3></div>
+          <p>Elige de 0 a 5 en cada frase. Sé sincero o sincera: sirve para que tu profe sepa en qué ayudarte.</p>
+          <ol class="escala escala-auto" start="0">${ESC.map((t, n) => `<li><b>${n}</b> ${t}</li>`).join("")}</ol>
+          <div class="inds">${cods.map((cod) => `<div class="fila-ind"><div class="fila-ind-t"><span class="cod">Ind. ${esc(cod)}</span> <b>${esc(frases[cod] || textoInd(cod))}</b></div>${chips(`auto-${cursoN()}-${id}|${cod}`, guardada(cod))}</div>`).join("")}</div>
+          <div class="enviar-fila"><button type="button" class="btn enviar-auto">Enviar mi autoevaluación</button><span class="estado" aria-live="polite"></span></div>
+        </article>
+        <h2 class="sa-tit" style="margin-top:24px">Mis notas jugando</h2>
         <p><a class="btn" href="${r.ir}">${r.accion}</a></p>
-        <div class="lista-notas">${f.map((x) => `<article class="reto-r nota-act" data-tipo="notas" data-clave="${esc(x.clave)}">
-          <div class="reto-r-cab"><span class="ses">${esc(x.pantalla)}</span><h3>${esc(x.actividad)}</h3></div>
-          <div class="inds">${filaInd(x.clave, x.codigo || "-", x.indicador, x.nota > 0 || V().leer()[x.clave] ? x.nota : null)}</div>
-          <div class="enviar-fila"><button type="button" class="btn sec enviar">Enviar nota</button><span class="estado" aria-live="polite"></span></div>
+        <div class="lista-notas">${f.map((x) => `<article class="reto-r nota-act">
+          <div class="reto-r-cab"><span class="ses">${esc(x.pantalla)}${x.codigo ? " · Ind. " + esc(x.codigo) : ""}</span><h3>${esc(x.actividad)}</h3></div>
+          <p class="nota-fija">${V().leer()[x.clave] ? `Nota: <b>${x.nota}</b> de 5` : "Todavía sin hacer"}</p>
         </article>`).join("")}</div>
       </div>`;
   }
@@ -231,6 +243,39 @@ window.Rincones = (function () {
       if (res.error) { estado(caja, res.error, "error"); return; }
       caja.querySelectorAll(".chips").forEach((g, k) => g.querySelectorAll("button").forEach((b) => b.setAttribute("aria-checked", String(+b.dataset.n === res.notas[k]))));
       estado(caja, "Notas puestas con la llave. Ahora pulsa Enviar notas.", "ok");
+      return;
+    }
+    const el = e.target.closest(".enviar-llave");
+    if (el) {
+      const caja = el.closest(".reto-r"), p = window.PIENSA[+caja.dataset.i];
+      if (faltanDatos()) { estado(caja, avisoDatos, "error"); return; }
+      const texto = $(".llave", caja).value.trim();
+      if (!texto) { estado(caja, "Termina la actividad para conseguir la llave (o pégala aquí).", "error"); return; }
+      const res = leerLlave(texto, p);
+      if (res.error) { estado(caja, res.error, "error"); return; }
+      const filas = indPiensa(p).map(([cod], k) => {
+        V().registrar(clavePiensa(p, cod), { nota: res.notas[k], codigo: cod, pantalla: "Piensa", actividad: p.titulo }, true);
+        return { destino: destinoPiensa(p), ciudad: p.titulo, personaje: "Piensa", programa: "Llave " + res.llave, indicador: cod, valoracion: res.notas[k] };
+      });
+      el.disabled = true; estado(caja, "Enviando…", "");
+      const ok = await V().enviarVarias(filas);
+      el.disabled = false;
+      if (ok) { pintarPiensa(); const c2 = raiz.querySelector(`.reto-r[data-i="${caja.dataset.i}"]`); if (c2) { estado(c2, "✓ Enviada.", "ok"); c2.scrollIntoView({ block: "center" }); } }
+      else estado(caja, "No se ha podido enviar. Revisa la conexión y vuelve a pulsar.", "error");
+      return;
+    }
+    const au = e.target.closest(".enviar-auto");
+    if (au) {
+      const caja = au.closest(".reto-r"), id = caja.dataset.rincon, r = RINCONES.find((x) => x.id === id);
+      if (faltanDatos()) { estado(caja, avisoDatos, "error"); return; }
+      const notas = leerChips(caja);
+      if (!notas.length) { estado(caja, "Elige de 0 a 5 en al menos una frase.", "error"); return; }
+      const obj = {};
+      notas.forEach((n) => { V().registrar(n.clave, { nota: n.nota }, true); obj[n.clave.split("|")[1]] = n.nota; });
+      au.disabled = true; estado(caja, "Enviando…", "");
+      const ok = await V().enviar({ accion: "autoevaluacion", rincon: r.nombre, notas: obj });
+      au.disabled = false;
+      estado(caja, ok ? "✓ Autoevaluación enviada a tu profe." : "No se ha podido enviar. Revisa la conexión y vuelve a pulsar.", ok ? "ok" : "error");
       return;
     }
     const fin = e.target.closest(".terminar");
@@ -296,6 +341,7 @@ window.Rincones = (function () {
     else if (h === "#notas-prog") pintarNotas("prog");
     else if (h === "#notas-rob") pintarNotas("rob");
     else if (h === "#profe" && window.Profe) window.Profe.pintar(raiz);
+    else if (h === "#familias" && window.Familias) window.Familias.pintar(raiz);
     else hecho = false;
     raiz.hidden = !hecho;
     if (hecho) window.scrollTo(0, 0);
@@ -305,6 +351,6 @@ window.Rincones = (function () {
   definir();
   // Si la actividad de Piensa está abierta en otra pestaña, al volver se ve la llave nueva.
   window.addEventListener("storage", (e) => { if (e.key === LLAVES && location.hash === "#piensa") pintarPiensa(); });
-  window.addEventListener("focus", () => { if (location.hash === "#piensa" && !raiz.querySelector(".reto-r .chips [aria-checked=true]")) pintarPiensa(); });
+  window.addEventListener("focus", () => { if (location.hash === "#piensa") pintarPiensa(); });
   return { ruta, leerLlave };
 })();
