@@ -116,9 +116,10 @@ function guardarAutoevaluacion(libro, d) {
 const ALUMNADO = ["Nombre", "Apellidos", "Usuario Educacyl", "Clase", "Correo familia"];
 const json = (o) => ContentService.createTextOutput(JSON.stringify(o)).setMimeType(ContentService.MimeType.JSON);
 const minus = (v) => String(v == null ? "" : v).trim().toLowerCase();
-// Grupo como P5A, P5B, P6A, P6B (P = Primaria). Acepta también 5ºA, 5A, "5º Primaria A"...
+// Grupo como P5A, P5B, P6A, P6B (P = Primaria). Convierte también el nombre antiguo 5ºA. Otros grupos (I5A de Infantil…) se quedan como están.
 function normGrupo(t) {
-  const m = /([56])\s*[º°o.]*\s*([ab])\b/i.exec(String(t == null ? "" : t).normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/primaria|curso/gi, " "));
+  const s = String(t == null ? "" : t).trim();
+  const m = /^p\s*([56])\s*([ab])$/i.exec(s) || /^([56])\s*[º°o.]*\s*([ab])$/i.exec(s);   // P5A, o el nombre antiguo 5ºA
   return m ? "P" + m[1] + m[2].toUpperCase() : String(t == null ? "" : t).trim();
 }
 
@@ -141,6 +142,7 @@ function importarAlumnado(libro, d) {
     (d.alumnos || []).slice(0, 2000).forEach((a) => {
       const u = String(a.usuario || "").trim().slice(0, 60);
       if (!u) { sinUsuario++; return; }
+      if (["P5A", "P5B", "P6A", "P6B"].indexOf(String(a.clase || "").trim()) < 0) { sinUsuario++; return; }   // solo esos grupos
       const fila = [String(a.nombre || "").trim().slice(0, 40), String(a.apellidos || "").trim().slice(0, 60), u, normGrupo(String(a.clase || "").trim().slice(0, 12)), String(a.correo || "").trim().slice(0, 250)];
       const i = pos[minus(u)];
       if (fila[4] === "-") fila[4] = i === undefined ? "" : "-";

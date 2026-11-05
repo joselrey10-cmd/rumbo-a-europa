@@ -13,7 +13,8 @@ window.Valoraciones = (function () {
 
   /* Grupo como P5A, P5B, P6A, P6B (P = Primaria). Acepta también los nombres antiguos (5ºA…). */
   function normGrupo(t) {
-    const m = /([56])\s*[º°o.]*\s*([ab])\b/i.exec(String(t || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/primaria|curso/gi, " "));
+    const s = String(t || "").trim();
+    const m = /^p\s*([56])\s*([ab])$/i.exec(s) || /^([56])\s*[º°o.]*\s*([ab])$/i.exec(s);   // P5A, o el nombre antiguo 5ºA
     return m ? `P${m[1]}${m[2].toUpperCase()}` : String(t || "").trim();
   }
   window.normGrupo = normGrupo;

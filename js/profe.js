@@ -169,7 +169,7 @@ window.Profe = (function () {
             ${RINC.map((r) => `<td>${res[r.id].media === null ? "–" : `<b>${res[r.id].media}</b>`}<small>${res[r.id].hechas}/${res[r.id].total} notas</small>${r.id === "crea" ? `<small>✓ ${res.crea.retos}/${res.crea.nRetos} retos</small>` : ""}</td>`).join("")}<td><b>${media}</b></td><td><button type="button" class="p-papelera" data-i="${i}" title="Dar de baja a ${esc(verNombre(a))}" aria-label="Dar de baja a ${esc(verNombre(a))}">🗑️</button></td></tr>`;
         }).join("")}</tbody></table></div>` : `<p class="intro">Todavía no hay notas de este grupo en la hoja.</p>`}
       <details class="p-import"><summary>Importar alumnado desde un CSV</summary>
-        <p class="intro">Columnas: <b>nombre; apellidos; usuario</b> (de Educacyl). Opcionales: <b>curso</b> (P5A, P5B, P6A, P6B; también vale 5ºA o 5A) y hasta dos <b>correos</b> de los tutores (columnas «correo tutor 1» y «correo tutor 2») (para que pueda consultar los resultados). Si el CSV no trae el curso, se ponen en ${grupo}. Si un alumno ya está, se actualizan sus datos.</p>
+        <p class="intro">Columnas obligatorias: <b>nombre; apellidos; usuario</b> (de Educacyl) y <b>curso</b>. Solo se importan las filas con el curso escrito exactamente <b>P5A, P5B, P6A o P6B</b>; el resto (Infantil, otros cursos o vacío) se salta. Opcionales: hasta dos <b>correos</b> de los tutores (columnas «correo tutor 1» y «correo tutor 2») para que la familia pueda consultar los resultados. Si un alumno ya está, se actualizan sus datos.</p>
         <div class="p-barra"><input type="file" id="p-csv" accept=".csv,text/csv,text/plain"><button type="button" class="btn sec" id="p-plantilla">Descargar plantilla CSV</button></div>
         <div id="p-csv-vista"></div>
       </details>
@@ -215,8 +215,8 @@ window.Profe = (function () {
   }
   const normal = (t) => String(t || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
   function claseValida(t) {
-    const m = /([56])\s*[º°o.]*\s*([ab])/i.exec(normal(t).replace(/primaria|curso/g, ""));
-    return m ? `P${m[1]}${m[2].toUpperCase()}` : "";
+    const g = String(t || "").trim();   // exactamente P5A, P5B, P6A o P6B (ni Infantil ni otros cursos)
+    return GRUPOS.indexOf(g) >= 0 ? g : "";
   }
   /* Hasta dos correos de tutores por alumno: se guardan juntos, separados por coma, en "Correo familia". */
   const separarCorreos = (t) => String(t || "").toLowerCase().split(/[;,\s]+/).filter((x) => x);
@@ -237,10 +237,11 @@ window.Profe = (function () {
     if (iN < 0 && iU < 0) { iN = 0; iA = 1; iU = 2; iC = filas[0].length > 3 ? 3 : -1; iE = filas[0].length > 4 ? 4 : -1; iEs.length = 0; for (let k = 4; k < filas[0].length; k++) iEs.push(k); datosF = filas; }   // sin cabecera
     const alumnosCSV = datosF.map((f) => ({
       nombre: f[iN] || "", apellidos: iA >= 0 ? f[iA] || "" : "", usuario: (f[iU] || "").replace(/@.*$/, ""),
-      clase: (iC >= 0 && claseValida(f[iC])) || grupo, correo: unirCorreos(iEs.map((k) => f[k]))
+      clase: iC >= 0 ? claseValida(f[iC]) : "", otroCurso: !(iC >= 0 && claseValida(f[iC])), correo: unirCorreos(iEs.map((k) => f[k]))
     }));
-    const validos = alumnosCSV.filter((a) => a.usuario && a.nombre), malos = alumnosCSV.length - validos.length;
-    vista.innerHTML = `<p><b>${validos.length}</b> alumnos listos para importar${malos ? ` · ${malos} filas sin nombre o sin usuario (no se importan)` : ""}.</p>
+    const otros = alumnosCSV.filter((a) => a.otroCurso).length;
+    const validos = alumnosCSV.filter((a) => a.usuario && a.nombre && !a.otroCurso).map(({ otroCurso, ...a }) => a), malos = alumnosCSV.length - validos.length - otros;
+    vista.innerHTML = `<p><b>${validos.length}</b> alumnos listos para importar${otros ? ` · ${otros} sin grupo P5A, P5B, P6A o P6B (no se importan)` : ""}${malos ? ` · ${malos} filas sin nombre o sin usuario (no se importan)` : ""}.</p>
       <div class="tabla-scroll"><table class="p-tabla"><thead><tr><th>Nombre</th><th>Apellidos</th><th>Usuario</th><th>Curso</th><th>Correos de la familia</th></tr></thead><tbody>
       ${validos.slice(0, 200).map((a) => `<tr><td>${esc(a.nombre)}</td><td>${esc(a.apellidos)}</td><td>${esc(a.usuario)}</td><td>${esc(a.clase)}</td><td>${esc(a.correo)}</td></tr>`).join("")}</tbody></table></div>
       <div class="enviar-fila" style="margin-top:10px"><button type="button" class="btn" id="p-importar"${validos.length ? "" : " disabled"}>Importar ${validos.length} alumnos</button><span class="estado" id="p-imp-estado"></span></div>`;
