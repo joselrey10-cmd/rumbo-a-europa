@@ -1,0 +1,249 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Rumbo a Europa</title>
+<meta name="description" content="Juego de programación por bloques: viaja por Europa con los personajes del cole.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;800&family=DM+Mono&family=Nunito:wght@400;700;800&display=swap">
+<link rel="stylesheet" href="css/estilo.css">
+</head>
+<body>
+<nav class="nav-global" aria-label="Secciones">
+  <div class="envoltura">
+    <a href="#" class="nav-tab" id="tab-programacion">Programación · Rumbo a Europa</a>
+    <a href="#robotica" class="nav-tab" id="tab-robotica">Robótica</a>
+  </div>
+</nav>
+
+
+<!-- PANTALLA DE INICIO -->
+<main id="inicio">
+  <header class="portada">
+    <div class="envoltura">
+      <div class="marca" id="marca"></div>
+      <div class="portada-grid">
+        <div>
+          <h1>Rumbo <span>a Europa</span></h1>
+          <p class="sub">Programa el camino con bloques y viaja de ciudad en ciudad. Recoge los sellos de tu pasaporte y llega a cada bandera.</p>
+          <button class="btn" id="btn-empezar">Empezar el viaje</button>
+        </div>
+        <div class="aro" aria-hidden="true">
+          <svg viewBox="0 0 200 200" id="aro-estrellas"></svg>
+          <div class="avatar-centro" id="avatar-portada"></div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <section class="seccion">
+    <div class="envoltura">
+      <span class="etiqueta">Paso 1</span>
+      <h2>¿Quién viaja hoy?</h2>
+      <p class="intro">Escribe tu nombre y tu clase para que tu profe vea tus resultados.</p>
+      <form class="alumno" id="form-alumno" autocomplete="off">
+        <label for="in-nombre">Nombre<input id="in-nombre" maxlength="30" placeholder="Por ejemplo: Lucía"></label>
+        <label for="in-clase">Clase<input id="in-clase" maxlength="12" placeholder="Por ejemplo: 5ºA"></label>
+        <span class="alumno-ok" id="alumno-ok" hidden></span>
+      </form>
+    </div>
+  </section>
+
+  <section class="seccion" style="padding-top:0">
+    <div class="envoltura">
+      <span class="etiqueta">Paso 2</span>
+      <h2>Elige tu viajero</h2>
+      <p class="intro">Personajes del cole que te acompañan en el viaje.</p>
+      <div class="personajes" id="lista-personajes"></div>
+    </div>
+  </section>
+
+  <section class="seccion">
+    <div class="envoltura">
+      <span class="etiqueta">Paso 3 · Tu pasaporte</span>
+      <h2>Destinos</h2>
+      <p class="intro">Tres aventuras, de más fácil a más difícil. Completa cada ciudad para desbloquear la siguiente de su aventura. Con menos bloques consigues más estrellas.</p>
+      <div id="lista-destinos"></div>
+      <div class="excel-fila"><button class="btn sec" id="btn-excel">Descargar mi valoración (Excel)</button><span>Nombre, clase y nota de 0 a 5 de cada indicador en cada actividad (Programación y Robótica).</span></div>
+    </div>
+  </section>
+
+  <section class="seccion">
+    <div class="envoltura">
+      <h2>Cómo se juega</h2>
+      <p class="intro">Unos pocos bloques y mucha lógica. Los bloques Si y Repetir hasta llegar aparecen en la aventura de Europa del Este.</p>
+      <div class="como">
+        <div><h3>Avanzar</h3><p>Da un paso en la dirección en la que miras.</p></div>
+        <div><h3>Girar</h3><p>Gira a la izquierda o a la derecha sin moverte.</p></div>
+        <div><h3>Saltar</h3><p>Pasa por encima de una maleta o de un canal.</p></div>
+        <div><h3>Repetir</h3><p>Repite los bloques de dentro las veces que elijas.</p></div>
+        <div><h3>Si…</h3><p>Hace lo de dentro solo si se cumple: si hay camino, si hay algo que saltar…</p></div>
+        <div><h3>Repetir hasta llegar</h3><p>Repite lo de dentro hasta que llegas a la bandera.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="envoltura" id="pie"></div>
+  </footer>
+</main>
+
+<!-- PANTALLA DE JUEGO -->
+<main id="juego" hidden>
+  <div class="barra-juego">
+    <div class="envoltura">
+      <button class="volver" id="btn-volver">← Pasaporte</button>
+      <div>
+        <h2 id="titulo-nivel">Madrid</h2>
+        <div class="pais" id="pais-nivel">España</div>
+      </div>
+      <div class="contador" id="contador-sellos"></div>
+    </div>
+  </div>
+
+  <div class="envoltura">
+    <div class="objetivo">
+      <div class="cara" id="cara-objetivo"></div>
+      <p><strong id="texto-objetivo"></strong><br><span class="dato" id="texto-dato"></span><span class="indicador" id="texto-indicador" hidden></span></p>
+    </div>
+
+    <div class="juego">
+      <div class="tablero-marco">
+        <div class="tablero" id="tablero"></div>
+      </div>
+
+      <div class="editor">
+        <div class="panel panel-puzle" id="panel-puzle" hidden>
+          <h3>Tu programa <small id="cuenta-puzle"></small></h3>
+          <p class="ayuda">Arrastra bloques desde la izquierda y engánchalos debajo de “Al empezar”. Para borrar uno, llévalo a la papelera.</p>
+          <div id="blockly" class="blockly-area"></div>
+        </div>
+        <div class="editor-clasico" id="editor-clasico">
+        <div class="panel">
+          <h3>Bloques <small>toca para añadir</small></h3>
+          <div class="paleta" id="paleta"></div>
+          <p class="donde" id="donde"></p>
+        </div>
+        <div class="panel">
+          <h3>Tu programa <small id="cuenta-bloques"></small></h3>
+          <ol class="programa" id="programa"></ol>
+        </div>
+        </div>
+        <p class="aviso" id="aviso" hidden></p>
+        <div class="controles">
+          <button class="btn" id="btn-ejecutar">▶ Ejecutar</button>
+          <button class="btn sec" id="btn-reiniciar">Reiniciar</button>
+          <button class="btn peligro" id="btn-borrar">Borrar todo</button>
+          <label class="velocidad" for="sel-velocidad">Velocidad
+            <select id="sel-velocidad">
+              <option value="650">Lenta</option>
+              <option value="420" selected>Normal</option>
+              <option value="200">Rápida</option>
+            </select>
+          </label>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+
+<!-- PANTALLA DE ROBÓTICA -->
+<main id="robotica" hidden>
+  <section id="rb-menu">
+    <header class="portada portada-rob">
+      <div class="envoltura">
+        <span class="etiqueta etiqueta-clara">Tapete de Europa · 6 × 6 casillas de 15 × 15 cm</span>
+        <h1>Robótica</h1>
+        <p class="sub">Programa un robot para viajar por el mapa de Europa. Empieza con el robot de suelo y pasa después a los bloques de iconos y de palabras para preparar el trabajo con el robot de verdad.</p>
+      </div>
+    </header>
+    <div class="envoltura seccion">
+      <form class="alumno rb-alumno" id="rb-form-alumno" autocomplete="off">
+        <label for="rb-in-nombre">Nombre<input id="rb-in-nombre" maxlength="30" placeholder="Por ejemplo: Lucía"></label>
+        <label for="rb-in-clase">Clase<input id="rb-in-clase" maxlength="12" placeholder="Por ejemplo: 5ºA"></label>
+        <button type="button" class="btn sec" id="rb-btn-excel">Descargar mi valoración (Excel)</button>
+      </form>
+      <div class="modos" id="rb-modos"></div>
+      <p class="nota-marca">LEGO® y SPIKE™ son marcas de LEGO Group. Esta web no está relacionada con LEGO: los bloques están dibujados de nuevo para practicar su forma de programar.</p>
+    </div>
+  </section>
+
+  <section id="rb-juego" hidden>
+    <div class="barra-juego">
+      <div class="envoltura">
+        <a class="volver" href="#robotica">← Niveles</a>
+        <div>
+          <h2 id="rb-titulo"></h2>
+          <div class="pais" id="rb-modo"></div>
+        </div>
+        <div class="contador" id="rb-donde"></div>
+      </div>
+    </div>
+    <div class="envoltura">
+      <div class="objetivo">
+        <div>
+          <p><strong id="rb-texto-reto"></strong><br><span class="dato" id="rb-ayuda"></span><span class="indicador" id="rb-indicador" hidden></span></p>
+          <ol class="lista-metas" id="rb-lista-metas"></ol>
+        </div>
+      </div>
+      <div class="juego con-puzle">
+        <div class="tablero-marco">
+          <div class="mapa-robot">
+            <img id="rb-mapa" alt="Mapa de Europa con una cuadrícula de 6 por 6 casillas">
+            <svg viewBox="0 0 600 600" class="capa-robot" aria-hidden="true">
+              <g id="rb-salida"><rect x="-30" y="-30" width="60" height="60" rx="8" fill="none" stroke="#14225a" stroke-width="3" stroke-dasharray="6 5"/></g>
+              <g id="rb-metas"></g>
+              <polyline id="rb-rastro" fill="none" stroke="#c8102e" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="2 8" points=""/>
+              <g id="rb-robot"></g>
+              <text id="rb-texto" text-anchor="middle" font-family="DM Mono, monospace" font-size="20" font-weight="700" fill="#ffd400" stroke="#14225a" stroke-width="5" paint-order="stroke"></text>
+            </svg>
+          </div>
+        </div>
+        <div class="editor">
+          <div class="panel panel-puzle">
+            <h3>Programa del robot <small>arrastra y encaja</small></h3>
+            <div id="rb-blockly" class="blockly-area"></div>
+          </div>
+          <p class="aviso" id="rb-aviso" hidden></p>
+          <div class="controles">
+            <button class="btn" id="rb-ejecutar">▶ Ejecutar</button>
+            <button class="btn sec" id="rb-reiniciar">Reiniciar</button>
+            <button class="btn peligro" id="rb-borrar">Borrar todo</button>
+            <label class="velocidad" for="rb-rapidez">Rapidez
+              <select id="rb-rapidez">
+                <option value="1">Real</option>
+                <option value="2" selected>×2</option>
+                <option value="4">×4</option>
+              </select>
+            </label>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="velo" id="rb-velo" hidden>
+    <div class="ventana" id="rb-ventana" role="dialog" aria-modal="true"></div>
+  </div>
+</main>
+
+<div class="velo" id="velo" hidden>
+  <div class="ventana" id="ventana" role="dialog" aria-modal="true"></div>
+</div>
+
+<script src="js/personajes.js"></script>
+<script src="js/niveles.js"></script>
+<script src="js/indicadores.js"></script>
+<script src="js/valoraciones.js"></script>
+<script src="js/vendor/xlsx.mini.min.js"></script>
+<script src="js/vendor/blockly.min.js"></script>
+<script src="js/vendor/blockly-es.js"></script>
+<script src="js/editor-bloques.js"></script>
+<script src="js/mapa-europa.js"></script>
+<script src="js/robotica.js"></script>
+<script src="js/juego.js"></script>
+</body>
+</html>
