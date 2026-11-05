@@ -11,14 +11,22 @@ window.Valoraciones = (function () {
   function leerJSON(k, def) { try { return JSON.parse(localStorage.getItem(k) || "null") || def; } catch (e) { return def; } }
   function escribirJSON(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
 
-  function alumno() { return Object.assign({ nombre: "", usuario: "", clase: "" }, leerJSON(CLAVE_ALUMNO, {}).alumno || {}); }
+  /* Grupo como P5A, P5B, P6A, P6B (P = Primaria). Acepta también los nombres antiguos (5ºA…). */
+  function normGrupo(t) {
+    const m = /([56])\s*[º°o.]*\s*([ab])\b/i.exec(String(t || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/primaria|curso/gi, " "));
+    return m ? `P${m[1]}${m[2].toUpperCase()}` : String(t || "").trim();
+  }
+  window.normGrupo = normGrupo;
+  // Pasa los grupos guardados con el nombre antiguo (5ºA…) al nuevo (P5A…), para todas las pantallas.
+  (function () { const g = leerJSON(CLAVE_ALUMNO, null); if (g && g.alumno && g.alumno.clase && normGrupo(g.alumno.clase) !== g.alumno.clase) { g.alumno.clase = normGrupo(g.alumno.clase); escribirJSON(CLAVE_ALUMNO, g); } })();
+  function alumno() { const a = Object.assign({ nombre: "", usuario: "", clase: "" }, leerJSON(CLAVE_ALUMNO, {}).alumno || {}); a.clase = normGrupo(a.clase); return a; }
   function ponerAlumno(nombre, clase, usuario) {
     const g = leerJSON(CLAVE_ALUMNO, {}), antes = g.alumno || {};
-    g.alumno = { nombre: (nombre || "").trim(), clase: (clase || "").trim(), usuario: (usuario === undefined ? antes.usuario || "" : usuario).trim() };
+    g.alumno = { nombre: (nombre || "").trim(), clase: normGrupo(clase), usuario: (usuario === undefined ? antes.usuario || "" : usuario).trim() };
     escribirJSON(CLAVE_ALUMNO, g);
     window.dispatchEvent(new CustomEvent("alumno-cambiado", { detail: g.alumno }));
   }
-  const curso = () => (/^\s*6/.test(alumno().clase || "") ? "6º" : "5º");
+  const curso = () => (/6/.test(alumno().clase || "") ? "6º" : "5º");
 
   function indicador(tipo, ref) {
     const c = curso();

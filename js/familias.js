@@ -70,13 +70,13 @@ window.Familias = (function () {
       `<div class="envoltura seccion">
         <p class="p-barra"><button type="button" class="btn sec" id="f-salir">Salir</button></p>
         ${hijos.map((h) => {
-          const c = /^\s*6/.test(h.clase || "") ? "6º" : "5º";
+          const c = /6/.test(h.clase || "") ? "6º" : "5º";
           const a = { notas: P.notasDe(cab, h.fila), terminados: {} };
           (h.hechos || []).forEach(([destino, programa, fecha]) => { a.terminados[String(destino)] = { ruta: String(programa || "").replace(/^Terminado ·\s*/, ""), fecha }; });
           const res = P.resumen(a, c), cat = P.catalogo(c);
           const medias = P.mediasInd([a], c);
           return `<section class="f-hijo">
-            <h2 class="sa-tit">${esc(`${h.nombre || ""} ${h.apellidos || ""}`.trim())} · ${esc(h.clase)}</h2>
+            <h2 class="sa-tit">${esc(`${h.nombre || ""} ${h.apellidos || ""}`.trim())} · ${esc(window.normGrupo ? window.normGrupo(h.clase) : h.clase)}</h2>
             <div class="p-resumen">${P.RINC.map((r) => `<div style="--rc:${r.color}"><b>${r.nombre}</b><span>${res[r.id].media === null ? "–" : res[r.id].media}</span><small>${res[r.id].hechas} de ${res[r.id].total} indicadores con nota${r.id === "crea" ? ` · ✓ ${res.crea.retos}/${res.crea.nRetos} retos terminados` : ""}</small></div>`).join("")}</div>
             ${P.RINC.map((r) => {
               const acts = cat.filter((x) => x.rincon === r.id && x.inds.length);

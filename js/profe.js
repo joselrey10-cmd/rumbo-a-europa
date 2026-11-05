@@ -8,15 +8,16 @@ window.Profe = (function () {
   "use strict";
   const $ = (s, r) => (r || document).querySelector(s);
   const esc = (t) => String(t == null ? "" : t).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
-  const GRUPOS = ["5ºA", "5ºB", "6ºA", "6ºB"];
+  const GRUPOS = ["P5A", "P5B", "P6A", "P6B"];
   const RINC = [
     { id: "crea", nombre: "Crea", color: "#e07a1f" }, { id: "prog", nombre: "Programa", color: "#3a7bd5" },
     { id: "rob", nombre: "Robótica", color: "#2f8f5b" }, { id: "piensa", nombre: "Piensa", color: "#8a4fd8" }
   ];
   const CLAVE_SES = "rumbo-profe-clave";
-  let raiz = null, datos = null, grupo = "5ºA", alumnoSel = null, extra = [];
+  let raiz = null, datos = null, grupo = "P5A", alumnoSel = null, extra = [];
 
-  const cursoDe = (g) => (/^\s*6/.test(g || "") ? "6º" : "5º");
+  const G = (t) => (window.normGrupo ? window.normGrupo(t) : String(t || ""));
+  const cursoDe = (g) => (/6/.test(g || "") ? "6º" : "5º");
   const igual = (a, b) => String(a || "").trim().toLowerCase() === String(b || "").trim().toLowerCase();
   const textoInd = (c, cod) => ((window.INDICADORES || {})[c] || {})[cod] || "";
   const columna = (destino, cod) => String(destino).slice(0, 60) + " · Ind. " + cod;
@@ -45,12 +46,12 @@ window.Profe = (function () {
     const iN = cab.indexOf("Nombre"), iU = cab.indexOf("Usuario Educacyl"), iC = cab.indexOf("Clase");
     // 1) Alumnado importado (pestaña Alumnado): nombre, apellidos, usuario, clase, correo de la familia
     const lista = (datos.alumnado || []).filter((f) => f[2]).map((f) => ({
-      nombre: `${f[0] || ""} ${f[1] || ""}`.trim(), nom: String(f[0] || "").trim(), apellidos: String(f[1] || "").trim(), usuario: String(f[2] || ""), clase: String(f[3] || ""), correo: String(f[4] || ""), notas: {}, terminados: {}, registrado: true
+      nombre: `${f[0] || ""} ${f[1] || ""}`.trim(), nom: String(f[0] || "").trim(), apellidos: String(f[1] || "").trim(), usuario: String(f[2] || ""), clase: G(f[3]), correo: String(f[4] || ""), notas: {}, terminados: {}, registrado: true
     }));
     // 2) Notas de la pestaña Valoraciones
     datos.filas.forEach((f) => {
       const notas = notasDe(cab, f);
-      const u = iU >= 0 ? String(f[iU] || "") : "", n = String(f[iN] || ""), c = String(f[iC] || "");
+      const u = iU >= 0 ? String(f[iU] || "") : "", n = String(f[iN] || ""), c = G(f[iC]);
       let a = lista.find((x) => u ? igual(x.usuario, u) : (igual(x.nombre, n) && igual(x.clase, c)));
       if (a) Object.assign(a.notas, notas);
       else lista.push({ nombre: n, usuario: u, clase: c, correo: "", notas, terminados: {} });
@@ -60,7 +61,7 @@ window.Profe = (function () {
     if (av.length > 1) {
       const ac = av[0].map(String);
       av.slice(1).forEach((f) => {
-        const u = String(f[2] || ""), n = String(f[1] || ""), c = String(f[3] || "");
+        const u = String(f[2] || ""), n = String(f[1] || ""), c = G(f[3]);
         let a = lista.find((x) => u ? igual(x.usuario, u) : (igual(x.nombre, n) && igual(x.clase, c)));
         if (!a) { a = { nombre: n, usuario: u, clase: c, correo: "", notas: {}, terminados: {} }; lista.push(a); }
         a.auto = {}; a.autoFecha = f[0];
@@ -68,7 +69,8 @@ window.Profe = (function () {
       });
     }
     // Retos de Crea terminados (aunque el alumno aún no tenga notas)
-    (datos.hechos || []).forEach(([nombre, usuario, clase, destino, programa, fecha]) => {
+    (datos.hechos || []).forEach(([nombre, usuario, clase0, destino, programa, fecha]) => {
+      const clase = G(clase0);
       let a = lista.find((x) => usuario ? igual(x.usuario, usuario) : (igual(x.nombre, nombre) && igual(x.clase, clase)));
       if (!a) { a = { nombre: String(nombre || ""), usuario: String(usuario || ""), clase: String(clase || ""), notas: {}, terminados: {} }; lista.push(a); }
       a.terminados[String(destino)] = { ruta: String(programa || "").replace(/^Terminado ·\s*/, ""), fecha };
@@ -89,7 +91,7 @@ window.Profe = (function () {
     const p = t.split(/\s+/); const n = p.shift() || ""; return [p.join(" "), n];
   }
   const verNombre = (a) => { const [ap, n] = partes(a); return ap ? `${ap}, ${n}` : n || a.nombre || "(sin nombre)"; };
-  const delGrupo = () => alumnos().filter((a) => igual(a.clase, grupo)).sort((a, b) => {
+  const delGrupo = () => alumnos().filter((a) => igual(G(a.clase), grupo)).sort((a, b) => {
     const x = partes(a), y = partes(b); return x[0].localeCompare(y[0], "es", { sensitivity: "base" }) || x[1].localeCompare(y[1], "es", { sensitivity: "base" });
   });
 
@@ -167,7 +169,7 @@ window.Profe = (function () {
             ${RINC.map((r) => `<td>${res[r.id].media === null ? "–" : `<b>${res[r.id].media}</b>`}<small>${res[r.id].hechas}/${res[r.id].total} notas</small>${r.id === "crea" ? `<small>✓ ${res.crea.retos}/${res.crea.nRetos} retos</small>` : ""}</td>`).join("")}<td><b>${media}</b></td><td><button type="button" class="p-papelera" data-i="${i}" title="Dar de baja a ${esc(verNombre(a))}" aria-label="Dar de baja a ${esc(verNombre(a))}">🗑️</button></td></tr>`;
         }).join("")}</tbody></table></div>` : `<p class="intro">Todavía no hay notas de este grupo en la hoja.</p>`}
       <details class="p-import"><summary>Importar alumnado desde un CSV</summary>
-        <p class="intro">Columnas: <b>nombre; apellidos; usuario</b> (de Educacyl). Opcionales: <b>curso</b> (5ºA, 5ºB, 6ºA, 6ºB) y hasta dos <b>correos</b> de los tutores (columnas «correo tutor 1» y «correo tutor 2») (para que pueda consultar los resultados). Si el CSV no trae el curso, se ponen en ${grupo}. Si un alumno ya está, se actualizan sus datos.</p>
+        <p class="intro">Columnas: <b>nombre; apellidos; usuario</b> (de Educacyl). Opcionales: <b>curso</b> (P5A, P5B, P6A, P6B; también vale 5ºA o 5A) y hasta dos <b>correos</b> de los tutores (columnas «correo tutor 1» y «correo tutor 2») (para que pueda consultar los resultados). Si el CSV no trae el curso, se ponen en ${grupo}. Si un alumno ya está, se actualizan sus datos.</p>
         <div class="p-barra"><input type="file" id="p-csv" accept=".csv,text/csv,text/plain"><button type="button" class="btn sec" id="p-plantilla">Descargar plantilla CSV</button></div>
         <div id="p-csv-vista"></div>
       </details>
@@ -187,7 +189,7 @@ window.Profe = (function () {
     });
     raiz.querySelectorAll(".p-alumno").forEach((b) => b.onclick = () => pintarAlumno(lista[+b.dataset.i]));
     raiz.querySelectorAll(".p-papelera").forEach((b) => b.onclick = () => darDeBaja(lista[+b.dataset.i], b, null));
-    $("#p-plantilla").onclick = () => descargar("plantilla_alumnado.csv", "nombre;apellidos;usuario;curso;correo tutor 1;correo tutor 2\nLucía;Martín Pérez;lucia.martper;5ºA;madre.martin@ejemplo.com;padre.martin@ejemplo.com\n");
+    $("#p-plantilla").onclick = () => descargar("plantilla_alumnado.csv", "nombre;apellidos;usuario;curso;correo tutor 1;correo tutor 2\nLucía;Martín Pérez;lucia.martper;P5A;madre.martin@ejemplo.com;padre.martin@ejemplo.com\n");
     $("#p-csv").onchange = (e) => leerCSV(e.target.files[0]);
   }
 
@@ -214,7 +216,7 @@ window.Profe = (function () {
   const normal = (t) => String(t || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
   function claseValida(t) {
     const m = /([56])\s*[º°o.]*\s*([ab])/i.exec(normal(t).replace(/primaria|curso/g, ""));
-    return m ? `${m[1]}º${m[2].toUpperCase()}` : "";
+    return m ? `P${m[1]}${m[2].toUpperCase()}` : "";
   }
   /* Hasta dos correos de tutores por alumno: se guardan juntos, separados por coma, en "Correo familia". */
   const separarCorreos = (t) => String(t || "").toLowerCase().split(/[;,\s]+/).filter((x) => x);

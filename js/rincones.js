@@ -14,7 +14,7 @@ window.Rincones = (function () {
   const V = () => window.Valoraciones;
   const raiz = $("#rincones");
   const esc = (t) => String(t == null ? "" : t).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
-  const CLASES = ["5ºA", "5ºB", "6ºA", "6ºB"];
+  const CLASES = ["P5A", "P5B", "P6A", "P6B"];
   const LLAVES = "rumbo-piensa-llaves";
   const ESCALA = ["No hecho", "Lo ha intentado sin conseguirlo", "Ha conseguido una parte", "Conseguido con bastante ayuda", "Conseguido casi del todo", "Conseguido perfectamente"];
 

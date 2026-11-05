@@ -41,7 +41,7 @@ function doPost(e) {
   }
   const d = pedido;
   const limpiar = (v, max) => String(v == null ? "" : v).slice(0, max);
-  const usuario = limpiar(d.usuario, 60), clase = limpiar(d.clase, 12);
+  const usuario = limpiar(d.usuario, 60), clase = normGrupo(limpiar(d.clase, 12));
   const nombre = nombreCompleto(libro, limpiar(d.nombre, 30), usuario);
   const nota = d.valoracion === "" || d.valoracion == null ? "" : Number(d.valoracion);
   hoja.appendRow([
@@ -87,7 +87,7 @@ function datosProfe(libro, d) {
 // con lo que el alumno dice que sabe hacer (0-5). Va aparte: no cuenta en las medias de las notas.
 function guardarAutoevaluacion(libro, d) {
   const limpiar = (v, max) => String(v == null ? "" : v).slice(0, max);
-  const usuario = limpiar(d.usuario, 60), clase = limpiar(d.clase, 12), rincon = limpiar(d.rincon, 20);
+  const usuario = limpiar(d.usuario, 60), clase = normGrupo(limpiar(d.clase, 12)), rincon = limpiar(d.rincon, 20);
   const nombre = nombreCompleto(libro, limpiar(d.nombre, 30), usuario);
   const lock = LockService.getScriptLock(); lock.waitLock(10000);
   try {
@@ -96,7 +96,7 @@ function guardarAutoevaluacion(libro, d) {
     const cab = h.getRange(1, 1, 1, h.getLastColumn()).getValues()[0];
     const filas = h.getLastRow() > 1 ? h.getRange(2, 1, h.getLastRow() - 1, 4).getValues() : [];
     const igual = (a, b) => String(a).trim().toLowerCase() === String(b).trim().toLowerCase();
-    let fila = filas.findIndex((f) => usuario ? igual(f[2], usuario) : (igual(f[1], nombre) && igual(f[3], clase))) + 2;
+    let fila = filas.findIndex((f) => usuario ? igual(f[2], usuario) : (igual(f[1], nombre) && igual(normGrupo(f[3]), clase))) + 2;
     if (fila < 2) fila = h.getLastRow() + 1;
     h.getRange(fila, 1, 1, 4).setValues([[new Date(), nombre, usuario || (filas[fila - 2] || [])[2] || "", clase]]);
     Object.keys(d.notas || {}).slice(0, 60).forEach((cod) => {
@@ -116,6 +116,11 @@ function guardarAutoevaluacion(libro, d) {
 const ALUMNADO = ["Nombre", "Apellidos", "Usuario Educacyl", "Clase", "Correo familia"];
 const json = (o) => ContentService.createTextOutput(JSON.stringify(o)).setMimeType(ContentService.MimeType.JSON);
 const minus = (v) => String(v == null ? "" : v).trim().toLowerCase();
+// Grupo como P5A, P5B, P6A, P6B (P = Primaria). Acepta también 5ºA, 5A, "5º Primaria A"...
+function normGrupo(t) {
+  const m = /([56])\s*[º°o.]*\s*([ab])\b/i.exec(String(t == null ? "" : t).normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/primaria|curso/gi, " "));
+  return m ? "P" + m[1] + m[2].toUpperCase() : String(t == null ? "" : t).trim();
+}
 
 function hojaAlumnado(libro) {
   const h = libro.getSheetByName("Alumnado") || libro.insertSheet("Alumnado");
@@ -136,7 +141,7 @@ function importarAlumnado(libro, d) {
     (d.alumnos || []).slice(0, 2000).forEach((a) => {
       const u = String(a.usuario || "").trim().slice(0, 60);
       if (!u) { sinUsuario++; return; }
-      const fila = [String(a.nombre || "").trim().slice(0, 40), String(a.apellidos || "").trim().slice(0, 60), u, String(a.clase || "").trim().slice(0, 12), String(a.correo || "").trim().slice(0, 250)];
+      const fila = [String(a.nombre || "").trim().slice(0, 40), String(a.apellidos || "").trim().slice(0, 60), u, normGrupo(String(a.clase || "").trim().slice(0, 12)), String(a.correo || "").trim().slice(0, 250)];
       const i = pos[minus(u)];
       if (fila[4] === "-") fila[4] = i === undefined ? "" : "-";
       if (i === undefined) { pos[minus(u)] = filas.length; filas.push(fila); nuevos++; }
@@ -243,7 +248,7 @@ function actualizarValoraciones(libro, nombre, usuario, clase, columna, nota) {
     const filas = hoja.getLastRow() > 1 ? hoja.getRange(2, 1, hoja.getLastRow() - 1, 3).getValues() : [];
     const igual = (a, b) => String(a).trim().toLowerCase() === String(b).trim().toLowerCase();
     // El alumno se reconoce por su usuario de Educacyl; si no lo tiene, por nombre y clase.
-    let fila = filas.findIndex((f) => usuario ? igual(f[1], usuario) : (igual(f[0], nombre) && igual(f[2], clase))) + 2;
+    let fila = filas.findIndex((f) => usuario ? igual(f[1], usuario) : (igual(f[0], nombre) && igual(normGrupo(f[2]), clase))) + 2;
     if (fila < 2) { fila = hoja.getLastRow() + 1; hoja.getRange(fila, 1, 1, 3).setValues([[nombre, usuario, clase]]); }
     else hoja.getRange(fila, 1, 1, 3).setValues([[nombre, usuario || filas[fila - 2][1], clase]]);
     // Se guarda la última nota enviada (el alumno puede revisarla y volver a enviarla).
@@ -311,7 +316,7 @@ function ordenarHoja(libro, nombreHoja, iN, iU, iC, iA) {
   const filas = h.getRange(2, 1, n, c).getValues();
   const cmp = (x, y) => { for (let i = 0; i < 3; i++) { const r = x[i].localeCompare(y[i], "es"); if (r) return r; } return 0; };
   // Fuera de Alumnado, el nombre se escribe como "Apellidos, Nombre".
-  if (iA == null) filas.forEach((f) => { f[iN] = nombreCompleto(libro, f[iN], f[iU], mapa); });
+  filas.forEach((f) => { f[iC] = normGrupo(f[iC]); if (iA == null) f[iN] = nombreCompleto(libro, f[iN], f[iU], mapa); });
   const ord = filas.map((f) => ({ f, k: claveOrden(mapa, f[iN], f[iU], f[iC], iA == null ? null : f[iA]) })).sort((a, b) => cmp(a.k, b.k)).map((x) => x.f);
   h.getRange(2, 1, n, c).setValues(ord);
 }
@@ -328,7 +333,7 @@ function ordenarTodo(libro) {
 // Borra al alumno de Alumnado, Valoraciones, Autoevaluación y Resultados (por su usuario; si no tiene, por nombre y clase).
 function borrarAlumno(libro, d) {
   if (CLAVE_PROFE === "cambia-esta-clave" || String(d.clave || "") !== CLAVE_PROFE) return json({ ok: false, error: "Clave incorrecta." });
-  const usuario = minus(d.usuario), nombre = minus(d.nombre), clase = minus(d.clase);
+  const usuario = minus(d.usuario), nombre = minus(d.nombre), clase = minus(normGrupo(d.clase));
   if (!usuario && !nombre) return json({ ok: false, error: "Falta el alumno." });
   const lock = LockService.getScriptLock(); lock.waitLock(20000);
   try {
@@ -339,7 +344,7 @@ function borrarAlumno(libro, d) {
       const v = h.getDataRange().getValues(), cab = v[0].map(String);
       const iU = cab.indexOf("Usuario Educacyl"), iN = cab.indexOf("Nombre"), iC = cab.indexOf("Clase"), iA = cab.indexOf("Apellidos");
       const nombreDe = (f) => minus(iA >= 0 ? (f[iN] + " " + f[iA]) : f[iN]);
-      const es = (f) => usuario ? (iU >= 0 && minus(f[iU]) === usuario) : (nombreDe(f) === nombre && minus(f[iC]) === clase && !(iU >= 0 && f[iU]));
+      const es = (f) => usuario ? (iU >= 0 && minus(f[iU]) === usuario) : (nombreDe(f) === nombre && minus(normGrupo(f[iC])) === clase && !(iU >= 0 && f[iU]));
       const quedan = v.slice(1).filter((f) => !es(f));
       const n = v.length - 1 - quedan.length;
       if (!n) return;

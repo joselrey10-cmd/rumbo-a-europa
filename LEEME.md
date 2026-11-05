@@ -14,7 +14,7 @@ Pini camina de frente, de lado o de espaldas según hacia dónde vaya. El editor
 
 ## Rincones TIC (portada)
 La web se abre en **Rincones**: el alumno escribe su nombre, su **usuario de Educacyl** y elige su **curso**
-(5ºA, 5ºB, 6ºA o 6ºB). El curso decide qué indicadores ve: los de 5.º o los de 6.º. Hay cuatro rincones:
+(P5A, P5B, P6A o P6B). El curso decide qué indicadores ve: los de 5.º o los de 6.º. Hay cuatro rincones:
 - **Crea**: los retos de las sesiones 1 y 2 de cada SA (Word, PDF y correo, Excel, Canva, pódcast), con ruta
   sencilla, intermedia o avanzada y ExtraTIC. Datos en `js/rincones-datos.js` (`CREA`). Van en orden: el alumno
   marca la ruta y pulsa «He terminado el reto», y así se abre el siguiente. No pone nota: la nota de los
@@ -32,7 +32,7 @@ puede revisar y volver a enviar. El Excel de la portada recoge los cuatro rincon
 ## Panel del profesor (pestaña Profe)
 1. En el script de la hoja (`registro-google-apps-script.gs`) cambia `CLAVE_PROFE = "cambia-esta-clave"` por una clave tuya.
 2. Pega el script en Apps Script y crea una **nueva versión** (Gestionar implementaciones → Editar → Nueva versión).
-3. En la web, pestaña **Profe**, escribe la clave. Verás cada grupo (5ºA, 5ºB, 6ºA, 6ºB) con la media de cada
+3. En la web, pestaña **Profe**, escribe la clave. Verás cada grupo (P5A, P5B, P6A, P6B) con la media de cada
    rincón por alumno y la media de cada indicador. Pulsa un alumno para ver todas sus actividades, poner o corregir
    notas y enviarlas: llegan a la hoja como "Nota del profe" y sustituyen a la anterior.
 La clave solo está en el script, así que el alumnado no puede leer las notas de los demás.
