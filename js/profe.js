@@ -227,6 +227,11 @@ window.Profe = (function () {
   /* Hasta dos correos de tutores por alumno: se guardan juntos, separados por coma, en "Correo familia". */
   const separarCorreos = (t) => String(t || "").toLowerCase().split(/[;,\s]+/).filter((x) => x);
   const unirCorreos = (lista) => [...new Set(lista.flatMap(separarCorreos))].slice(0, 2).join(", ");
+  // "APELLIDOS, NOMBRE" en una sola columna → se separa.
+  function partirNombre(a) {
+    if (!a.apellidos && a.nombre.indexOf(",") > 0) { const p = a.nombre.split(","); a.apellidos = p[0].trim(); a.nombre = p.slice(1).join(",").trim(); }
+    return a;
+  }
   async function leerCSV(archivo) {
     const vista = $("#p-csv-vista"); if (!archivo) return;
     const buf = await archivo.arrayBuffer();
@@ -237,13 +242,15 @@ window.Profe = (function () {
     if (!filas.length) { vista.innerHTML = `<p class="estado" data-tipo="error">El archivo está vacío.</p>`; return; }
     const cab = filas[0].map(normal);
     const col = (...p) => cab.findIndex((c) => p.some((x) => c.includes(x)));
-    let iN = col("nombre"), iA = col("apellido"), iU = col("usuario", "educacyl", "user"), iC = col("curso", "clase", "grupo"), iE = col("correo", "email", "mail");
-    const iEs = cab.map((c, i) => (/correo|email|mail/.test(c) ? i : -1)).filter((i) => i >= 0);
+    let iN = col("nombre") >= 0 ? col("nombre") : cab.findIndex((c) => /^alumn/.test(c) && !/correo|mail/.test(c)), iA = col("apellido"), iU = col("usuario", "educacyl", "user"), iC = col("curso", "clase", "grupo"), iE = col("correo", "email", "mail");
+    // Correos de los tutores: no se cogen las columnas del correo del alumno (alumno, educa, usuario…).
+    const iEs = cab.map((c, i) => (/correo|email|mail/.test(c) && !/alumn|educa|usuario|user/.test(c) ? i : -1)).filter((i) => i >= 0);
     let datosF = filas.slice(1);
     if (iN < 0 && iU < 0) { iN = 0; iA = 1; iU = 2; iC = filas[0].length > 3 ? 3 : -1; iE = filas[0].length > 4 ? 4 : -1; iEs.length = 0; for (let k = 4; k < filas[0].length; k++) iEs.push(k); datosF = filas; }   // sin cabecera
-    const alumnosCSV = datosF.map((f) => ({
+    const sinPropio = (lista, usuario) => lista.filter((c) => !usuario || String(c).trim().toLowerCase().replace(/@.*$/, "") !== usuario.toLowerCase());
+    const alumnosCSV = datosF.map((f) => partirNombre({
       nombre: f[iN] || "", apellidos: iA >= 0 ? f[iA] || "" : "", usuario: (f[iU] || "").replace(/@.*$/, ""),
-      clase: iC >= 0 ? claseValida(f[iC]) : "", otroCurso: !(iC >= 0 && claseValida(f[iC])), correo: unirCorreos(iEs.map((k) => f[k]))
+      clase: iC >= 0 ? claseValida(f[iC]) : "", otroCurso: !(iC >= 0 && claseValida(f[iC])), correo: unirCorreos(sinPropio(iEs.map((k) => f[k]).flatMap(separarCorreos), (f[iU] || "").replace(/@.*$/, "")))
     }));
     const otros = alumnosCSV.filter((a) => a.otroCurso).length;
     const validos = alumnosCSV.filter((a) => a.usuario && a.nombre && !a.otroCurso).map(({ otroCurso, ...a }) => a), malos = alumnosCSV.length - validos.length - otros;

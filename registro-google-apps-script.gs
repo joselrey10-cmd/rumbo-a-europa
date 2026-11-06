@@ -18,6 +18,10 @@ const CLAVE_PROFE = "47001559";
 // CORREO PARA LAS RESPUESTAS DE LAS FAMILIAS: si una familia contesta al correo del código, le llega a esta dirección.
 const CORREO_RESPUESTA = "jlrey@educa.jcyl.es";
 
+// HOJA DE GOOGLE donde se guarda todo. Déjalo vacío ("") y el script usa (o crea) la suya.
+// Si quieres usar una hoja que ya tienes, pega aquí su enlace (docs.google.com/spreadsheets/d/...).
+const HOJA_URL = "https://docs.google.com/spreadsheets/d/1_6XcAUVOc52FE5fTFvh8pritJGjrx_7n3RM0rPN1QjY/edit";
+
 // DIRECCIÓN DE LA WEB que se pone en los correos con el código para las familias.
 const WEB_FAMILIAS = "https://rumbo-a-europa.vercel.app/#familias";
 // Días que vale el código cuando lo envía el profe desde el panel.
@@ -153,7 +157,8 @@ function importarAlumnado(libro, d) {
       const u = String(a.usuario || "").trim().slice(0, 60);
       if (!u) { sinUsuario++; return; }
       if (["P5A", "P5B", "P6A", "P6B"].indexOf(String(a.clase || "").trim()) < 0) { sinUsuario++; return; }   // solo esos grupos
-      const fila = [String(a.nombre || "").trim().slice(0, 40), String(a.apellidos || "").trim().slice(0, 60), u, normGrupo(String(a.clase || "").trim().slice(0, 12)), String(a.correo || "").trim().slice(0, 250)];
+      const fila = limpiarFilaAlumno([String(a.nombre || "").trim().slice(0, 60), String(a.apellidos || "").trim().slice(0, 60), u, normGrupo(String(a.clase || "").trim().slice(0, 12)), String(a.correo || "").trim().slice(0, 250)]);
+      if (String(a.correo || "").trim() === "-") fila[4] = "-";
       const i = pos[minus(u)];
       if (fila[4] === "-") fila[4] = i === undefined ? "" : "-";
       if (i === undefined) { pos[minus(u)] = filas.length; filas.push(fila); nuevos++; }
@@ -238,6 +243,7 @@ function familiaDatos(libro, d) {
 function abrirLibro() {
   const activo = SpreadsheetApp.getActiveSpreadsheet();
   if (activo) return activo;
+  if (HOJA_URL) return SpreadsheetApp.openByUrl(HOJA_URL);
   const props = PropertiesService.getScriptProperties();
   const id = props.getProperty("HOJA_ID");
   if (id) { try { return SpreadsheetApp.openById(id); } catch (e) {} }
@@ -343,8 +349,25 @@ function ordenarHoja(libro, nombreHoja, iN, iU, iC, iA) {
   const ord = filas.map((f) => ({ f, k: claveOrden(mapa, f[iN], f[iU], f[iC], iA == null ? null : f[iA]) })).sort((a, b) => cmp(a.k, b.k)).map((x) => x.f);
   h.getRange(2, 1, n, c).setValues(ord);
 }
+// Arregla la pestaña Alumnado: separa "APELLIDOS, NOMBRE" si vino todo junto en Nombre,
+// y quita de "Correo familia" el correo Educacyl del propio alumno (usuario@educa...).
+function limpiarFilaAlumno(f) {
+  if (!String(f[1] || "").trim() && String(f[0] || "").indexOf(",") > 0) {
+    const p = String(f[0]).split(","); f[1] = p[0].trim(); f[0] = p.slice(1).join(",").trim();
+  }
+  const u = minus(f[2]).replace(/@.*$/, "");
+  f[4] = minus(f[4]).split(/[;,\s]+/).filter((c) => c && (!u || c.replace(/@.*$/, "") !== u)).join(", ");
+  return f;
+}
+function limpiarAlumnado(libro) {
+  const h = libro.getSheetByName("Alumnado");
+  if (!h || h.getLastRow() < 2) return;
+  const r = h.getRange(2, 1, h.getLastRow() - 1, ALUMNADO.length);
+  r.setValues(r.getValues().map(limpiarFilaAlumno));
+}
 function ordenarTodo(libro) {
   libro = libro || abrirLibro();
+  limpiarAlumnado(libro);
   ordenarHoja(libro, "Alumnado", 0, 2, 3, 1);
   ordenarHoja(libro, "Valoraciones", 0, 1, 2);
   ordenarHoja(libro, "Autoevaluación", 1, 2, 3);
@@ -391,6 +414,7 @@ function probarCorreo() {
   const h = abrirLibro().getSheetByName("Alumnado");
   const filas = h && h.getLastRow() > 1 ? h.getRange(2, 1, h.getLastRow() - 1, ALUMNADO.length).getValues() : [];
   const conCorreo = filas.filter((f) => String(f[4] || "").trim());
+  console.log("Hoja: " + abrirLibro().getUrl());
   console.log("Correo de prueba enviado a " + yo + ". Quedan " + MailApp.getRemainingDailyQuota() + " envíos hoy.");
   console.log("Alumnado: " + filas.length + " alumnos, " + conCorreo.length + " con correo de familia.");
   conCorreo.slice(0, 5).forEach((f) => console.log("  " + f[1] + ", " + f[0] + " (" + f[3] + "): " + f[4]));
