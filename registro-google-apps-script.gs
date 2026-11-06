@@ -16,7 +16,11 @@
 const CLAVE_PROFE = "47001559";
 
 // CORREO PARA LAS RESPUESTAS DE LAS FAMILIAS: si una familia contesta al correo del código, le llega a esta dirección.
-const CORREO_RESPUESTA = "jlrey@educa.jcyl.es";
+// Vacío ("") = las respuestas llegan a esta misma cuenta. Una dirección de otro dominio hace que más correos acaben en spam.
+const CORREO_RESPUESTA = "";
+// Opciones comunes de los correos (nombre del remitente y, si hay, dirección de respuesta).
+function opcionesCorreo(o) { o.name = "Rumbo a Europa · CEIP Tierra de Pinares"; if (CORREO_RESPUESTA) o.replyTo = CORREO_RESPUESTA; return o; }
+const htmlDe = (t) => "<div style=\"font-family:Arial,sans-serif;font-size:15px;line-height:1.5\">" + String(t).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/\n/g, "<br>").replace(/(https:\/\/[^\s<]+)/g, "<a href=\"$1\">$1</a>") + "</div>";
 
 // HOJA DE GOOGLE donde se guarda todo. Déjalo vacío ("") y el script usa (o crea) la suya.
 // Si quieres usar una hoja que ya tienes, pega aquí su enlace (docs.google.com/spreadsheets/d/...).
@@ -41,6 +45,8 @@ function doPost(e) {
   if (pedido.accion === "nombresGrupo") return nombresGrupo(libro, pedido);
   if (pedido.accion === "comprobarAlumno") return comprobarAlumno(libro, pedido);
   if (pedido.accion === "enviarCodigos") return enviarCodigos(libro, pedido);
+  if (pedido.accion === "textos") return leerTextos(libro);
+  if (pedido.accion === "guardarTexto") return guardarTexto(libro, pedido);
   const hoja = libro.getSheetByName("Resultados") || libro.insertSheet("Resultados");
   if (hoja.getLastRow() === 0) {
     hoja.appendRow(COLUMNAS);
@@ -191,12 +197,9 @@ function familiaCodigo(libro, d) {
   const codigo = String(Math.floor(100000 + Math.random() * 900000));
   cache.put("codigo_" + correo, JSON.stringify({ codigo, fallos: 0 }), 900);
   cache.put("espera_" + correo, "1", 60);
-  MailApp.sendEmail({
-    to: correo, name: "Rumbo a Europa · CEIP Tierra de Pinares", replyTo: CORREO_RESPUESTA,
-    subject: "Tu código para ver los resultados de Rumbo a Europa",
-    body: "Hola:\n\nTu código para ver los resultados de " + hijos.map((f) => f[0]).join(" y ") + " en Rumbo a Europa es: " + codigo +
-      "\n\nEl código vale 15 minutos. Si no lo has pedido tú, no hagas nada.\n\nCEIP Tierra de Pinares"
-  });
+  const texto = "Hola:\n\nTu código para ver los resultados de " + hijos.map((f) => f[0]).join(" y ") + " en Rumbo a Europa es: " + codigo +
+    "\n\nEl código vale 15 minutos. Si no lo has pedido tú, no hagas nada.\n\nCEIP Tierra de Pinares";
+  MailApp.sendEmail(opcionesCorreo({ to: correo, subject: "Código de acceso a Rumbo a Europa", body: texto, htmlBody: htmlDe(texto) }));
   return json(resp);
 }
 
@@ -409,8 +412,7 @@ function borrarAlumno(libro, d) {
 // en el registro cuántos correos de familias hay guardados en la pestaña Alumnado.
 function probarCorreo() {
   const yo = Session.getEffectiveUser().getEmail();
-  MailApp.sendEmail({ to: yo, name: "Rumbo a Europa · CEIP Tierra de Pinares", replyTo: CORREO_RESPUESTA,
-    subject: "Prueba de Rumbo a Europa", body: "Si lees esto, el envío de códigos a las familias funciona." });
+  MailApp.sendEmail(opcionesCorreo({ to: yo, subject: "Prueba de Rumbo a Europa", body: "Si lees esto, el envío de códigos a las familias funciona." }));
   const h = abrirLibro().getSheetByName("Alumnado");
   const filas = h && h.getLastRow() > 1 ? h.getRange(2, 1, h.getLastRow() - 1, ALUMNADO.length).getValues() : [];
   const conCorreo = filas.filter((f) => String(f[4] || "").trim());
@@ -468,13 +470,10 @@ function enviarCodigos(libro, d) {
   correos.forEach((c) => {
     const codigo = String(Math.floor(100000 + Math.random() * 900000));
     try {
-      MailApp.sendEmail({
-        to: c, name: "Rumbo a Europa · CEIP Tierra de Pinares", replyTo: CORREO_RESPUESTA,
-        subject: "Resultados de Rumbo a Europa: tu código de acceso",
-        body: "Hola:\n\nYa podéis consultar los resultados de " + porCorreo[c].join(" y ") + " en Rumbo a Europa.\n\n" +
+      const texto = "Hola:\n\nYa podéis consultar los resultados de " + porCorreo[c].join(" y ") + " en Rumbo a Europa.\n\n" +
           "1. Entrad en " + WEB_FAMILIAS + "\n2. Escribid este correo: " + c + "\n3. Pulsad «Ya tengo un código» y escribid: " + codigo +
-          "\n\nEl código vale " + DIAS_CODIGO_PROFE + " días. Después podéis pedir uno nuevo desde la misma página.\n\nCEIP Tierra de Pinares"
-      });
+          "\n\nEl código vale " + DIAS_CODIGO_PROFE + " días. Después podéis pedir uno nuevo desde la misma página.\n\nCEIP Tierra de Pinares";
+      MailApp.sendEmail(opcionesCorreo({ to: c, subject: "Resultados de Rumbo a Europa: código de acceso", body: texto, htmlBody: htmlDe(texto) }));
       props.setProperty("fam_" + c, JSON.stringify({ codigo, hasta, fallos: 0 }));
       enviados++;
     } catch (e) { fallos.push(c); }
@@ -482,4 +481,59 @@ function enviarCodigos(libro, d) {
   const sinCorreo = quienes.length - filas.filter((f) => String(f[4] || "").trim()).length;
   console.log("Códigos enviados por el profe: " + enviados + " correos; fallos: " + fallos.join(", "));
   return json({ ok: true, enviados, sinCorreo, fallos });
+}
+
+// Prueba de entrega: escribe tu correo personal entre las comillas, elige "probarEntrega" y pulsa Ejecutar.
+// Envía 3 correos distintos para ver cuál llega (A, B y C en el asunto).
+const PRUEBA_A = "";
+function probarEntrega() {
+  if (!PRUEBA_A) throw new Error("Escribe tu correo en PRUEBA_A (justo encima de esta función) y guarda.");
+  MailApp.sendEmail(PRUEBA_A, "Prueba A Rumbo a Europa", "Correo A: envío sencillo, sin nombre ni respuesta.");
+  MailApp.sendEmail({ to: PRUEBA_A, name: "Rumbo a Europa · CEIP Tierra de Pinares", replyTo: CORREO_RESPUESTA || "rumboaeuropa@ceiptierradepinares.com",
+    subject: "Prueba B Rumbo a Europa", body: "Correo B: igual que el de las familias (con nombre y dirección de respuesta)." });
+  GmailApp.sendEmail(PRUEBA_A, "Prueba C Rumbo a Europa", "Correo C: enviado con Gmail en vez de MailApp.", { name: "Rumbo a Europa · CEIP Tierra de Pinares" });
+  console.log("Enviados A, B y C a " + PRUEBA_A + ". Quedan " + MailApp.getRemainingDailyQuota() + " envíos hoy.");
+}
+
+/* ---------- Textos cambiados por el profe ----------
+   Pestaña «Textos»: Pantalla | Texto original | Texto nuevo | Fecha. La lee toda la web al cargar (no tiene datos del alumnado).
+   Se puede corregir a mano: si borras una fila, vuelve el texto original. */
+const COL_TEXTOS = ["Pantalla", "Texto original", "Texto nuevo", "Fecha"];
+function hojaTextos(libro) {
+  let h = libro.getSheetByName("Textos");
+  if (!h) {
+    h = libro.insertSheet("Textos");
+    h.appendRow(COL_TEXTOS); h.setFrozenRows(1);
+    h.getRange(1, 1, 1, COL_TEXTOS.length).setFontWeight("bold");
+    h.setColumnWidth(2, 380); h.setColumnWidth(3, 380);
+  }
+  return h;
+}
+function leerTextos(libro) {
+  const h = libro.getSheetByName("Textos"), textos = {};
+  if (h && h.getLastRow() > 1) {
+    h.getRange(2, 1, h.getLastRow() - 1, 3).getValues().forEach((f) => {
+      const nuevo = String(f[2] || "").trim();
+      if (f[1] !== "" && nuevo) textos[String(f[0] || "#") + "|" + String(f[1]).replace(/\s+/g, " ").trim()] = nuevo;
+    });
+  }
+  return json({ ok: true, textos: textos });
+}
+function guardarTexto(libro, d) {
+  if (CLAVE_PROFE === "cambia-esta-clave" || String(d.clave || "") !== CLAVE_PROFE) return json({ ok: false, error: "Clave incorrecta: entra otra vez en el panel del profe." });
+  const id = String(d.id || ""), i = id.indexOf("|");
+  if (i < 1) return json({ ok: false, error: "Texto no válido." });
+  const pantalla = id.slice(0, i).slice(0, 40), original = id.slice(i + 1).slice(0, 2000);
+  const nuevo = String(d.texto || "").replace(/\s+/g, " ").trim().slice(0, 2000);
+  const lock = LockService.getScriptLock(); lock.waitLock(20000);
+  try {
+    const h = hojaTextos(libro), n = h.getLastRow() - 1;
+    const filas = n > 0 ? h.getRange(2, 1, n, 2).getValues() : [];
+    let fila = -1;
+    filas.forEach((f, k) => { if (String(f[0]) === pantalla && String(f[1]).replace(/\s+/g, " ").trim() === original) fila = k + 2; });
+    if (!nuevo) { if (fila > 0) h.deleteRow(fila); }
+    else if (fila > 0) h.getRange(fila, 3, 1, 2).setValues([[nuevo, new Date()]]);
+    else h.appendRow([pantalla, original, nuevo, new Date()]);
+  } finally { lock.releaseLock(); }
+  return json({ ok: true });
 }

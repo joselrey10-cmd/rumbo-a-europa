@@ -155,7 +155,7 @@ window.Profe = (function () {
 
   function barraGrupos() {
     return `<div class="p-barra"><div class="rutas p-grupos" role="radiogroup" aria-label="Grupo">${GRUPOS.map((g) => `<button type="button" role="radio" class="ruta p-grupo" aria-checked="${g === grupo}" data-g="${g}"><b>${g}</b></button>`).join("")}</div>
-      <button type="button" class="btn sec" id="p-recargar">Recargar datos</button><button type="button" class="btn sec" id="p-salir">Salir</button></div>`;
+      <button type="button" class="btn sec" id="p-textos" title="Cambia los textos que ve el alumnado en los rincones">✏️ Editar textos</button><button type="button" class="btn sec" id="p-recargar">Recargar datos</button><button type="button" class="btn sec" id="p-salir">Salir</button></div>`;
   }
   function pintarGrupo() {
     alumnoSel = null;
@@ -397,6 +397,7 @@ window.Profe = (function () {
         if (chip) { chip.parentElement.querySelectorAll("button").forEach((b) => b.setAttribute("aria-checked", String(b === chip))); const caja = chip.closest(".reto-r"); if (caja && alumnoSel) enviarProfe(caja); return; }
         const g = e.target.closest(".p-grupo"); if (g) { grupo = g.dataset.g; pintarGrupo(); return; }
         if (e.target.closest("#p-recargar")) { let k = ""; try { k = sessionStorage.getItem(CLAVE_SES) || ""; } catch (x) {} datos = null; pintarClave(); cargar(k); return; }
+        if (e.target.closest("#p-textos") && window.Textos) { window.Textos.activar(true); location.hash = ""; return; }
         if (e.target.closest("#p-salir")) { try { sessionStorage.removeItem(CLAVE_SES); } catch (x) {} datos = null; cambios = {}; pintarClave(); return; }
         const env = e.target.closest(".enviar-p"); if (env) enviarProfe(env.closest(".reto-r"), true);
       }, true);
