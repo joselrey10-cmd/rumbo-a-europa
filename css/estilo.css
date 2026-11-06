@@ -461,17 +461,3 @@ a.volver { text-decoration: none; }
 .que-nota h3 { margin: 0 0 6px; }
 .que-nota p { margin: 6px 0; }
 
-/* Modo editar textos (profe) */
-body.editando-textos { padding-bottom: 90px; }
-body.editando-textos main :is(h1,h2,h3,h4,p,li,span,b,a,button,label,small,div):hover { outline: 2px dashed #e07a1f; outline-offset: 2px; cursor: text; }
-#textos-barra { position: fixed; left: 12px; right: 12px; bottom: 12px; z-index: 9999; display: flex; flex-wrap: wrap; gap: 10px; align-items: center;
-  background: #14225a; color: #fff; padding: 12px 16px; border-radius: 14px; box-shadow: 0 6px 24px rgba(0,0,0,.3); }
-#textos-barra span { flex: 1 1 260px; }
-#textos-barra .btn.sec { background: #fff; color: #14225a; }
-#textos-dialogo { position: fixed; inset: 0; z-index: 10000; background: rgba(10,15,40,.55); display: flex; align-items: center; justify-content: center; padding: 16px; }
-#textos-dialogo .td-caja { background: var(--paper); color: var(--ink); width: min(560px, 100%); border-radius: 16px; padding: 20px; box-shadow: 0 10px 40px rgba(0,0,0,.35); }
-#textos-dialogo h3 { margin: 0 0 6px; }
-#textos-dialogo .td-donde, #textos-dialogo .td-orig { font-size: .9rem; opacity: .85; margin: 4px 0; }
-#textos-dialogo textarea { width: 100%; box-sizing: border-box; font: inherit; padding: 10px; border-radius: 10px; border: 2px solid var(--line); margin: 10px 0; resize: vertical; background: transparent; color: inherit; }
-#textos-dialogo .td-acc { display: flex; flex-wrap: wrap; gap: 8px; }
-#textos-dialogo .td-estado[data-tipo="error"] { color: #c0392b; }

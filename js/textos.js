@@ -18,12 +18,28 @@ window.Textos = (function () {
   try { mapa = JSON.parse(localStorage.getItem(CACHE) || "{}") || {}; } catch (e) {}
 
   const limpio = (t) => String(t || "").replace(/\s+/g, " ").trim();
-  // Pantalla actual: #crea, #piensa, #programa… (la portada es «#»).
-  const pantalla = () => (location.hash || "#").split(/[/?]/)[0] || "#";
-  const prohibida = () => /^#(profe|familias)$/.test(pantalla());
+  // Actividades de Piensa (piensa/itv.html…): la pantalla es «piensa/itv» para toda la actividad.
+  const enPiensa = /\/piensa\/([\w-]+)\.html$/.exec(location.pathname);
+  // Pantalla actual: #crea, #piensa, #programa, #destino-3… (la portada es «#»).
+  const pantalla = () => (enPiensa ? "piensa/" + enPiensa[1] : (location.hash || "#").split(/[/?]/)[0] || "#");
+  const prohibida = () => !enPiensa && /^#(profe|familias)$/.test(pantalla());
   const clave = (orig) => pantalla() + "|" + orig;
-  const editando = () => { try { return !!sessionStorage.getItem(EDITAR); } catch (e) { return false; } };
-  const claveProfe = () => { try { return sessionStorage.getItem(CLAVE_SES) || ""; } catch (e) { return ""; } };
+  // El modo editar se guarda en localStorage (8 horas) para que siga en las actividades de Piensa, que se abren en otra pestaña.
+  function estadoEd() {
+    try {
+      const e = JSON.parse(localStorage.getItem(EDITAR) || "null");
+      if (e && e.hasta > Date.now()) return e;
+      if (e) localStorage.removeItem(EDITAR);
+    } catch (x) {}
+    return null;
+  }
+  function ponerEstado(e) { try { if (e) localStorage.setItem(EDITAR, JSON.stringify(e)); else localStorage.removeItem(EDITAR); } catch (x) {} }
+  const editando = () => !!estadoEd();
+  const editandoYa = () => { const e = estadoEd(); return !!e && !e.navegar && !prohibida(); };
+  const zona = (t) => t && t.closest && (enPiensa ? t.closest("body") : t.closest("main"));
+  const claveProfe = () => { const e = estadoEd(); if (e && e.clave) return e.clave; try { return sessionStorage.getItem(CLAVE_SES) || ""; } catch (x) { return ""; } };
+  const PANTALLAS = [["#", "Portada"], ["#crea", "Crea"], ["#programa", "Programa"], ["#notas-prog", "Autoevaluación de Programa"],
+    ["#robotica", "Robótica"], ["#notas-rob", "Autoevaluación de Robótica"], ["#piensa", "Piensa"], ["#familias", "Familias (no editable)"]];
 
   function valido(n) {
     const p = n.parentElement;
@@ -97,15 +113,22 @@ window.Textos = (function () {
   }
   function barra() {
     let b = document.getElementById("textos-barra");
-    const ver = editando() && !prohibida();
-    document.body.classList.toggle("editando-textos", ver);
+    const e = estadoEd(), ver = !!e && !prohibida();
+    document.body.classList.toggle("editando-textos", ver && !e.navegar);
+    document.body.classList.toggle("piensa-ed", !!enPiensa);
     if (!ver) { if (b) b.remove(); return; }
-    if (b) return;
-    b = document.createElement("div");
-    b.id = "textos-barra";
-    b.innerHTML = `<span>✏️ <b>Modo editar textos.</b> Pulsa un texto para cambiarlo. Muévete con el menú de arriba; los botones de las pantallas no funcionan mientras editas.</span>
-      <a class="btn sec" href="#profe">Volver al panel</a><button type="button" class="btn" id="textos-salir">Terminar de editar</button>`;
-    document.body.appendChild(b);
+    if (!b) { b = document.createElement("div"); b.id = "textos-barra"; document.body.appendChild(b); }
+    const ir = enPiensa
+      ? `<button type="button" class="btn sec" id="textos-cerrar">Cerrar la actividad</button>`
+      : `<label class="tb-ir">Ir a <select id="textos-ir">${PANTALLAS.map(([h, t]) => `<option value="${h}"${pantalla() === h ? " selected" : ""}>${t}</option>`).join("")}${PANTALLAS.some(([h]) => h === pantalla()) ? "" : `<option selected value="">(esta pantalla)</option>`}</select></label>`;
+    b.innerHTML = `<span class="tb-t">${e.navegar
+        ? "👆 <b>Modo navegar.</b> Los botones funcionan: entra en la actividad o el reto que quieras y vuelve a «Editar»."
+        : "✏️ <b>Modo editar.</b> Pulsa un texto para cambiarlo. Para pulsar botones y entrar en actividades, cambia a «Navegar»."}</span>
+      <div class="tb-modo" role="radiogroup" aria-label="Modo"><button type="button" role="radio" data-modo="editar" aria-checked="${!e.navegar}"><b>✏️ Editar</b></button><button type="button" role="radio" data-modo="navegar" aria-checked="${!!e.navegar}"><b>👆 Navegar</b></button></div>
+      ${ir}${enPiensa ? "" : `<a class="btn sec" href="#profe">Volver al panel</a>`}<button type="button" class="btn" id="textos-salir">Terminar de editar</button>`;
+    b.querySelectorAll("[data-modo]").forEach((x) => (x.onclick = () => { const s = estadoEd(); if (s) { s.navegar = x.dataset.modo === "navegar"; ponerEstado(s); } barra(); }));
+    const sel = b.querySelector("#textos-ir"); if (sel) sel.onchange = () => { if (sel.value) location.hash = sel.value === "#" ? "" : sel.value; };
+    const cer = b.querySelector("#textos-cerrar"); if (cer) cer.onclick = () => window.close();
     b.querySelector("#textos-salir").onclick = () => { activar(false); };
   }
   function dialogo(n) {
@@ -151,22 +174,25 @@ window.Textos = (function () {
   }
   function clic(e) {
     // Solo se edita dentro de las pantallas (main); el menú de arriba sigue funcionando para moverse.
-    if (!editando() || prohibida() || !e.target.closest("main") || e.target.closest("#textos-barra,#textos-dialogo")) return;
+    if (!editandoYa() || !zona(e.target) || e.target.closest("#textos-barra,#textos-dialogo")) return;
     if (e.target.closest("input,select,textarea,svg,canvas,.blockly-area")) return;
     const n = nodoEn(e);
     e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
     if (n) dialogo(n);
   }
   function activar(si) {
-    try { if (si) sessionStorage.setItem(EDITAR, "1"); else sessionStorage.removeItem(EDITAR); } catch (e) {}
+    let k = ""; try { k = sessionStorage.getItem(CLAVE_SES) || ""; } catch (e) {}
+    ponerEstado(si ? { clave: k, navegar: false, hasta: Date.now() + 8 * 3600 * 1000 } : null);
     barra();
   }
 
   function iniciar() {
     aplicar(document.body);
     obs.observe(document.body, { childList: true, subtree: true, characterData: true });
-    ["click", "mousedown", "pointerdown"].forEach((ev) => document.addEventListener(ev, (e) => { if (ev === "click") clic(e); else if (editando() && !prohibida() && e.target.closest("main") && !e.target.closest("#textos-barra,#textos-dialogo,input,select,textarea")) e.preventDefault(); }, true));
+    ["click", "mousedown", "pointerdown"].forEach((ev) => document.addEventListener(ev, (e) => { if (ev === "click") clic(e); else if (editandoYa() && zona(e.target) && !e.target.closest("#textos-barra,#textos-dialogo,input,select,textarea")) e.preventDefault(); }, true));
     window.addEventListener("hashchange", () => { barra(); setTimeout(() => aplicar(document.body), 0); });
+    // Si se activa o se termina en otra pestaña (por ejemplo una actividad de Piensa), se actualiza aquí.
+    window.addEventListener("storage", (e) => { if (e.key === EDITAR) barra(); if (e.key === CACHE) { try { mapa = JSON.parse(e.newValue || "{}") || {}; } catch (x) {} restaurarTodo(); aplicar(document.body); } });
     barra();
     cargar();
   }

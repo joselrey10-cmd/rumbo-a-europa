@@ -41,8 +41,10 @@ La clave solo está en el script, así que el alumnado no puede leer las notas d
 y, si quieres, `curso` y `correo` (de la familia). Hay una plantilla para descargar. Se guarda en la pestaña **Alumnado** de la hoja.
 También puedes escribir o cambiar el correo de la familia en la ficha de cada alumno.
 
-**Editar textos de las pantallas:** en el panel Profe pulsa **✏️ Editar textos**. Ve a cualquier rincón con el menú
-de arriba: los textos se marcan al pasar el ratón. Pulsa uno, escríbelo de nuevo y **Guardar**. Se guarda en la pestaña
+**Editar textos de las pantallas:** en el panel Profe pulsa **✏️ Editar textos**. Abajo aparece una barra con
+**✏️ Editar / 👆 Navegar** y un menú «Ir a» (Portada, Crea, Programa, Robótica, Piensa, autoevaluaciones).
+En «Navegar» los botones funcionan para entrar en un destino de Programa, un reto de Robótica o una actividad de Piensa
+(se abre en otra pestaña y sigue en modo editar); vuelve a «Editar» para cambiar textos. Los textos se marcan al pasar el ratón. Pulsa uno, escríbelo de nuevo y **Guardar**. Se guarda en la pestaña
 **Textos** de la hoja y el alumnado lo ve al abrir la página. «Volver al original» deshace el cambio (o borra la fila en la hoja).
 Cada cambio vale para esa pantalla y ese texto exacto (los textos que llevan el curso, como «Retos de 5º…», se cambian
 una vez para 5.º y otra para 6.º). Pulsa «Terminar de editar» para salir.
