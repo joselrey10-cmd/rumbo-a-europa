@@ -32,13 +32,14 @@ window.Familias = (function () {
         <form class="alumno" id="f-correo" autocomplete="on">
           <label for="f-email">Correo electrónico de la familia<input id="f-email" type="email" maxlength="120" value="${esc(correo)}" placeholder="El que diste en el colegio" autocomplete="email"></label>
           <button class="btn${paso === 2 ? " sec" : ""}" type="submit">${paso === 2 ? "Enviar otro código" : "Enviarme el código"}</button>
+          ${paso === 2 ? "" : `<button class="btn sec" type="button" id="f-tengo">Ya tengo un código</button>`}
         </form>
         ${paso === 2 ? `<form class="alumno" id="f-cod" autocomplete="off" style="margin-top:16px">
           <label for="f-codigo">Código de 6 cifras<input id="f-codigo" inputmode="numeric" maxlength="6" placeholder="123456" autocomplete="one-time-code"></label>
           <button class="btn" type="submit">Ver resultados</button>
         </form>` : ""}
         <p class="estado" id="f-estado" data-tipo="${tipo || ""}" style="margin-top:12px">${esc(aviso || "")}</p>
-        <p class="intro" style="margin-top:16px">Te mandaremos un código a tu correo. Solo verás los resultados del alumnado que el colegio tiene asociado a ese correo. El código caduca a los 15 minutos.</p>
+        <p class="intro" style="margin-top:16px">Te mandaremos un código a tu correo. Solo verás los resultados del alumnado que el colegio tiene asociado a ese correo. El código que pides aquí caduca a los 15 minutos; el que te envía el profe por correo vale unos días.</p>
       </div>`;
     $("#f-correo").addEventListener("submit", async (e) => {
       e.preventDefault();
@@ -50,6 +51,13 @@ window.Familias = (function () {
       pintarAcceso(2, j.mensaje + " Mira también la carpeta de correo no deseado.", "ok");
       const c = $("#f-codigo"); if (c) c.focus();
     });
+    const tengo = $("#f-tengo");
+    if (tengo) tengo.onclick = () => {
+      correo = $("#f-email").value.trim().toLowerCase();
+      if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(correo)) { pintarAcceso(1, "Escribe primero tu correo.", "error"); return; }
+      pintarAcceso(2, "Escribe el código que te llegó por correo.", "");
+      const c = $("#f-codigo"); if (c) c.focus();
+    };
     const fc = $("#f-cod");
     if (fc) fc.addEventListener("submit", async (e) => {
       e.preventDefault();

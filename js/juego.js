@@ -591,6 +591,7 @@
     n.addEventListener("input", cambiar); c.addEventListener("input", cambiar); u.addEventListener("input", cambiar);
     c.addEventListener("input", () => pintarInicio());
     $("#form-alumno").addEventListener("submit", (e) => e.preventDefault());
+    if (window.ListaAlumnos) window.ListaAlumnos.montar(n, c, u);
     pintarOk();
   }
 

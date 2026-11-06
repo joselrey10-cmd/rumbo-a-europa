@@ -97,9 +97,9 @@ window.Rincones = (function () {
       <h2>Tus datos</h2>
       <p class="intro">Tu curso decide qué indicadores ves: los de 5.º o los de 6.º.</p>
       <form class="alumno" id="r-form" autocomplete="off">
-        <label for="r-nombre">Nombre y apellido<input id="r-nombre" maxlength="30" placeholder="Por ejemplo: Lucía Martín" value="${esc(a.nombre)}"></label>
-        <label for="r-usuario">Usuario Educacyl<input id="r-usuario" maxlength="60" placeholder="nombre.apellido" value="${esc(a.usuario)}"></label>
         <label for="r-clase">Curso<select id="r-clase"><option value="">Elige</option>${CLASES.map((c) => `<option${a.clase === c ? " selected" : ""}>${c}</option>`).join("")}</select></label>
+        <label for="r-nombre">Nombre<input id="r-nombre" maxlength="60" placeholder="Por ejemplo: Lucía Martín" value="${esc(a.nombre)}"></label>
+        <label for="r-usuario">Usuario Educacyl<input id="r-usuario" maxlength="60" placeholder="nombre.apellido" value="${esc(a.usuario)}"></label>
         <span class="alumno-ok" id="r-ok"></span>
       </form>
     </div></section>
@@ -121,6 +121,7 @@ window.Rincones = (function () {
     c.addEventListener("change", cambiar);
     $("#r-form").addEventListener("submit", (e) => e.preventDefault());
     $("#r-excel").onclick = () => V().excel();
+    if (window.ListaAlumnos) window.ListaAlumnos.montar(n, c, u);
     ok();
   }
   function pintarTarjetas() {
@@ -222,9 +223,18 @@ window.Rincones = (function () {
         </article>
         <h2 class="sa-tit" style="margin-top:24px">Mis notas jugando</h2>
         <p><a class="btn" href="${r.ir}">${r.accion}</a></p>
+        <div class="que-nota">
+          <h3>¿Qué significa mi nota?</h3>
+          <p>Cada actividad se valora de <b>0 a 5</b> según lo que has conseguido en ese indicador de logro. La nota se pone sola al jugar y tu profe la puede revisar:</p>
+          <ul><li>Si llegas en 1 o 2 intentos: <b>5</b>. En 3 o 4 intentos: <b>4</b>. Con más intentos: <b>3</b>.</li>
+            <li>Si usas más bloques de los necesarios, baja un poco (nunca de 3 si lo has conseguido).</li>
+            <li>Si no llegas al final: <b>2</b> si has hecho una parte, <b>1</b> si lo has intentado.</li></ul>
+          <ol class="escala" start="0">${ESCALA.map((t, n) => `<li><b>${n}</b> ${t}</li>`).join("")}</ol>
+          <p>Si tienes poca nota en algo, vuelve a jugar esa actividad: se guarda tu mejor nota.</p>
+        </div>
         <div class="lista-notas">${f.map((x) => `<article class="reto-r nota-act">
           <div class="reto-r-cab"><span class="ses">${esc(x.pantalla)}${x.codigo ? " · Ind. " + esc(x.codigo) : ""}</span><h3>${esc(x.actividad)}</h3></div>
-          <p class="nota-fija">${V().leer()[x.clave] ? `Nota: <b>${x.nota}</b> de 5` : "Todavía sin hacer"}</p>
+          <p class="nota-fija">${V().leer()[x.clave] ? `Nota: <b>${x.nota}</b> de 5 · ${esc(ESCALA[x.nota] || "")}` : "Todavía sin hacer (cuenta como 0)"}</p>
         </article>`).join("")}</div>
       </div>`;
   }

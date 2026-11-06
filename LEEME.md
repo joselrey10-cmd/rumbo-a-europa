@@ -143,3 +143,9 @@ Consejo: con un filtro o una tabla dinámica por Clase y Nombre verás de un vis
 - En el panel Profe, la papelera 🗑️ de cada fila (o el botón «Dar de baja» dentro del alumno) lo borra de todas las pestañas (pide confirmación; no se puede deshacer).
 - Correos de las familias: hasta dos por alumno (tutor 1 y tutor 2), en el panel o en el CSV con las columnas «correo tutor 1» y «correo tutor 2». Se guardan juntos en «Correo familia», separados por coma, y cualquiera de los dos puede pedir el código.
 - En Valoraciones, Autoevaluación, Medias y Resultados el alumno aparece en una sola columna como «Apellidos, Nombre» (sacado de la pestaña Alumnado por su usuario). Alumnado mantiene Nombre y Apellidos por separado porque es la lista importada.
+
+## Desplegable de nombres y códigos para las familias
+- El alumno elige primero su grupo y después su nombre en un desplegable (la lista importada en la pestaña Alumnado). El usuario de Educacyl lo escribe a mano y la web le avisa si no coincide; si se equivoca, la hoja usa el usuario de la lista, así no hay alumnos repetidos. Si un grupo aún no tiene lista, se puede escribir el nombre como antes.
+- La lista solo muestra nombres (ni usuarios ni correos) y la ve cualquiera que abra la web y elija un grupo.
+- Panel Profe → «✉️ Acceso de las familias»: envía a cada familia un correo con las instrucciones y su código (vale 7 días; cambia DIAS_CODIGO_PROFE en el script). Una familia con dos hijos recibe un solo código. También hay «✉️ Enviar código» en la ficha de cada alumno. La familia entra en la web → Familias → escribe su correo → «Ya tengo un código».
+- probarCorreo (en el editor de Apps Script) envía un correo de prueba y dice cuántos alumnos tienen correo de familia.

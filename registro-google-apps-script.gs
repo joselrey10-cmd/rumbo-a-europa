@@ -18,6 +18,11 @@ const CLAVE_PROFE = "47001559";
 // CORREO PARA LAS RESPUESTAS DE LAS FAMILIAS: si una familia contesta al correo del código, le llega a esta dirección.
 const CORREO_RESPUESTA = "jlrey@educa.jcyl.es";
 
+// DIRECCIÓN DE LA WEB que se pone en los correos con el código para las familias.
+const WEB_FAMILIAS = "https://rumbo-a-europa.vercel.app/#familias";
+// Días que vale el código cuando lo envía el profe desde el panel.
+const DIAS_CODIGO_PROFE = 7;
+
 const COLUMNAS = ["Fecha", "Nombre", "Usuario Educacyl", "Clase", "Actividad", "Ciudad / reto", "Estrellas", "Bloques", "Intentos", "Personaje / robot", "Programa", "Nº indicador", "Valoración (0-5)"];
 
 function doPost(e) {
@@ -29,6 +34,9 @@ function doPost(e) {
   if (pedido.accion === "autoevaluacion") return guardarAutoevaluacion(libro, pedido);
   if (pedido.accion === "familiaCodigo") return familiaCodigo(libro, pedido);
   if (pedido.accion === "familiaDatos") return familiaDatos(libro, pedido);
+  if (pedido.accion === "nombresGrupo") return nombresGrupo(libro, pedido);
+  if (pedido.accion === "comprobarAlumno") return comprobarAlumno(libro, pedido);
+  if (pedido.accion === "enviarCodigos") return enviarCodigos(libro, pedido);
   const hoja = libro.getSheetByName("Resultados") || libro.insertSheet("Resultados");
   if (hoja.getLastRow() === 0) {
     hoja.appendRow(COLUMNAS);
@@ -41,8 +49,9 @@ function doPost(e) {
   }
   const d = pedido;
   const limpiar = (v, max) => String(v == null ? "" : v).slice(0, max);
-  const usuario = limpiar(d.usuario, 60), clase = normGrupo(limpiar(d.clase, 12));
-  const nombre = nombreCompleto(libro, limpiar(d.nombre, 30), usuario);
+  const clase = normGrupo(limpiar(d.clase, 12));
+  const usuario = usuarioDeLista(libro, limpiar(d.nombre, 60), limpiar(d.usuario, 60), clase);
+  const nombre = nombreCompleto(libro, limpiar(d.nombre, 60), usuario);
   const nota = d.valoracion === "" || d.valoracion == null ? "" : Number(d.valoracion);
   hoja.appendRow([
     new Date(d.fecha), nombre, usuario, clase, limpiar(d.destino, 60), limpiar(d.ciudad, 40),
@@ -87,8 +96,9 @@ function datosProfe(libro, d) {
 // con lo que el alumno dice que sabe hacer (0-5). Va aparte: no cuenta en las medias de las notas.
 function guardarAutoevaluacion(libro, d) {
   const limpiar = (v, max) => String(v == null ? "" : v).slice(0, max);
-  const usuario = limpiar(d.usuario, 60), clase = normGrupo(limpiar(d.clase, 12)), rincon = limpiar(d.rincon, 20);
-  const nombre = nombreCompleto(libro, limpiar(d.nombre, 30), usuario);
+  const clase = normGrupo(limpiar(d.clase, 12)), rincon = limpiar(d.rincon, 20);
+  const usuario = usuarioDeLista(libro, limpiar(d.nombre, 60), limpiar(d.usuario, 60), clase);
+  const nombre = nombreCompleto(libro, limpiar(d.nombre, 60), usuario);
   const lock = LockService.getScriptLock(); lock.waitLock(10000);
   try {
     const h = libro.getSheetByName("Autoevaluación") || libro.insertSheet("Autoevaluación");
@@ -167,10 +177,11 @@ function familiaCodigo(libro, d) {
   const resp = { ok: true, mensaje: "Si ese correo está registrado en el colegio, recibirás un código en unos minutos." };
   if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(correo)) return json({ ok: false, error: "Escribe un correo válido." });
   const cache = CacheService.getScriptCache();
-  if (cache.get("espera_" + correo)) return json(resp);
+  if (cache.get("espera_" + correo)) { console.log("Familias: " + correo + " ya pidió un código hace menos de 1 minuto."); return json(resp); }
   const h = libro.getSheetByName("Alumnado");
   const filas = h && h.getLastRow() > 1 ? h.getRange(2, 1, h.getLastRow() - 1, ALUMNADO.length).getValues() : [];
   const hijos = filas.filter((f) => minus(f[4]).split(/[;,\s]+/).indexOf(correo) >= 0);
+  console.log("Familias: " + correo + " → " + hijos.length + " alumno(s) con ese correo en la pestaña Alumnado.");
   if (!hijos.length) return json(resp);
   const codigo = String(Math.floor(100000 + Math.random() * 900000));
   cache.put("codigo_" + correo, JSON.stringify({ codigo, fallos: 0 }), 900);
@@ -187,9 +198,19 @@ function familiaCodigo(libro, d) {
 // 2) Con el código correcto devuelve solo los datos de sus hijos.
 function familiaDatos(libro, d) {
   const correo = minus(d.correo), cache = CacheService.getScriptCache();
+  const props = PropertiesService.getScriptProperties();
+  const p = JSON.parse(props.getProperty("fam_" + correo) || "null");   // código enviado por el profe (vale varios días)
+  const delProfe = p && p.hasta > Date.now() && String(d.codigo || "").trim() === p.codigo;
   const g = JSON.parse(cache.get("codigo_" + correo) || "null");
-  if (!g) return json({ ok: false, error: "El código ha caducado. Pide uno nuevo." });
-  if (String(d.codigo || "").trim() !== g.codigo) {
+  if (!g && !delProfe) {
+    if (p && p.hasta > Date.now()) {
+      p.fallos = (p.fallos || 0) + 1;
+      if (p.fallos >= 5) props.deleteProperty("fam_" + correo); else props.setProperty("fam_" + correo, JSON.stringify(p));
+      return json({ ok: false, error: p.fallos >= 5 ? "Demasiados intentos. Pide un código nuevo." : "Código incorrecto." });
+    }
+    return json({ ok: false, error: "El código ha caducado. Pide uno nuevo." });
+  }
+  if (!delProfe && String(d.codigo || "").trim() !== g.codigo) {
     g.fallos++;
     if (g.fallos >= 5) cache.remove("codigo_" + correo); else cache.put("codigo_" + correo, JSON.stringify(g), 900);
     return json({ ok: false, error: g.fallos >= 5 ? "Demasiados intentos. Pide un código nuevo." : "Código incorrecto." });
@@ -358,4 +379,83 @@ function borrarAlumno(libro, d) {
     calcularMedias(libro);
     return json({ ok: true, borradas });
   } finally { lock.releaseLock(); }
+}
+
+/* ---------- Prueba del correo de las familias ---------- */
+// Elige "probarCorreo" arriba y pulsa Ejecutar: te envía un correo de prueba a ti y te dice
+// en el registro cuántos correos de familias hay guardados en la pestaña Alumnado.
+function probarCorreo() {
+  const yo = Session.getEffectiveUser().getEmail();
+  MailApp.sendEmail({ to: yo, name: "Rumbo a Europa · CEIP Tierra de Pinares", replyTo: CORREO_RESPUESTA,
+    subject: "Prueba de Rumbo a Europa", body: "Si lees esto, el envío de códigos a las familias funciona." });
+  const h = abrirLibro().getSheetByName("Alumnado");
+  const filas = h && h.getLastRow() > 1 ? h.getRange(2, 1, h.getLastRow() - 1, ALUMNADO.length).getValues() : [];
+  const conCorreo = filas.filter((f) => String(f[4] || "").trim());
+  console.log("Correo de prueba enviado a " + yo + ". Quedan " + MailApp.getRemainingDailyQuota() + " envíos hoy.");
+  console.log("Alumnado: " + filas.length + " alumnos, " + conCorreo.length + " con correo de familia.");
+  conCorreo.slice(0, 5).forEach((f) => console.log("  " + f[1] + ", " + f[0] + " (" + f[3] + "): " + f[4]));
+}
+
+/* ---------- Lista de nombres para el alumnado ---------- */
+const GRUPOS_VALIDOS = ["P5A", "P5B", "P6A", "P6B"];
+function filasAlumnado(libro) {
+  const h = libro.getSheetByName("Alumnado");
+  return h && h.getLastRow() > 1 ? h.getRange(2, 1, h.getLastRow() - 1, ALUMNADO.length).getValues() : [];
+}
+const textoAlumno = (f) => (String(f[1] || "").trim() ? String(f[1]).trim() + ", " : "") + String(f[0] || "").trim();
+
+// Devuelve solo los nombres ("Apellidos, Nombre") de un grupo, para el desplegable. Ni usuarios ni correos.
+function nombresGrupo(libro, d) {
+  const clase = normGrupo(d.clase);
+  if (GRUPOS_VALIDOS.indexOf(clase) < 0) return json({ ok: false, nombres: [] });
+  const nombres = filasAlumnado(libro).filter((f) => normGrupo(f[3]) === clase && f[2]).map(textoAlumno)
+    .sort((a, b) => a.localeCompare(b, "es", { sensitivity: "base" }));
+  return json({ ok: true, nombres });
+}
+// Comprueba si el usuario escrito es el del alumno elegido (solo dice sí o no).
+function comprobarAlumno(libro, d) {
+  const clase = normGrupo(d.clase), nombre = minus(d.nombre), usuario = minus(d.usuario);
+  const f = filasAlumnado(libro).find((x) => normGrupo(x[3]) === clase && minus(textoAlumno(x)) === nombre);
+  if (!f) return json({ ok: true, enLista: false });
+  return json({ ok: true, enLista: true, coincide: !!usuario && minus(f[2]) === usuario });
+}
+// Si el alumno eligió su nombre de la lista pero escribió mal su usuario, se usa el de la lista (así no hay alumnos repetidos).
+function usuarioDeLista(libro, nombre, usuario, clase) {
+  const filas = filasAlumnado(libro);
+  if (!filas.length) return usuario;
+  if (usuario && filas.some((f) => minus(f[2]) === minus(usuario))) return usuario;
+  const f = filas.find((x) => normGrupo(x[3]) === clase && minus(textoAlumno(x)) === minus(nombre));
+  return f ? String(f[2]) : usuario;
+}
+
+/* ---------- El profe envía el código a las familias desde el panel ---------- */
+function enviarCodigos(libro, d) {
+  if (CLAVE_PROFE === "cambia-esta-clave" || String(d.clave || "") !== CLAVE_PROFE) return json({ ok: false, error: "Clave incorrecta." });
+  const quienes = (d.usuarios || []).map(minus);
+  const filas = filasAlumnado(libro).filter((f) => quienes.indexOf(minus(f[2])) >= 0);
+  // Un código por correo (una familia con dos hijos recibe un solo código para los dos).
+  const porCorreo = {};
+  filas.forEach((f) => minus(f[4]).split(/[;,\s]+/).filter((c) => /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(c))
+    .forEach((c) => (porCorreo[c] = porCorreo[c] || []).push(String(f[0] || ""))));
+  const correos = Object.keys(porCorreo);
+  if (correos.length > MailApp.getRemainingDailyQuota()) return json({ ok: false, error: "Hoy ya no quedan envíos suficientes de Google. Prueba mañana o con menos familias." });
+  const props = PropertiesService.getScriptProperties(), hasta = Date.now() + DIAS_CODIGO_PROFE * 86400000;
+  let enviados = 0; const fallos = [];
+  correos.forEach((c) => {
+    const codigo = String(Math.floor(100000 + Math.random() * 900000));
+    try {
+      MailApp.sendEmail({
+        to: c, name: "Rumbo a Europa · CEIP Tierra de Pinares", replyTo: CORREO_RESPUESTA,
+        subject: "Resultados de Rumbo a Europa: tu código de acceso",
+        body: "Hola:\n\nYa podéis consultar los resultados de " + porCorreo[c].join(" y ") + " en Rumbo a Europa.\n\n" +
+          "1. Entrad en " + WEB_FAMILIAS + "\n2. Escribid este correo: " + c + "\n3. Pulsad «Ya tengo un código» y escribid: " + codigo +
+          "\n\nEl código vale " + DIAS_CODIGO_PROFE + " días. Después podéis pedir uno nuevo desde la misma página.\n\nCEIP Tierra de Pinares"
+      });
+      props.setProperty("fam_" + c, JSON.stringify({ codigo, hasta, fallos: 0 }));
+      enviados++;
+    } catch (e) { fallos.push(c); }
+  });
+  const sinCorreo = quienes.length - filas.filter((f) => String(f[4] || "").trim()).length;
+  console.log("Códigos enviados por el profe: " + enviados + " correos; fallos: " + fallos.join(", "));
+  return json({ ok: true, enviados, sinCorreo, fallos });
 }

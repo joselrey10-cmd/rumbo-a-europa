@@ -171,6 +171,7 @@ window.Profe = (function () {
           return `<tr><td><button type="button" class="p-alumno" data-i="${i}">${esc(verNombre(a))}</button></td><td>${esc(a.usuario)}${a.correo ? ` <span title="${esc(a.correo)}">✉️</span>` : ""}</td>
             ${RINC.map((r) => `<td>${res[r.id].media === null ? "–" : `<b>${res[r.id].media}</b>`}<small>${res[r.id].hechas}/${res[r.id].total} notas</small>${r.id === "crea" ? `<small>✓ ${res.crea.retos}/${res.crea.nRetos} retos</small>` : ""}</td>`).join("")}<td><b>${media}</b></td><td><button type="button" class="p-papelera" data-i="${i}" title="Dar de baja a ${esc(verNombre(a))}" aria-label="Dar de baja a ${esc(verNombre(a))}">🗑️</button></td></tr>`;
         }).join("")}</tbody></table></div>` : `<p class="intro">Todavía no hay notas de este grupo en la hoja.</p>`}
+      ${barraCodigos(lista)}
       <details class="p-import"><summary>Importar alumnado desde un CSV</summary>
         <p class="intro">Columnas obligatorias: <b>nombre; apellidos; usuario</b> (de Educacyl) y <b>curso</b>. Solo se importan las filas con el curso escrito exactamente <b>P5A, P5B, P6A o P6B</b>; el resto (Infantil, otros cursos o vacío) se salta. Opcionales: hasta dos <b>correos</b> de los tutores (columnas «correo tutor 1» y «correo tutor 2») para que la familia pueda consultar los resultados. Si un alumno ya está, se actualizan sus datos.</p>
         <div class="p-barra"><input type="file" id="p-csv" accept=".csv,text/csv,text/plain"><button type="button" class="btn sec" id="p-plantilla">Descargar plantilla CSV</button></div>
@@ -191,6 +192,8 @@ window.Profe = (function () {
       extra.push(a); pintarAlumno(a);
     });
     raiz.querySelectorAll(".p-alumno").forEach((b) => b.onclick = () => pintarAlumno(lista[+b.dataset.i]));
+    const bg = $("#p-cod-grupo"); if (bg) bg.onclick = () => mandarCodigos(lista, bg, `las familias de ${grupo}`);
+    const bt = $("#p-cod-todos"); if (bt) bt.onclick = () => mandarCodigos(alumnos().filter((x) => GRUPOS.indexOf(G(x.clase)) >= 0), bt, "las familias de todos los grupos");
     raiz.querySelectorAll(".p-papelera").forEach((b) => b.onclick = () => darDeBaja(lista[+b.dataset.i], b, null));
     $("#p-plantilla").onclick = () => descargar("plantilla_alumnado.csv", "nombre;apellidos;usuario;curso;correo tutor 1;correo tutor 2\nLucía;Martín Pérez;lucia.martper;P5A;madre.martin@ejemplo.com;padre.martin@ejemplo.com\n");
     $("#p-csv").onchange = (e) => leerCSV(e.target.files[0]);
@@ -297,6 +300,7 @@ window.Profe = (function () {
         <label>Correo tutor 1<input id="p-correo-in" type="email" maxlength="120" value="${esc(separarCorreos(a.correo)[0] || "")}" placeholder="tutor1@ejemplo.com"></label>
         <label>Correo tutor 2 <small>(opcional)</small><input id="p-correo-in2" type="email" maxlength="120" value="${esc(separarCorreos(a.correo)[1] || "")}" placeholder="tutor2@ejemplo.com"></label>
         <button class="btn sec" type="submit"${a.usuario ? "" : " disabled title=\"Hace falta el usuario de Educacyl\""}>Guardar correos</button>
+        <button class="btn sec" type="button" id="p-cod-uno"${a.usuario && a.correo ? "" : " disabled"}>✉️ Enviar código</button>
         <span class="estado" id="p-correo-est">${a.usuario ? "Con cualquiera de estos correos la familia puede ver los resultados en la pestaña Familias." : "Este alumno no tiene usuario de Educacyl: impórtalo con su usuario."}</span>
       </form>
       <div class="p-resumen">${RINC.map((r) => `<div style="--rc:${r.color}"><b>${r.nombre}</b><span>${res[r.id].media === null ? "–" : res[r.id].media}</span><small>${res[r.id].hechas} de ${res[r.id].total} con nota${r.id === "crea" ? ` · ✓ ${res.crea.retos}/${res.crea.nRetos} retos terminados` : ""}</small></div>`).join("")}</div>
@@ -312,6 +316,7 @@ window.Profe = (function () {
       </div>`;
     $("#p-volver").onclick = pintarGrupo;
     $("#p-borrar").onclick = () => darDeBaja(a, $("#p-borrar"), $("#p-borrar-est"));
+    $("#p-cod-uno").onclick = () => mandarCodigos([a], $("#p-cod-uno"), `la familia de ${verNombre(a)}`, $("#p-correo-est"));
     $("#p-correo").addEventListener("submit", async (e) => {
       e.preventDefault();
       const est = $("#p-correo-est"), lista = [$("#p-correo-in").value, $("#p-correo-in2").value].map((x) => x.trim().toLowerCase()).filter((x) => x);
@@ -319,9 +324,31 @@ window.Profe = (function () {
       const correo = unirCorreos(lista);
       const partes = a.nombre.split(" ");
       const j = await llamar({ accion: "importar", alumnos: [{ nombre: a.registrado ? "" : partes[0], apellidos: a.registrado ? "" : partes.slice(1).join(" "), usuario: a.usuario, clase: a.clase, correo: correo || "-" }] }).catch(() => ({ ok: false, error: "No se ha podido conectar con la hoja." }));
-      if (j.ok) { a.correo = correo; a.registrado = true; est.textContent = correo ? "✓ Correos guardados." : "✓ Correos borrados."; est.dataset.tipo = "ok"; } else { est.textContent = j.error; est.dataset.tipo = "error"; }
+      if (j.ok) { a.correo = correo; a.registrado = true; $("#p-cod-uno").disabled = !correo; est.textContent = correo ? "✓ Correos guardados." : "✓ Correos borrados."; est.dataset.tipo = "ok"; } else { est.textContent = j.error; est.dataset.tipo = "error"; }
     });
     window.scrollTo(0, 0);
+  }
+
+  /* ---------- Enviar el código a las familias ---------- */
+  const conCorreo = (l) => l.filter((x) => x.usuario && String(x.correo || "").trim());
+  function barraCodigos(lista) {
+    const n = conCorreo(lista).length, t = conCorreo(alumnos().filter((x) => GRUPOS.indexOf(G(x.clase)) >= 0)).length;
+    return `<div class="p-codigos"><div><b>✉️ Acceso de las familias</b><p class="intro">Envía a cada familia un correo con las instrucciones y su código (vale 7 días). Solo a los alumnos con correo guardado.</p></div>
+      <div class="enviar-fila"><button type="button" class="btn sec" id="p-cod-grupo"${n ? "" : " disabled"}>Enviar a ${grupo} (${n})</button>
+      <button type="button" class="btn sec" id="p-cod-todos"${t ? "" : " disabled"}>Enviar a todos los grupos (${t})</button>
+      <span class="estado" id="p-cod-est" aria-live="polite"></span></div></div>`;
+  }
+  async function mandarCodigos(lista, btn, quien, est) {
+    est = est || $("#p-cod-est");
+    const l = conCorreo(lista);
+    if (!l.length) { est.textContent = "Ningún alumno tiene correo de familia."; est.dataset.tipo = "error"; return; }
+    if (!confirm(`¿Enviar el correo con el código a ${quien}?\n\nSe enviará a ${l.length} ${l.length === 1 ? "alumno" : "alumnos"} con correo guardado. Cada código vale 7 días y anula el anterior.`)) return;
+    btn.disabled = true; est.textContent = "Enviando… (puede tardar un poco)"; est.dataset.tipo = "";
+    const j = await llamar({ accion: "enviarCodigos", usuarios: l.map((x) => x.usuario) }).catch(() => ({ ok: false, error: "No se ha podido conectar con la hoja." }));
+    btn.disabled = false;
+    if (!j.ok) { est.textContent = j.error || "No se ha podido enviar."; est.dataset.tipo = "error"; return; }
+    est.textContent = `✓ Enviados ${j.enviados} ${j.enviados === 1 ? "correo" : "correos"}${j.fallos && j.fallos.length ? ` · no se pudo enviar a: ${j.fallos.join(", ")}` : ""}.`;
+    est.dataset.tipo = j.fallos && j.fallos.length ? "error" : "ok";
   }
 
   async function darDeBaja(a, btn, est) {

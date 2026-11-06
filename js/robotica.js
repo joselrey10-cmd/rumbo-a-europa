@@ -538,6 +538,7 @@
       c.addEventListener("change", pintarMenu);
       window.addEventListener("alumno-cambiado-prog", cargar);
       $("#rb-form-alumno").addEventListener("submit", (e) => e.preventDefault());
+      if (window.ListaAlumnos) window.ListaAlumnos.montar(n, c, u);
       $("#rb-btn-excel").onclick = () => VAL().excel();
     }
     $("#rb-mapa").src = MAPA_URL;
