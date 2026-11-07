@@ -77,7 +77,7 @@ window.INDICADORES = {
     "5.3.3": "CD2 · CD3: Explica a otra tripulación cómo resolvió un reto (micro:bit o robot) con una miniguía de pasos que les permite hacerlo."
   },
   "6º": {
-    "1.1.1": "CD1, CCL3: Busca en Internet los datos pedidos de su país (capital, habitantes, monumento y curiosidades) con palabras clave y anota la web de cada dato.",
+    "1.1.1": "CD1, CCL3: Busca en Internet los datos pedidos de su país (capital, habitantes, monumento y curiosidades) con palabras clave y anota la web de cada dato. Reconoce diferentes navegadores.",
     "1.1.2": "CD1, CCL3: Comprueba un dato en una segunda web fiable antes de usarlo, también cuando el dato lo ha dado una IA.",
     "1.1.3": "CCL3, CP1: Distingue una noticia fiable de un bulo (autor, fecha, fuentes, titular que asusta o mete prisa) y sabe que debe comprobarla en otro medio antes de compartirla.",
     "1.2.1": "CE3: Guarda sus trabajos en la carpeta de OneDrive indicada (TIAC · curso · SA o subcarpeta) con un nombre claro.",
@@ -88,10 +88,10 @@ window.INDICADORES = {
     "2.1.3": "CPSAA3, CC1: Aplica la netiqueta en chats, correos y videollamadas: saluda, pide por favor, no grita en mayúsculas, pide turno y pide permiso antes de compartir imágenes de otros.",
     "2.2.1": "CCL5, CE3: Comparte su trabajo por OneDrive o Teams con las personas adecuadas y comprueba que pueden abrirlo.",
     "2.2.2": "CCL5, CE3: Crea un código QR que enlaza a información útil (especie, ahorro de agua o energía) y comprueba que funciona.",
-    "2.3.1": "CD3, CPSAA5: Escribe su parte en un documento colaborativo de Word sin borrar ni cambiar la de los demás.",
+    "2.3.1": "CD3, CPSAA5: Escribe su parte en un documento colaborativo de Word o PowerPoint sin borrar ni cambiar la de los demás.",
     "2.3.2": "CCL5, CD3: Completa con su tripulación una tabla de Excel compartida aportando sus datos en el lugar acordado.",
     "3.1.1": "STEM3, CD2: Crea en Excel una tabla con los datos de los países y un gráfico con título.",
-    "3.1.2": "CD2, CCEC4: Diseña en Canva un cartel legible con título, información e imagen, cuidando tipografía, colores y orden.",
+    "3.1.2": "CD2, CCEC4: Diseña en Canva un cartel legible con título, información e imagen, cuidando tipografía, colores y orden. Crea en PowerPoint una presentación colaborativa con título, información e imágenes, cuidando tipografía, colores y orden, incluyendo diseño y transiciones.",
     "3.1.3": "CD2, CD3: Graba y edita en Audacity su parte del pódcast con voz clara, quitando silencios y errores.",
     "3.2.1": "CD2, CD5: Anima en Scratch las letras del nombre de su país con eventos y bloques de apariencia, movimiento y sonido.",
     "3.2.2": "CD2, CD5: Programa en Scratch personajes que se desplazan o conversan por turnos siguiendo una secuencia ordenada.",
