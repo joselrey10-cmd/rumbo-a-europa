@@ -21,6 +21,13 @@ window.Profe = (function () {
   const igual = (a, b) => String(a || "").trim().toLowerCase() === String(b || "").trim().toLowerCase();
   const textoInd = (c, cod) => ((window.INDICADORES || {})[c] || {})[cod] || "";
   const columna = (destino, cod) => String(destino).slice(0, 60) + " · Ind. " + cod;
+  /* Indicadores de una actividad para un alumno: los de ahora y, si en la hoja tiene notas con códigos
+     antiguos (p. ej. tras cambiar los indicadores de 6º en SA1), también esos, para que no se pierdan. */
+  function indsAl(x, a) {
+    const pre = String(x.destino).slice(0, 60) + " · Ind. ", L = x.inds.slice();
+    Object.keys((a && a.notas) || {}).forEach((k) => { if (k.indexOf(pre) === 0) { const c = k.slice(pre.length); if (L.indexOf(c) < 0) L.push(c); } });
+    return L;
+  }
 
   /* Todas las actividades de un curso, con su texto de "Actividad" tal como llega a la hoja. */
   function catalogo(c) {
@@ -80,6 +87,7 @@ window.Profe = (function () {
     extra.forEach((x) => { x.terminados = x.terminados || {}; if (!lista.some((a) => igual(a.nombre, x.nombre) && igual(a.clase, x.clase))) lista.push(x); });
     return lista;
   }
+  const esAdaptado = (a) => !!a.usuario && (datos && datos.adaptados || []).indexOf(String(a.usuario).trim().toLowerCase()) >= 0;
   const idDe = (a) => (a.usuario ? "u:" + String(a.usuario).trim().toLowerCase() : "n:" + String(a.nombre || "").trim().toLowerCase() + "|" + G(a.clase));
   function notasDe(cab, f) {
     const notas = {};
@@ -101,15 +109,15 @@ window.Profe = (function () {
   function resumen(a, c) {
     const cat = catalogo(c), out = {};
     RINC.forEach((r) => {
-      const notas = [], total = cat.filter((x) => x.rincon === r.id).reduce((n, x) => n + x.inds.length, 0);
-      cat.filter((x) => x.rincon === r.id).forEach((x) => x.inds.forEach((cod) => { const v = a.notas[columna(x.destino, cod)]; if (v !== undefined) notas.push(v); }));
+      const notas = [], total = cat.filter((x) => x.rincon === r.id).reduce((n, x) => n + indsAl(x, a).length, 0);
+      cat.filter((x) => x.rincon === r.id).forEach((x) => indsAl(x, a).forEach((cod) => { const v = a.notas[columna(x.destino, cod)]; if (v !== undefined) notas.push(v); }));
       out[r.id] = { retos: r.id === "crea" ? cat.filter((x) => x.rincon === "crea" && a.terminados && a.terminados[x.destino.slice(0, 60)]).length : 0, nRetos: cat.filter((x) => x.rincon === r.id).length, hechas: notas.length, total, media: notas.length ? Math.round(notas.reduce((s, v) => s + v, 0) / notas.length * 10) / 10 : null };
     });
     return out;
   }
   function mediasInd(lista, c) {
     const cat = catalogo(c), por = {};
-    lista.forEach((a) => cat.forEach((x) => x.inds.forEach((cod) => {
+    lista.forEach((a) => cat.forEach((x) => indsAl(x, a).forEach((cod) => {
       const v = a.notas[columna(x.destino, cod)];
       if (v !== undefined) (por[cod] = por[cod] || []).push(v);
     })));
@@ -168,7 +176,7 @@ window.Profe = (function () {
           const res = resumen(a, c), todas = RINC.map((r) => res[r.id]).filter((x) => x.media !== null);
           const hechas = todas.reduce((s, x) => s + x.hechas, 0);
           const media = hechas ? Math.round(todas.reduce((s, x) => s + x.media * x.hechas, 0) / hechas * 10) / 10 : "–";
-          return `<tr><td><button type="button" class="p-alumno" data-i="${i}">${esc(verNombre(a))}</button></td><td>${esc(a.usuario)}${a.correo ? ` <span title="${esc(a.correo)}">✉️</span>` : ""}</td>
+          return `<tr><td><button type="button" class="p-alumno" data-i="${i}">${esc(verNombre(a))}</button>${esAdaptado(a) ? ` <span class="p-ac-marca" title="Adaptación curricular">AC</span>` : ""}</td><td>${esc(a.usuario)}${a.correo ? ` <span title="${esc(a.correo)}">✉️</span>` : ""}</td>
             ${RINC.map((r) => `<td>${res[r.id].media === null ? "–" : `<b>${res[r.id].media}</b>`}<small>${res[r.id].hechas}/${res[r.id].total} notas</small>${r.id === "crea" ? `<small>✓ ${res.crea.retos}/${res.crea.nRetos} retos</small>` : ""}</td>`).join("")}<td><b>${media}</b></td><td><button type="button" class="p-papelera" data-i="${i}" title="Dar de baja a ${esc(verNombre(a))}" aria-label="Dar de baja a ${esc(verNombre(a))}">🗑️</button></td></tr>`;
         }).join("")}</tbody></table></div>` : `<p class="intro">Todavía no hay notas de este grupo en la hoja.</p>`}
       ${barraCodigos(lista)}
@@ -308,6 +316,7 @@ window.Profe = (function () {
         <label>Correo tutor 2 <small>(opcional)</small><input id="p-correo-in2" type="email" maxlength="120" value="${esc(separarCorreos(a.correo)[1] || "")}" placeholder="tutor2@ejemplo.com"></label>
         <button class="btn sec" type="submit"${a.usuario ? "" : " disabled title=\"Hace falta el usuario de Educacyl\""}>Guardar correos</button>
         <button class="btn sec" type="button" id="p-cod-uno"${a.usuario && a.correo ? "" : " disabled"}>✉️ Enviar código</button>
+        <label class="p-ac"><input type="checkbox" id="p-ac"${esAdaptado(a) ? " checked" : ""}${a.usuario ? "" : " disabled"}> Adaptación curricular <small>(entra sin código y ve los contenidos adaptados)</small></label>
         <span class="estado" id="p-correo-est">${a.usuario ? "Con cualquiera de estos correos la familia puede ver los resultados en la pestaña Familias." : "Este alumno no tiene usuario de Educacyl: impórtalo con su usuario."}</span>
       </form>
       <div class="p-resumen">${RINC.map((r) => `<div style="--rc:${r.color}"><b>${r.nombre}</b><span>${res[r.id].media === null ? "–" : res[r.id].media}</span><small>${res[r.id].hechas} de ${res[r.id].total} con nota${r.id === "crea" ? ` · ✓ ${res.crea.retos}/${res.crea.nRetos} retos terminados` : ""}</small></div>`).join("")}</div>
@@ -317,12 +326,20 @@ window.Profe = (function () {
         <div class="retos-r">${cat.map((x, k) => ({ x, k })).filter(({ x }) => x.rincon === r.id && x.inds.length).map(({ x, k }) => `
           <article class="reto-r" data-k="${k}">
             <div class="reto-r-cab"><h3>${esc(x.titulo)}</h3>${x.rincon === "crea" ? (() => { const t = (a.terminados || {})[x.destino.slice(0, 60)]; return t ? `<span class="p-hecho">✓ Terminado${t.ruta && t.ruta !== "Todos" ? " · " + esc(t.ruta) : ""}${t.fecha && !isNaN(new Date(t.fecha)) ? " · " + new Date(t.fecha).toLocaleDateString("es-ES") : ""}</span>` : `<span class="p-hecho no">Sin terminar</span>`; })() : ""}</div>
-            <div class="inds">${x.inds.map((cod) => { const col = columna(x.destino, cod); return `<div class="fila-ind"><div class="fila-ind-t"><span class="cod">Ind. ${cod}</span> ${esc(textoInd(c, cod))}</div>${chips(col, a.notas[col])}</div>`; }).join("")}</div>
+            <div class="inds">${indsAl(x, a).map((cod) => { const col = columna(x.destino, cod), viejo = x.inds.indexOf(cod) < 0; return `<div class="fila-ind"><div class="fila-ind-t"><span class="cod">Ind. ${cod}</span> ${esc(textoInd(c, cod))}${viejo ? " <small>(indicador anterior: nota ya puesta)</small>" : ""}</div>${chips(col, a.notas[col])}</div>`; }).join("")}</div>
             <div class="enviar-fila"><button type="button" class="btn sec enviar-p">Volver a enviar</button><span class="estado" aria-live="polite"></span></div>
           </article>`).join("")}</div></details>`).join("")}
       </div>`;
     $("#p-volver").onclick = pintarGrupo;
     $("#p-borrar").onclick = () => darDeBaja(a, $("#p-borrar"), $("#p-borrar-est"));
+    $("#p-ac").onchange = async (e) => {
+      const est = $("#p-correo-est"), si = e.target.checked; e.target.disabled = true;
+      est.textContent = "Guardando…"; est.dataset.tipo = "";
+      const j = await llamar({ accion: "adaptacion", usuario: a.usuario, valor: si }).catch(() => null);
+      e.target.disabled = false;
+      if (j && j.ok) { datos.adaptados = j.adaptados; est.textContent = si ? "✓ Con adaptación: entra sin código y ve los contenidos adaptados." : "✓ Sin adaptación."; est.dataset.tipo = "ok"; }
+      else { e.target.checked = !si; est.textContent = (j && j.error) || "No se ha podido guardar."; est.dataset.tipo = "error"; }
+    };
     $("#p-cod-uno").onclick = () => mandarCodigos([a], $("#p-cod-uno"), `la familia de ${verNombre(a)}`, $("#p-correo-est"));
     $("#p-correo").addEventListener("submit", async (e) => {
       e.preventDefault();
@@ -369,14 +386,15 @@ window.Profe = (function () {
       pintarGrupo();
   }
 
+  function claveGuardada() { try { return sessionStorage.getItem(CLAVE_SES) || ""; } catch (e) { return ""; } }
   async function enviarProfe(caja, todas) {
     const a = alumnoSel, x = catalogo(cursoDe(a.clase))[+caja.dataset.k], est = $(".estado", caja), filas = [];
     caja.querySelectorAll(".chips").forEach((g, i) => {
       const b = g.querySelector('[aria-checked="true"]');
       if (!b) return;
-      const nota = +b.dataset.n, cod = x.inds[i];
+      const nota = +b.dataset.n, cod = indsAl(x, a)[i];
       if (!todas && a.notas[g.dataset.col] === nota) return;   // sin cambios
-      filas.push({ col: g.dataset.col, nota, d: { nombre: a.nombre, usuario: a.usuario, clase: a.clase, destino: x.destino, ciudad: x.ciudad, personaje: "Profe", programa: "Nota del profe", indicador: cod, valoracion: nota } });
+      filas.push({ col: g.dataset.col, nota, d: { clave: claveGuardada(), nombre: a.nombre, usuario: a.usuario, clase: a.clase, destino: x.destino, ciudad: x.ciudad, personaje: "Profe", programa: "Nota del profe", indicador: cod, valoracion: nota } });
     });
     if (!filas.length) { if (todas) { est.textContent = "Elige al menos una nota."; est.dataset.tipo = "error"; } return; }
     const btn = $(".enviar-p", caja); btn.disabled = true; est.textContent = "Enviando…"; est.dataset.tipo = "";
