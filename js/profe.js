@@ -21,6 +21,13 @@ window.Profe = (function () {
   const igual = (a, b) => String(a || "").trim().toLowerCase() === String(b || "").trim().toLowerCase();
   const textoInd = (c, cod) => ((window.INDICADORES || {})[c] || {})[cod] || "";
   const columna = (destino, cod) => String(destino).slice(0, 60) + " · Ind. " + cod;
+  /* Indicadores de una actividad para un alumno: los de ahora y, si en la hoja tiene notas con códigos
+     antiguos (p. ej. tras cambiar los indicadores de 6º en SA1), también esos, para que no se pierdan. */
+  function indsAl(x, a) {
+    const pre = String(x.destino).slice(0, 60) + " · Ind. ", L = x.inds.slice();
+    Object.keys((a && a.notas) || {}).forEach((k) => { if (k.indexOf(pre) === 0) { const c = k.slice(pre.length); if (L.indexOf(c) < 0) L.push(c); } });
+    return L;
+  }
 
   /* Todas las actividades de un curso, con su texto de "Actividad" tal como llega a la hoja. */
   function catalogo(c) {
@@ -102,15 +109,15 @@ window.Profe = (function () {
   function resumen(a, c) {
     const cat = catalogo(c), out = {};
     RINC.forEach((r) => {
-      const notas = [], total = cat.filter((x) => x.rincon === r.id).reduce((n, x) => n + x.inds.length, 0);
-      cat.filter((x) => x.rincon === r.id).forEach((x) => x.inds.forEach((cod) => { const v = a.notas[columna(x.destino, cod)]; if (v !== undefined) notas.push(v); }));
+      const notas = [], total = cat.filter((x) => x.rincon === r.id).reduce((n, x) => n + indsAl(x, a).length, 0);
+      cat.filter((x) => x.rincon === r.id).forEach((x) => indsAl(x, a).forEach((cod) => { const v = a.notas[columna(x.destino, cod)]; if (v !== undefined) notas.push(v); }));
       out[r.id] = { retos: r.id === "crea" ? cat.filter((x) => x.rincon === "crea" && a.terminados && a.terminados[x.destino.slice(0, 60)]).length : 0, nRetos: cat.filter((x) => x.rincon === r.id).length, hechas: notas.length, total, media: notas.length ? Math.round(notas.reduce((s, v) => s + v, 0) / notas.length * 10) / 10 : null };
     });
     return out;
   }
   function mediasInd(lista, c) {
     const cat = catalogo(c), por = {};
-    lista.forEach((a) => cat.forEach((x) => x.inds.forEach((cod) => {
+    lista.forEach((a) => cat.forEach((x) => indsAl(x, a).forEach((cod) => {
       const v = a.notas[columna(x.destino, cod)];
       if (v !== undefined) (por[cod] = por[cod] || []).push(v);
     })));
@@ -319,7 +326,7 @@ window.Profe = (function () {
         <div class="retos-r">${cat.map((x, k) => ({ x, k })).filter(({ x }) => x.rincon === r.id && x.inds.length).map(({ x, k }) => `
           <article class="reto-r" data-k="${k}">
             <div class="reto-r-cab"><h3>${esc(x.titulo)}</h3>${x.rincon === "crea" ? (() => { const t = (a.terminados || {})[x.destino.slice(0, 60)]; return t ? `<span class="p-hecho">✓ Terminado${t.ruta && t.ruta !== "Todos" ? " · " + esc(t.ruta) : ""}${t.fecha && !isNaN(new Date(t.fecha)) ? " · " + new Date(t.fecha).toLocaleDateString("es-ES") : ""}</span>` : `<span class="p-hecho no">Sin terminar</span>`; })() : ""}</div>
-            <div class="inds">${x.inds.map((cod) => { const col = columna(x.destino, cod); return `<div class="fila-ind"><div class="fila-ind-t"><span class="cod">Ind. ${cod}</span> ${esc(textoInd(c, cod))}</div>${chips(col, a.notas[col])}</div>`; }).join("")}</div>
+            <div class="inds">${indsAl(x, a).map((cod) => { const col = columna(x.destino, cod), viejo = x.inds.indexOf(cod) < 0; return `<div class="fila-ind"><div class="fila-ind-t"><span class="cod">Ind. ${cod}</span> ${esc(textoInd(c, cod))}${viejo ? " <small>(indicador anterior: nota ya puesta)</small>" : ""}</div>${chips(col, a.notas[col])}</div>`; }).join("")}</div>
             <div class="enviar-fila"><button type="button" class="btn sec enviar-p">Volver a enviar</button><span class="estado" aria-live="polite"></span></div>
           </article>`).join("")}</div></details>`).join("")}
       </div>`;
@@ -385,7 +392,7 @@ window.Profe = (function () {
     caja.querySelectorAll(".chips").forEach((g, i) => {
       const b = g.querySelector('[aria-checked="true"]');
       if (!b) return;
-      const nota = +b.dataset.n, cod = x.inds[i];
+      const nota = +b.dataset.n, cod = indsAl(x, a)[i];
       if (!todas && a.notas[g.dataset.col] === nota) return;   // sin cambios
       filas.push({ col: g.dataset.col, nota, d: { clave: claveGuardada(), nombre: a.nombre, usuario: a.usuario, clase: a.clase, destino: x.destino, ciudad: x.ciudad, personaje: "Profe", programa: "Nota del profe", indicador: cod, valoracion: nota } });
     });
