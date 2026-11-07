@@ -429,7 +429,16 @@ function prepararExcel(libro) {
   const c = r[0].map(String), I = (t) => c.indexOf(t);
   const iF = I("Fecha"), iN = I("Nombre"), iU = I("Usuario Educacyl"), iC = I("Clase"), iA = I("Actividad"), iI = I("Nº indicador"), iV = I("Valoración (0-5)");
   const mapa = mapaApellidos(libro);
-  const idDe = (u, n, cl) => u ? "u:" + minus(u) : "n:" + minus(n) + "|" + normGrupo(cl);
+  // Cada fila de Resultados se une a su alumno de Alumnado por el usuario (con o sin @educa…) o, si no, por el nombre.
+  const sinDom = (u) => minus(u).replace(/@.*$/, "");
+  const llano = (t) => minus(t).normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-zñ0-9]+/g, " ").trim();
+  const porUsuario = {}, porNombre = {};
+  filasAlumnado(libro).forEach((f) => {
+    if (!f[2]) return; const id = "u:" + sinDom(f[2]), g = normGrupo(f[3]);
+    porUsuario[sinDom(f[2])] = id;
+    [textoAlumno(f), String(f[0] || "") + " " + String(f[1] || "")].forEach((t) => (porNombre[llano(t) + "|" + g] = id));
+  });
+  const idDe = (u, n, cl) => (u && porUsuario[sinDom(u)]) || porNombre[llano(n) + "|" + normGrupo(cl)] || (u ? "u:" + sinDom(u) : "n:" + llano(n) + "|" + normGrupo(cl));
   // 1) Última nota de cada alumno en cada actividad e indicador.
   const ultima = {};
   r.slice(1).forEach((f) => {
@@ -448,7 +457,7 @@ function prepararExcel(libro) {
   const alumnado = filasAlumnado(libro), hechos = [];
   GRUPOS_EXCEL.forEach((g) => {
     const curso = /6/.test(g) ? "6º" : "5º";
-    let lista = alumnado.filter((f) => normGrupo(f[3]) === g && f[2]).map((f) => ({ id: idDe(f[2]), nombre: textoAlumno(f), k: claveOrden(mapa, f[0], f[2], g, f[1]) }));
+    let lista = alumnado.filter((f) => normGrupo(f[3]) === g && f[2]).map((f) => ({ id: "u:" + sinDom(f[2]), nombre: textoAlumno(f), k: claveOrden(mapa, f[0], f[2], g, f[1]) }));
     // Alumnos con notas que no están en Alumnado (van al final).
     const vistos = {}; lista.forEach((a) => (vistos[a.id] = 1));
     Object.keys(ultima).forEach((k) => { const f = ultima[k].f; if (normGrupo(f[iC]) !== g) return; const id = idDe(f[iU], f[iN], f[iC]); if (!vistos[id]) { vistos[id] = 1; lista.push({ id, nombre: String(f[iN]) + " (no está en Alumnado)", k: ["~", minus(f[iN]), ""] }); } });
@@ -456,10 +465,15 @@ function prepararExcel(libro) {
     const filas = [], negritas = [];
     ORDEN_EXCEL[curso].forEach((txt, tri) => {
       const cods = txt.split(" ");
+      // Indicadores con nota en este trimestre que no están en el Excel (p. ej. códigos antiguos): se ponen aparte, al final.
+      const otros = [];
+      Object.keys(suma).forEach((kk) => { const p = kk.split("#"); if (+p[1] === tri && cods.indexOf(p[2]) < 0 && otros.indexOf(p[2]) < 0 && lista.some((a) => a.id === p[0])) otros.push(p[2]); });
+      otros.sort((a, b) => a.localeCompare(b, "es", { numeric: true }));
       const ini = filas.length + 1;
       filas.push([`${tri + 1}.º TRIMESTRE · copia las notas (desde la columna B, sin la fila de los números) y pégalas en la pestaña TIAC${tri + 1} del Excel de ${g.charAt(1)}º${g.charAt(2)}, en la celda D9`]);
-      filas.push(["Alumno/a"].concat(cods)); negritas.push(ini, ini + 1);
-      lista.forEach((a) => filas.push([a.nombre].concat(cods.map((cod) => notaDe(a.id, tri, cod)))));
+      const extra = otros.length ? ["", "NO ESTÁN EN EL EXCEL →"].concat(otros) : [];
+      filas.push(["Alumno/a"].concat(cods, extra)); negritas.push(ini, ini + 1);
+      lista.forEach((a) => filas.push([a.nombre].concat(cods.map((cod) => notaDe(a.id, tri, cod)), otros.length ? ["", ""].concat(otros.map((cod) => notaDe(a.id, tri, cod))) : [])));
       filas.push([""]);
     });
     const ancho = Math.max.apply(null, filas.map((f) => f.length));
