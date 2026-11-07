@@ -144,12 +144,44 @@ window.Rincones = (function () {
     const r = RINCONES[0], lista = crea();
     const porSA = {};
     lista.forEach((a, i) => (porSA[a.sa] = porSA[a.sa] || []).push(i));
-    raiz.innerHTML = cabecera(r, "Crea", `Retos de ${V().curso()} en orden. Elige tu ruta, haz el reto y pulsa «He terminado el reto» para abrir el siguiente. La nota de los indicadores la pone tu profe.`) +
+    const AC = !!window.ADAPTADO && lista.some((a) => a.ac);
+    const pais = paisAC();
+    raiz.innerHTML = cabecera(r, "Crea", AC ? "Mira la ficha, escúchala 🔊 y escribe la palabra que falta." : `Retos de ${V().curso()} en orden. Elige tu ruta, haz el reto y pulsa «He terminado el reto» para abrir el siguiente. La nota de los indicadores la pone tu profe.`) +
+      (AC ? `<div class="envoltura seccion ac-paises"><h2>Elige tu país</h2><div class="ac-flags">${Object.keys(window.PAISES_AC).map((k) =>
+        `<button type="button" class="ac-flag" data-pais="${k}" aria-pressed="${k === pais}"><span>${window.PAISES_AC[k].flag}</span>${k}</button>`).join("")}</div></div>` : "") +
       `<div class="envoltura seccion">${Object.keys(porSA).map((sa) => `
         <h2 class="sa-tit">${sa}</h2>
         <div class="retos-r">${porSA[sa].map((i) => tarjetaCrea(lista[i], i)).join("")}</div>`).join("")}</div>`;
   }
+  function paisAC() { try { const p = localStorage.getItem("rumbo-pais-ac"); return window.PAISES_AC && window.PAISES_AC[p] ? p : "Francia"; } catch (e) { return "Francia"; } }
+  // Cambia {capital}, {pais}… por los datos del país elegido.
+  function rellenar(t) { const k = paisAC(), P = Object.assign({ pais: k }, window.PAISES_AC[k]); return String(t).replace(/\{(\w+)\}/g, (m, x) => (P[x] != null ? P[x] : m)); }
+  function respuestaOk(q, v) {
+    const n = (t) => String(t || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-zñ0-9 ]/g, "").trim();
+    const esp = q[1][0] === "=" ? q[1].slice(1).split("|") : [rellenar("{" + q[1] + "}")];
+    return esp.some((x) => n(x) && (n(v) === n(x) || n(v).split(" ").includes(n(x))));
+  }
+  function tarjetaCreaAC(a, i) {
+    const x = a.ac, lista = crea(), h = V().leer()[claveHecho(a)] || {};
+    if (i > 0 && !hecho(lista[i - 1])) {
+      return `<article class="reto-r bloqueado ac-reto" data-tipo="crea" data-i="${i}"><div class="reto-r-cab"><span class="ses">${a.sa} · ${a.s}</span><h3>🔒 ${esc(x.facil)}</h3></div>
+        <p class="aviso-bloq">Primero termina: <b>${esc(lista[i - 1].ac ? lista[i - 1].ac.facil : lista[i - 1].titulo)}</b>.</p></article>`;
+    }
+    const ficha = rellenar(x.ficha), guard = h.respuestas || [];
+    return `<article class="reto-r ac-reto" data-tipo="crea" data-i="${i}">
+      <div class="reto-r-cab"><span class="ses">${a.sa} · ${a.s}</span><h3>${esc(x.facil)}</h3></div>
+      <ol class="ac-pasos">${x.pasos.map((p) => `<li>${esc(p)}</li>`).join("")}</ol>
+      <div class="ac-ficha"><p>${esc(ficha)}</p><button type="button" class="btn sec leer" data-leer="${esc(ficha)}" aria-label="Escuchar la ficha">🔊 Escuchar</button></div>
+      <div class="ac-preguntas">${x.preguntas.map((q, k) => `<label class="ac-preg"><span><button type="button" class="leer mini" data-leer="${esc(q[0])}" aria-label="Escuchar la pregunta">🔊</button> ${esc(q[0])}</span>
+        <input class="ac-resp" data-k="${k}" maxlength="30" autocomplete="off" value="${esc(guard[k] || "")}"><b class="ac-ok" aria-live="polite"></b></label>`).join("")}</div>
+      <div class="inds"><p class="inds-t">Lo que valora tu profe</p>${a.ind.map((cod) => `<div class="fila-ind"><div class="fila-ind-t"><span class="cod">Ind. ${esc(cod)}</span> ${esc(textoInd(cod))}</div></div>`).join("")}</div>
+      ${h.hecho
+        ? `<p class="hecho-ok">✓ ¡Muy bien! Reto terminado 😊</p>`
+        : `<div class="enviar-fila"><button type="button" class="btn terminar">✅ He terminado</button><span class="estado" aria-live="polite"></span></div>`}
+    </article>`;
+  }
   function tarjetaCrea(a, i) {
+    if (window.ADAPTADO && a.ac) return tarjetaCreaAC(a, i);
     const lista = crea(), h = V().leer()[claveHecho(a)] || {};
     if (i > 0 && !hecho(lista[i - 1])) {
       return `<article class="reto-r bloqueado" data-tipo="crea" data-i="${i}">
@@ -196,7 +228,7 @@ window.Rincones = (function () {
         const g = L[p.pre], auto = g ? leerLlave(g.llave, p) : {};
         return `<article class="reto-r" data-tipo="piensa" data-i="${i}">
           <div class="reto-r-cab"><span class="ses">Parada ${i + 1}</span><h3>${esc(p.titulo)}</h3></div>
-          <p><a class="btn sec abrir" href="piensa/${p.slug}.html" target="_blank" rel="noopener">Abrir la actividad ↗</a></p>
+          <p><a class="btn sec abrir" href="piensa/${window.ADAPTADO && window.PIENSA_AC && window.PIENSA_AC[p.slug] ? "facil.html?p=" + p.slug : p.slug + ".html"}" target="_blank" rel="noopener">Abrir la actividad ↗</a></p>
           <div class="llave-fila"><label>Llave<input class="llave" placeholder="${p.pre}-…" value="${esc(g ? g.llave : "")}" autocomplete="off" spellcheck="false"></label></div>
           ${g ? `<p class="nota-llave">${g.completa ? "🔑 Llave conseguida en la actividad." : "Llave de una actividad sin terminar: termínala para conseguir la llave completa."}</p>` : ""}
           <div class="inds"><p class="inds-t">Indicadores de tu curso</p>${indPiensa(p).map(([cod, t]) => `<div class="fila-ind"><div class="fila-ind-t"><span class="cod">Ind. ${esc(cod)}</span> ${esc(t)}</div></div>`).join("")}</div>
@@ -241,7 +273,14 @@ window.Rincones = (function () {
   }
 
   /* ---------- Clics ---------- */
+  raiz.addEventListener("input", (e) => {
+    const r = e.target.closest(".ac-resp"); if (!r) return;
+    const caja = r.closest(".reto-r"), a = crea()[+caja.dataset.i], q = a.ac.preguntas[+r.dataset.k], ok = r.parentElement.querySelector(".ac-ok");
+    ok.textContent = r.value.trim() && respuestaOk(q, r.value) ? "✅" : "";
+  });
   raiz.addEventListener("click", async (e) => {
+    const fl = e.target.closest(".ac-flag");
+    if (fl) { try { localStorage.setItem("rumbo-pais-ac", fl.dataset.pais); } catch (x) {} pintarCrea(); return; }
     const chip = e.target.closest(".chips button, .rutas .ruta");
     if (chip) {
       chip.parentElement.querySelectorAll("button").forEach((b) => b.setAttribute("aria-checked", String(b === chip)));
@@ -294,10 +333,16 @@ window.Rincones = (function () {
       const caja = fin.closest(".reto-r"), a = crea()[+caja.dataset.i];
       if (faltanDatos()) { estado(caja, avisoDatos, "error"); return; }
       const rb = caja.querySelector('.ruta[aria-checked="true"]');
-      const ruta = a.rutas.length === 1 ? "Todos" : rb ? rb.dataset.ruta : "";
+      let ruta = a.rutas.length === 1 ? "Todos" : rb ? rb.dataset.ruta : "", respuestas = null;
+      if (window.ADAPTADO && a.ac) {
+        respuestas = [...caja.querySelectorAll(".ac-resp")].map((x) => x.value.trim());
+        if (respuestas.some((v) => !v)) { estado(caja, "✏️ Escribe una palabra en cada pregunta.", "error"); return; }
+        const bien = a.ac.preguntas.filter((q, k) => respuestaOk(q, respuestas[k])).length;
+        ruta = `Adaptada · ${paisAC()} · ${bien} de ${respuestas.length} bien (${respuestas.join(", ")})`;
+      }
       if (!ruta) { estado(caja, "Marca primero la ruta que has hecho.", "error"); return; }
       fin.disabled = true; estado(caja, "Enviando…", "");
-      V().registrar(claveHecho(a), { nota: "✓ Terminado", hecho: true, ruta, pantalla: "Crea", actividad: a.titulo }, true);
+      V().registrar(claveHecho(a), Object.assign({ nota: "✓ Terminado", hecho: true, ruta, pantalla: "Crea", actividad: a.titulo }, respuestas ? { respuestas } : {}), true);
       await V().enviar({ destino: destinoCrea(a), ciudad: a.titulo, personaje: "Crea", programa: "Terminado · " + ruta });
       pintarCrea();
       const sig = raiz.querySelector(`.reto-r[data-i="${+caja.dataset.i + 1}"]`);

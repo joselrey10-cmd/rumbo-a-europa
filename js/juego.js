@@ -12,14 +12,17 @@
   const CLAVE = "rumbo-a-europa-v1";
 
   /* ---------- Progreso guardado ---------- */
-  let progreso = { estrellas: {}, personaje: PERSONAJES[0].id, alumno: { nombre: "", clase: "" } };
+  // Con adaptación curricular los niveles son otros: sus estrellas se guardan aparte.
+  const AC = !!window.ADAPTADO, EST = AC ? "estrellasAC" : "estrellas";
+  let progreso = { estrellas: {}, estrellasAC: {}, personaje: PERSONAJES[0].id, alumno: { nombre: "", clase: "" } };
   try {
     const g = JSON.parse(localStorage.getItem(CLAVE) || "null");
     if (g && typeof g === "object") progreso = Object.assign(progreso, g);
+    progreso[EST] = progreso[EST] || {};
   } catch (e) { /* sin almacenamiento */ }
   function guardar() { try { localStorage.setItem(CLAVE, JSON.stringify(progreso)); } catch (e) {} }
-  const completados = () => Object.keys(progreso.estrellas).length;
-  const desbloqueadoNivel = (i) => NIVELES[i].pos === 0 || !!progreso.estrellas[i - 1];
+  const completados = () => Object.keys(progreso[EST]).length;
+  const desbloqueadoNivel = (i) => NIVELES[i].pos === 0 || !!progreso[EST][i - 1];
   const desbloqueadoPers = (p) => completados() >= (p.desbloquea || 0);
   function personajeActual() {
     const p = PERSONAJES.find((x) => x.id === progreso.personaje);
@@ -147,10 +150,10 @@
     });
 
     $("#lista-destinos").innerHTML = AVENTURAS.map((av, ai) => {
-      const hechas = NIVELES.filter((n, i) => n.aventura === ai && progreso.estrellas[i]).length;
+      const hechas = NIVELES.filter((n, i) => n.aventura === ai && progreso[EST][i]).length;
       const tarjetas = NIVELES.map((n, i) => {
         if (n.aventura !== ai) return "";
-        const est = progreso.estrellas[i] || 0;
+        const est = progreso[EST][i] || 0;
         const ok = desbloqueadoNivel(i);
         return `<button class="destino" data-i="${i}" ${ok ? "" : "disabled"}>
         <span class="num">Destino ${n.pos + 1} de ${av.niveles.length}</span>
@@ -178,8 +181,8 @@
   let corriendo = false;
   let intentos = 0;          // veces que se pulsa Ejecutar en este nivel
 
-  const NOMBRES = { avanzar: "Avanzar", izq: "Girar a la izquierda", der: "Girar a la derecha", saltar: "Saltar", repetir: "Repetir", si: "Si…", hasta: "Repetir hasta llegar" };
-  const SIMBOLOS = { avanzar: "↑", izq: "↺", der: "↻", saltar: "⤴", repetir: "⟳", si: "?", hasta: "⚑" };
+  const NOMBRES = { atras: "Atrás", avanzar: "Avanzar", izq: "Girar a la izquierda", der: "Girar a la derecha", saltar: "Saltar", repetir: "Repetir", si: "Si…", hasta: "Repetir hasta llegar" };
+  const SIMBOLOS = AC ? { avanzar: "⬆️", atras: "⬇️", izq: "↩️", der: "↪️", saltar: "⤴️", repetir: "🔁", si: "❓", hasta: "🚩" } : { atras: "↓", avanzar: "↑", izq: "↺", der: "↻", saltar: "⤴", repetir: "⟳", si: "?", hasta: "⚑" };
   const CONDICIONES = { salto: "hay algo que saltar delante", camino: "hay camino delante", izq: "hay camino a la izquierda", der: "hay camino a la derecha" };
   const CONTENEDORES = ["repetir", "si", "hasta"];
 
@@ -306,7 +309,7 @@
     return lista.some((b) => b.cuerpo && quitar(id, b.cuerpo));
   }
   const contar = (lista) => lista.reduce((n, b) => n + 1 + (b.cuerpo ? contar(b.cuerpo) : 0) + (b.sino ? contar(b.sino) : 0), 0);
-  const PUZLE = !!window.EditorBloques;
+  const PUZLE = !!window.EditorBloques && !AC;   // con adaptación: botones grandes de flechas (tocar para añadir)
 
   function añadir(t) {
     if (corriendo) return;
@@ -441,6 +444,10 @@
           c === "B" ? "Hay una maleta en medio. Prueba a saltar." : "¡Te sales del camino!");
       }
       pj.x += dx; pj.y += dy;
+    } else if (paso.t === "atras") {
+      const c = celda(pj.x - dx, pj.y - dy);
+      if (!pisable(c)) throw new Fin("fallo", c === "X" ? "¡Un árbol detrás! Prueba otra flecha." : "¡Te sales del camino!");
+      pj.x -= dx; pj.y -= dy;
     } else if (paso.t === "saltar") {
       const medio = celda(pj.x + dx, pj.y + dy), dest = celda(pj.x + 2 * dx, pj.y + 2 * dy);
       if (medio === "X") throw new Fin("fallo", "Ese árbol es demasiado alto para saltarlo.");
@@ -499,13 +506,13 @@
     $("#sprite").classList.add("fiesta");
     const n = contar(programa);
     const est = n <= nivel.reto ? 3 : n <= nivel.reto + 2 ? 2 : 1;
-    progreso.estrellas[nivelI] = Math.max(progreso.estrellas[nivelI] || 0, est);
+    progreso[EST][nivelI] = Math.max(progreso[EST][nivelI] || 0, est);
     guardar();
     const val = valorar(true);
     enviarResultado(n, est, val);
     const av = AVENTURAS[nivel.aventura];
     const ultimo = nivel.pos === av.niveles.length - 1;
-    const todos = NIVELES.every((n, i) => n.aventura !== nivel.aventura || progreso.estrellas[i]);
+    const todos = NIVELES.every((n, i) => n.aventura !== nivel.aventura || progreso[EST][i]);
     const nuevo = PERSONAJES.find((p) => (p.desbloquea || 0) === completados() && p.desbloquea);
     const p = personajeActual();
     let html = `<div class="sello-grande">${SELLO_HECHO(nivel.ciudad.toUpperCase().slice(0, 9))}</div>
@@ -632,7 +639,7 @@
   }
 
   $("#btn-empezar").onclick = () => {
-    let i = NIVELES.findIndex((_, k) => !progreso.estrellas[k] && desbloqueadoNivel(k));
+    let i = NIVELES.findIndex((_, k) => !progreso[EST][k] && desbloqueadoNivel(k));
     irANivel(i < 0 ? 0 : i);
   };
   $("#btn-volver").onclick = () => { location.hash = "programa"; };

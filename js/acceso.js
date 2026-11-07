@@ -15,8 +15,11 @@ window.Acceso = (function () {
 
   function sesion() { try { return JSON.parse(localStorage.getItem(CLAVE) || "null"); } catch (e) { return null; } }
   function ponerSesion(s) {
+    const antes = !!(sesion() || {}).adaptado;
     try { if (s) localStorage.setItem(CLAVE, JSON.stringify(s)); else localStorage.removeItem(CLAVE); } catch (e) {}
     if (s && window.Valoraciones) window.Valoraciones.ponerAlumno(s.nombre, s.clase, s.usuario);
+    // Con adaptación curricular las pantallas son otras: se vuelve a cargar la página.
+    if (antes !== !!(s && s.adaptado)) { location.reload(); return; }
     pintarTodas();
   }
   // false solo si la hoja ha dicho que no hace falta código (CODIGO_ALUMNO = false).
@@ -51,6 +54,15 @@ window.Acceso = (function () {
       else if (b.dataset.acc === "salir") { ponerSesion(null); c.paso = "inicio"; c.msg = ""; pintar(c); }
       else if (b.dataset.acc === "otro") { c.paso = "inicio"; c.msg = ""; pintar(c); pedir(c); }
     });
+    // Alumnado con adaptación curricular: entra solo con elegir su nombre (sin código).
+    const directo = async () => {
+      if (sesion()) return;
+      const v = valores(c);
+      if (!v.clase || !v.nombre) return;
+      const j = await llamar({ accion: "alumnoDirecto", clase: v.clase, nombre: v.nombre });
+      if (j && j.ok && j.token && !sesion()) ponerSesion({ token: j.token, usuario: j.usuario, nombre: j.nombre, clase: j.clase, adaptado: !!j.adaptado });
+    };
+    campos.nombre.addEventListener("change", directo);
     caja.addEventListener("keydown", (e) => { if (e.key === "Enter" && e.target.matches(".acceso-cod")) { e.preventDefault(); entrar(c); } });
     pintar(c);
   }
@@ -77,7 +89,7 @@ window.Acceso = (function () {
     if (!j) { c.msg = "No hay conexión con la hoja. Inténtalo otra vez."; c.tipo = "error"; pintar(c); return; }
     if (!j.ok) { c.msg = j.error || "Código incorrecto."; c.tipo = "error"; if (/caducado|Demasiados/.test(c.msg)) c.paso = "inicio"; pintar(c); return; }
     c.paso = "inicio"; c.msg = "";
-    ponerSesion({ token: j.token, usuario: j.usuario, nombre: j.nombre, clase: j.clase });
+    ponerSesion({ token: j.token, usuario: j.usuario, nombre: j.nombre, clase: j.clase, adaptado: !!j.adaptado });
   }
   function bloquear(c, si) {
     const nom = c.campos.nombre, sel = nom.parentElement && nom.parentElement.querySelector(".lista-nombres");

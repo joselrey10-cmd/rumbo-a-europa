@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Piensa fácil · Rumbo a Europa</title>
+<link rel="icon" href="../favicon.ico" sizes="48x48">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;800&family=Nunito:wght@400;700;800&display=swap">
+<style>
+  :root { --navy: #14225a; --paper: #eef2f0; --ink: #18213f; --ok: #2f8f5b; --bad: #c8102e; --gold: #ffcc00; --card: #fff; --line: #c7d1cc; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --paper: #10162e; --ink: #eef2f0; --card: #1b2340; --line: #34406a; } }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--paper); color: var(--ink); font: 20px/1.5 "Nunito", system-ui, sans-serif; }
+  header { background: var(--navy); color: #fff; padding: 18px 16px; }
+  header h1 { font: 800 clamp(28px, 6vw, 40px)/1.1 "Baloo 2", system-ui, sans-serif; margin: 0; }
+  main { max-width: 820px; margin: 0 auto; padding: 16px; }
+  .caja { background: var(--card); border: 2px solid var(--line); border-radius: 20px; padding: 18px; margin: 16px 0; }
+  h2 { font: 800 26px/1.2 "Baloo 2", system-ui, sans-serif; margin: 0 0 10px; }
+  .lectura { font-size: 26px; line-height: 1.5; font-weight: 700; margin: 0 0 12px; }
+  button { font: inherit; font-weight: 800; cursor: pointer; border-radius: 999px; border: 3px solid var(--navy); background: #fff; color: var(--navy); padding: 10px 20px; }
+  button:focus-visible { outline: 4px solid var(--gold); outline-offset: 3px; }
+  .video { position: relative; padding-top: 56.25%; border-radius: 14px; overflow: hidden; background: #000; }
+  .video iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+  .carta { text-align: center; }
+  .carta .dibujo { font-size: 96px; line-height: 1.1; }
+  .carta .frase { font-size: 28px; font-weight: 800; margin: 8px 0 16px; }
+  .botones { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; }
+  .botones button { font-size: 30px; padding: 14px 28px; min-width: 160px; }
+  .bien { border-color: var(--ok); color: var(--ok); }
+  .mal { border-color: var(--bad); color: var(--bad); }
+  .resp { min-height: 1.6em; font-size: 26px; font-weight: 800; text-align: center; margin-top: 12px; }
+  .puntos { font-size: 48px; text-align: center; letter-spacing: 4px; }
+  .fin { text-align: center; font-size: 24px; font-weight: 800; }
+  .progreso { text-align: center; font-weight: 800; opacity: .8; }
+  a.volver { color: #fff; font-weight: 800; }
+</style>
+</head>
+<body>
+<header><a class="volver" href="../#piensa">← Piensa</a><h1 id="tit">Piensa</h1></header>
+<main>
+  <section class="caja"><h2>📖 Leemos</h2><p class="lectura" id="lectura"></p><button type="button" id="leer">🔊 Escuchar</button></section>
+  <section class="caja"><h2>🎬 Vemos el vídeo</h2><div class="video" id="video"></div></section>
+  <section class="caja" id="juego"><h2>🎮 ¿Está bien o mal?</h2><div id="carta"></div></section>
+</main>
+<script src="../js/personajes.js"></script>
+<script src="../js/rincones-datos.js"></script>
+<script src="../js/adaptacion.js"></script>
+<script>
+(function () {
+  "use strict";
+  const $ = (s) => document.querySelector(s);
+  const esc = (t) => String(t == null ? "" : t).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+  const slug = new URLSearchParams(location.search).get("p") || "";
+  const A = (window.PIENSA_AC || {})[slug], P = (window.PIENSA || []).find((x) => x.slug === slug);
+  if (!A || !P) { document.querySelector("main").innerHTML = '<p class="caja">No encuentro esta actividad. <a href="../#piensa">Vuelve a Piensa</a>.</p>'; return; }
+  document.title = P.titulo + " · Piensa fácil";
+  $("#tit").textContent = P.titulo;
+  $("#lectura").textContent = A.lectura;
+  function leer(t) {
+    try { speechSynthesis.cancel(); const u = new SpeechSynthesisUtterance(t); u.lang = "es-ES"; u.rate = 0.85; speechSynthesis.speak(u); } catch (e) {}
+  }
+  $("#leer").onclick = () => leer(A.lectura);
+  $("#video").innerHTML = `<iframe src="https://www.youtube-nocookie.com/embed/${encodeURIComponent(A.video)}?rel=0" title="Vídeo: ${esc(P.titulo)}" allow="encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe>`;
+
+  let i = 0, aciertos = 0;
+  function carta() {
+    if (i >= A.juego.length) return final();
+    const [dib, frase] = A.juego[i];
+    $("#carta").innerHTML = `<div class="carta"><p class="progreso">${i + 1} de ${A.juego.length}</p><div class="dibujo" aria-hidden="true">${dib}</div>
+      <p class="frase">${esc(frase)}</p><button type="button" class="oir">🔊</button>
+      <div class="botones" style="margin-top:16px"><button type="button" class="bien" data-r="1">👍 Bien</button><button type="button" class="mal" data-r="0">👎 Mal</button></div>
+      <p class="resp" aria-live="polite"></p></div>`;
+    $(".oir").onclick = () => leer(frase);
+    document.querySelectorAll("[data-r]").forEach((b) => (b.onclick = () => responder(b.dataset.r === "1")));
+    leer(frase);
+  }
+  function responder(dice) {
+    const ok = dice === A.juego[i][2];
+    if (ok) aciertos++;
+    document.querySelectorAll("[data-r]").forEach((b) => (b.disabled = true));
+    const t = ok ? "😊 ¡Muy bien!" : (A.juego[i][2] ? "🙂 Esto está bien." : "🙂 Esto está mal.");
+    $(".resp").textContent = t; leer(t.replace(/^\S+\s/, ""));
+    setTimeout(() => { i++; carta(); }, 1800);
+  }
+  // Llave con el mismo formato que las actividades normales: el rincón Piensa la lee y pone la nota.
+  function llave(nota) {
+    const c5 = P.i5.map(() => nota).join(""), raw = `${P.pre}-${c5}--0`;
+    let h = 0; for (let k = 0; k < raw.length; k++) h = (h + raw.charCodeAt(k) * (k + 7)) % 1296;
+    return raw + "-" + h.toString(36).toUpperCase().padStart(2, "0");
+  }
+  function final() {
+    const n = A.juego.length, nota = aciertos === n ? 5 : aciertos >= n - 1 ? 4 : aciertos >= n / 2 ? 3 : aciertos > 0 ? 2 : 1;
+    const k = llave(nota);
+    try {
+      const g = JSON.parse(localStorage.getItem("rumbo-piensa-llaves") || "{}") || {};
+      g[P.pre] = { llave: k, completa: true, fecha: new Date().toISOString() };
+      localStorage.setItem("rumbo-piensa-llaves", JSON.stringify(g));
+    } catch (e) {}
+    $("#carta").innerHTML = `<div class="puntos" aria-label="${aciertos} de ${n} bien">${"⭐".repeat(aciertos)}${"☆".repeat(n - aciertos)}</div>
+      <p class="fin">¡Has terminado! ${aciertos} de ${n} bien.</p>
+      <p class="fin">Ahora vuelve a Piensa y pulsa <b>«Enviar mi llave»</b>.</p>
+      <div class="botones"><a href="../#piensa"><button type="button">← Volver a Piensa</button></a><button type="button" id="otra">🔁 Jugar otra vez</button></div>`;
+    $("#otra").onclick = () => { i = 0; aciertos = 0; carta(); };
+    leer(`¡Has terminado! ${aciertos} de ${n} bien. Ahora vuelve a Piensa y pulsa enviar mi llave.`);
+  }
+  carta();
+})();
+</script>
+<script src="../js/textos.js"></script>
+<link rel="stylesheet" href="../css/textos.css">
+</body>
+</html>

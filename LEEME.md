@@ -58,6 +58,16 @@ Las notas que pone el profe desde el panel no necesitan código.
 En el script: `CODIGO_ALUMNO = false` lo desactiva; `DOMINIO_ALUMNADO` y `DIAS_SESION_ALUMNO` cambian el correo y la duración.
 El alumno tiene que estar en la pestaña Alumnado con su usuario correcto.
 
+## Adaptación curricular
+En el panel Profe, en la ficha del alumno, marca **Adaptación curricular**. Ese alumno entra solo con elegir su grupo y
+su nombre (sin código) y ve los contenidos adaptados (`js/adaptacion.js`):
+- **Indicadores:** los mismos números (mismo criterio) con un logro muy básico, tomado de la programación de 1.º. Las notas van a las mismas columnas.
+- **Crea:** elige su país (Francia, Italia, Portugal o Alemania), lee o escucha 🔊 una ficha corta con la información ya buscada y responde con una o dos palabras. Las respuestas llegan a la hoja con el reto terminado.
+- **Programa:** 6 niveles cortos con botones grandes de flechas (delante, atrás, girar y saltar).
+- **Robótica:** solo el robot de flechas (con flecha atrás) y 4 retos cortos.
+- **Piensa:** cada parada abre `piensa/facil.html`: lectura de 2-3 líneas, un vídeo y un juego de «bien o mal». La llave se guarda sola.
+Puedes cambiar los textos en `js/adaptacion.js` o con «Editar textos».
+
 ## Autoevaluación (Programa y Robótica)
 En la portada, los botones **Autoevaluación** de Programa y Robótica llevan a una página donde el alumno elige de 0 a 5
 lo que sabe hacer en cada indicador de su curso. Va a una pestaña aparte de la hoja, **Autoevaluación** (no cuenta en

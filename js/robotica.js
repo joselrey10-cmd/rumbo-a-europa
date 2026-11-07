@@ -16,11 +16,12 @@
   const CASILLA = 15 * CM;       // una casilla = 15 cm
   const RUEDA_CM = 17.6;         // circunferencia real de la rueda (56 mm de diámetro)
   const EJE_CM = 11.2;           // distancia entre las ruedas izquierda y derecha
-  const CLAVE = "rumbo-robotica-v1";
+  const CLAVE = window.ADAPTADO ? "rumbo-robotica-ac" : "rumbo-robotica-v1";
 
   /* ---------- Retos (los mismos para los tres niveles) ----------
      inicio: casilla y dirección (E, S, O, N). metas: casillas a visitar en orden. */
-  const RETOS = [
+  const AC = !!window.ADAPTADO;   // adaptación curricular: solo el robot de flechas y retos cortos
+  const RETOS_TODOS = [
     { titulo: "De España a Italia", texto: "Sal de España y llega a Italia.", inicio: ["A5", "E"], metas: [["D5", "Italia"]] },
     { titulo: "Rumbo al Reino Unido", texto: "Sube desde el sur de España hasta el Reino Unido.", inicio: ["A6", "N"], metas: [["B3", "Reino Unido"]] },
     { titulo: "Alemania y Grecia", texto: "Pasa por Alemania y termina en Grecia.", inicio: ["B4", "E"], metas: [["C4", "Alemania"], ["E6", "Grecia"]] },
@@ -28,6 +29,7 @@
     { titulo: "Ruta del Danubio", texto: "Viaja por Chequia y Rumanía hasta Turquía.", inicio: ["C4", "E"], metas: [["D4", "Chequia"], ["E5", "Rumanía"], ["F6", "Turquía"]] },
     { titulo: "Gran vuelta por Europa", texto: "Reino Unido, Suecia, Ucrania y Grecia. ¡Un viaje largo!", inicio: ["A5", "N"], metas: [["B3", "Reino Unido"], ["D2", "Suecia"], ["F4", "Ucrania"], ["E6", "Grecia"]] }
   ];
+  const RETOS = AC && window.RETOS_ROB_AC ? window.RETOS_ROB_AC : RETOS_TODOS;
   const DIR_GRADOS = { E: 0, S: 90, O: 180, N: 270 };
 
   const MODOS = {
@@ -36,17 +38,19 @@
       texto: "Como el robot de suelo del aula: cada Avanzar es una casilla y cada giro es un cuarto de vuelta.",
       color: "#3a7bd5"
     },
-    essential: {
+    essential: AC ? undefined : {
       nombre: "SPIKE Essential", sub: "Bloques de iconos",
       texto: "Bloques con dibujos, como los de SPIKE Essential. Las distancias van en centímetros: una casilla son 15 cm.",
       color: "#e8489b"
     },
-    prime: {
+    prime: AC ? undefined : {
       nombre: "SPIKE Prime", sub: "Bloques de palabras",
       texto: "Bloques de palabras, como los de SPIKE Prime: centímetros, rotaciones, grados, velocidad, bucles y esperas.",
       color: "#14225a"
     }
   };
+
+  Object.keys(MODOS).forEach((k) => { if (!MODOS[k]) delete MODOS[k]; });
 
   /* ---------- Progreso ---------- */
   let hechos = {};
@@ -131,9 +135,10 @@
     B.defineBlocksWithJsonArray([
       // Robot de suelo
       { type: "rob_inicio", message0: "▶ Al pulsar Inicio", nextStatement: null, colour: C.evento, deletable: false },
-      { type: "rob_avanzar", message0: "↑ Avanzar", previousStatement: null, nextStatement: null, colour: C.rob, tooltip: "Avanza una casilla (15 cm)." },
-      { type: "rob_der", message0: "↻ Girar a la derecha", previousStatement: null, nextStatement: null, colour: C.giro, tooltip: "Gira 90 grados a la derecha." },
-      { type: "rob_izq", message0: "↺ Girar a la izquierda", previousStatement: null, nextStatement: null, colour: C.giro, tooltip: "Gira 90 grados a la izquierda." },
+      { type: "rob_atras", message0: AC ? "⬇️ Atrás" : "↓ Atrás", previousStatement: null, nextStatement: null, colour: C.rob, tooltip: "Retrocede una casilla (15 cm) sin girar." },
+      { type: "rob_avanzar", message0: AC ? "⬆️ Adelante" : "↑ Avanzar", previousStatement: null, nextStatement: null, colour: C.rob, tooltip: "Avanza una casilla (15 cm)." },
+      { type: "rob_der", message0: AC ? "↪️ Girar" : "↻ Girar a la derecha", previousStatement: null, nextStatement: null, colour: C.giro, tooltip: "Gira 90 grados a la derecha." },
+      { type: "rob_izq", message0: AC ? "↩️ Girar" : "↺ Girar a la izquierda", previousStatement: null, nextStatement: null, colour: C.giro, tooltip: "Gira 90 grados a la izquierda." },
       // Iconos (tipo SPIKE Essential)
       { type: "ess_inicio", message0: "%1", args0: [img("bandera")], nextStatement: null, colour: C.evento, deletable: false, tooltip: "Al empezar el programa" },
       { type: "ess_adelante", message0: "%1 %2 cm", args0: [img("adelante"), { type: "field_number", name: "CM", value: 15, min: 1, max: 100 }], previousStatement: null, nextStatement: null, colour: C.mov, tooltip: "Avanzar estos centímetros" },
@@ -164,7 +169,7 @@
   }
 
   const CAJAS = {
-    robot: { kind: "flyoutToolbox", contents: ["rob_avanzar", "rob_der", "rob_izq"].map((t) => ({ kind: "block", type: t })) },
+    robot: { kind: "flyoutToolbox", contents: (AC ? ["rob_avanzar", "rob_atras", "rob_der", "rob_izq"] : ["rob_avanzar", "rob_der", "rob_izq"]).map((t) => ({ kind: "block", type: t })) },
     essential: { kind: "flyoutToolbox", contents: ["ess_adelante", "ess_atras", "ess_derecha", "ess_izquierda", "ess_repetir", "ess_esperar", "ess_luz", "ess_sonido"].map((t) => ({ kind: "block", type: t })) },
     prime: {
       kind: "categoryToolbox", contents: [
@@ -185,6 +190,7 @@
       const id = b.id, f = (n) => b.getFieldValue(n), dentro = (n) => cadena(b.getInputTargetBlock(n));
       switch (b.type) {
         case "rob_avanzar": out.push({ id, t: "mover", cm: 15 }); break;
+        case "rob_atras": out.push({ id, t: "mover", cm: -15 }); break;
         case "rob_der": out.push({ id, t: "girar", g: 90 }); break;
         case "rob_izq": out.push({ id, t: "girar", g: -90 }); break;
         case "ess_adelante": out.push({ id, t: "mover", cm: +f("CM") }); break;
@@ -523,7 +529,7 @@
   function ruta(hash) {
     $("#robotica").hidden = false;
     const m = /^#robotica-(robot|essential|prime)-(\d+)$/.exec(hash);
-    if (m && +m[2] >= 1 && +m[2] <= RETOS.length) return abrirReto(m[1], +m[2] - 1);
+    if (m && MODOS[m[1]] && +m[2] >= 1 && +m[2] <= RETOS.length) return abrirReto(m[1], +m[2] - 1);
     ejecucion++; corriendo = false;
     $("#rb-juego").hidden = true; $("#rb-menu").hidden = false;
     pintarMenu();

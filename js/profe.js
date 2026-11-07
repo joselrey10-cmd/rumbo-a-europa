@@ -80,6 +80,7 @@ window.Profe = (function () {
     extra.forEach((x) => { x.terminados = x.terminados || {}; if (!lista.some((a) => igual(a.nombre, x.nombre) && igual(a.clase, x.clase))) lista.push(x); });
     return lista;
   }
+  const esAdaptado = (a) => !!a.usuario && (datos && datos.adaptados || []).indexOf(String(a.usuario).trim().toLowerCase()) >= 0;
   const idDe = (a) => (a.usuario ? "u:" + String(a.usuario).trim().toLowerCase() : "n:" + String(a.nombre || "").trim().toLowerCase() + "|" + G(a.clase));
   function notasDe(cab, f) {
     const notas = {};
@@ -168,7 +169,7 @@ window.Profe = (function () {
           const res = resumen(a, c), todas = RINC.map((r) => res[r.id]).filter((x) => x.media !== null);
           const hechas = todas.reduce((s, x) => s + x.hechas, 0);
           const media = hechas ? Math.round(todas.reduce((s, x) => s + x.media * x.hechas, 0) / hechas * 10) / 10 : "–";
-          return `<tr><td><button type="button" class="p-alumno" data-i="${i}">${esc(verNombre(a))}</button></td><td>${esc(a.usuario)}${a.correo ? ` <span title="${esc(a.correo)}">✉️</span>` : ""}</td>
+          return `<tr><td><button type="button" class="p-alumno" data-i="${i}">${esc(verNombre(a))}</button>${esAdaptado(a) ? ` <span class="p-ac-marca" title="Adaptación curricular">AC</span>` : ""}</td><td>${esc(a.usuario)}${a.correo ? ` <span title="${esc(a.correo)}">✉️</span>` : ""}</td>
             ${RINC.map((r) => `<td>${res[r.id].media === null ? "–" : `<b>${res[r.id].media}</b>`}<small>${res[r.id].hechas}/${res[r.id].total} notas</small>${r.id === "crea" ? `<small>✓ ${res.crea.retos}/${res.crea.nRetos} retos</small>` : ""}</td>`).join("")}<td><b>${media}</b></td><td><button type="button" class="p-papelera" data-i="${i}" title="Dar de baja a ${esc(verNombre(a))}" aria-label="Dar de baja a ${esc(verNombre(a))}">🗑️</button></td></tr>`;
         }).join("")}</tbody></table></div>` : `<p class="intro">Todavía no hay notas de este grupo en la hoja.</p>`}
       ${barraCodigos(lista)}
@@ -308,6 +309,7 @@ window.Profe = (function () {
         <label>Correo tutor 2 <small>(opcional)</small><input id="p-correo-in2" type="email" maxlength="120" value="${esc(separarCorreos(a.correo)[1] || "")}" placeholder="tutor2@ejemplo.com"></label>
         <button class="btn sec" type="submit"${a.usuario ? "" : " disabled title=\"Hace falta el usuario de Educacyl\""}>Guardar correos</button>
         <button class="btn sec" type="button" id="p-cod-uno"${a.usuario && a.correo ? "" : " disabled"}>✉️ Enviar código</button>
+        <label class="p-ac"><input type="checkbox" id="p-ac"${esAdaptado(a) ? " checked" : ""}${a.usuario ? "" : " disabled"}> Adaptación curricular <small>(entra sin código y ve los contenidos adaptados)</small></label>
         <span class="estado" id="p-correo-est">${a.usuario ? "Con cualquiera de estos correos la familia puede ver los resultados en la pestaña Familias." : "Este alumno no tiene usuario de Educacyl: impórtalo con su usuario."}</span>
       </form>
       <div class="p-resumen">${RINC.map((r) => `<div style="--rc:${r.color}"><b>${r.nombre}</b><span>${res[r.id].media === null ? "–" : res[r.id].media}</span><small>${res[r.id].hechas} de ${res[r.id].total} con nota${r.id === "crea" ? ` · ✓ ${res.crea.retos}/${res.crea.nRetos} retos terminados` : ""}</small></div>`).join("")}</div>
@@ -323,6 +325,14 @@ window.Profe = (function () {
       </div>`;
     $("#p-volver").onclick = pintarGrupo;
     $("#p-borrar").onclick = () => darDeBaja(a, $("#p-borrar"), $("#p-borrar-est"));
+    $("#p-ac").onchange = async (e) => {
+      const est = $("#p-correo-est"), si = e.target.checked; e.target.disabled = true;
+      est.textContent = "Guardando…"; est.dataset.tipo = "";
+      const j = await llamar({ accion: "adaptacion", usuario: a.usuario, valor: si }).catch(() => null);
+      e.target.disabled = false;
+      if (j && j.ok) { datos.adaptados = j.adaptados; est.textContent = si ? "✓ Con adaptación: entra sin código y ve los contenidos adaptados." : "✓ Sin adaptación."; est.dataset.tipo = "ok"; }
+      else { e.target.checked = !si; est.textContent = (j && j.error) || "No se ha podido guardar."; est.dataset.tipo = "error"; }
+    };
     $("#p-cod-uno").onclick = () => mandarCodigos([a], $("#p-cod-uno"), `la familia de ${verNombre(a)}`, $("#p-correo-est"));
     $("#p-correo").addEventListener("submit", async (e) => {
       e.preventDefault();

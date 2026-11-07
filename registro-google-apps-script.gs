@@ -54,6 +54,8 @@ function doPost(e) {
   if (pedido.accion === "alumnoCodigo") return alumnoCodigo(libro, pedido);
   if (pedido.accion === "alumnoEntrar") return alumnoEntrar(libro, pedido);
   if (pedido.accion === "alumnoSesion") return alumnoSesion(libro, pedido);
+  if (pedido.accion === "alumnoDirecto") return alumnoDirecto(libro, pedido);
+  if (pedido.accion === "adaptacion") return ponerAdaptacion(libro, pedido);
   if (pedido.accion === "guardarTexto") return guardarTexto(libro, pedido);
   const hoja = libro.getSheetByName("Resultados") || libro.insertSheet("Resultados");
   if (hoja.getLastRow() === 0) {
@@ -108,9 +110,9 @@ function datosProfe(libro, d) {
   const al = libro.getSheetByName("Alumnado");
   const alumnado = al && al.getLastRow() > 1 ? al.getRange(2, 1, al.getLastRow() - 1, ALUMNADO.length).getValues() : [];
   const hoja = libro.getSheetByName("Valoraciones");
-  if (!hoja || hoja.getLastRow() < 1) return salida({ ok: true, cab: [], filas: [], hechos, alumnado, autoeval });
+  if (!hoja || hoja.getLastRow() < 1) return salida({ ok: true, cab: [], filas: [], hechos, alumnado, autoeval, adaptados: leerAdaptados() });
   const v = hoja.getDataRange().getValues();
-  return salida({ ok: true, cab: v[0], filas: v.slice(1), hechos, alumnado, autoeval });
+  return salida({ ok: true, cab: v[0], filas: v.slice(1), hechos, alumnado, autoeval, adaptados: leerAdaptados() });
 }
 
 /* ---------- Autoevaluación (Programa y Robótica) ---------- */
@@ -591,12 +593,15 @@ function alumnoEntrar(libro, d) {
     return json({ ok: false, error: g.fallos >= 5 ? "Demasiados intentos. Pide un código nuevo." : "Código incorrecto." });
   }
   cache.remove("acod_" + usuario);
-  const token = Utilities.getUuid().replace(/-/g, "");
+  return json(crearSesion(f));
+}
+function crearSesion(f) {
+  const usuario = minus(f[2]), token = Utilities.getUuid().replace(/-/g, "");
   const props = PropertiesService.getScriptProperties();
   const lista = JSON.parse(props.getProperty("ases_" + usuario) || "[]").filter((x) => x.hasta > Date.now()).slice(-4);   // hasta 5 ordenadores
   lista.push({ t: token, hasta: Date.now() + DIAS_SESION_ALUMNO * 86400000 });
   props.setProperty("ases_" + usuario, JSON.stringify(lista));
-  return json({ ok: true, token, usuario, nombre: textoAlumno(f), clase: normGrupo(f[3]) });
+  return { ok: true, token, usuario, nombre: textoAlumno(f), clase: normGrupo(f[3]), adaptado: leerAdaptados().indexOf(usuario) >= 0 };
 }
 // Devuelve {usuario, nombre, clase} si la sesión que manda el navegador es válida.
 function alumnoDeSesion(libro, d) {
@@ -605,9 +610,30 @@ function alumnoDeSesion(libro, d) {
   const lista = JSON.parse(PropertiesService.getScriptProperties().getProperty("ases_" + usuario) || "[]");
   if (!lista.some((x) => x.t === token && x.hasta > Date.now())) return null;
   const f = filasAlumnado(libro).find((x) => minus(x[2]) === usuario);
-  return f ? { usuario, nombre: textoAlumno(f), clase: normGrupo(f[3]) } : null;
+  return f ? { usuario, nombre: textoAlumno(f), clase: normGrupo(f[3]), adaptado: leerAdaptados().indexOf(usuario) >= 0 } : null;
 }
 function alumnoSesion(libro, d) {
   const s = alumnoDeSesion(libro, d);
   return json({ ok: true, valida: !!s, requiere: CODIGO_ALUMNO, alumno: s });
+}
+
+/* ---------- Adaptación curricular ----------
+   El profe marca en la ficha del alumno «Adaptación curricular». Se guarda en las propiedades del script
+   (no en la hoja, para no cambiar sus columnas). Ese alumno entra solo con elegir su nombre (sin código)
+   y la web le muestra los contenidos adaptados. */
+function leerAdaptados() { return JSON.parse(PropertiesService.getScriptProperties().getProperty("adaptados") || "[]"); }
+function ponerAdaptacion(libro, d) {
+  if (CLAVE_PROFE === "cambia-esta-clave" || String(d.clave || "") !== CLAVE_PROFE) return json({ ok: false, error: "Clave incorrecta." });
+  const u = minus(d.usuario); if (!u) return json({ ok: false, error: "Falta el usuario de Educacyl." });
+  const l = leerAdaptados().filter((x) => x !== u);
+  if (d.valor) l.push(u);
+  PropertiesService.getScriptProperties().setProperty("adaptados", JSON.stringify(l));
+  return json({ ok: true, adaptados: l });
+}
+// El alumno con adaptación entra solo con elegir grupo y nombre.
+function alumnoDirecto(libro, d) {
+  const clase = normGrupo(d.clase), nombre = minus(d.nombre), ad = leerAdaptados();
+  const f = filasAlumnado(libro).find((x) => normGrupo(x[3]) === clase && minus(textoAlumno(x)) === nombre);
+  if (!f || ad.indexOf(minus(f[2])) < 0) return json({ ok: false });
+  return json(crearSesion(f));
 }
