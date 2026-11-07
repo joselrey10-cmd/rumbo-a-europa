@@ -395,6 +395,44 @@ function ordenarTodo(libro) {
   calcularMedias(libro);
 }
 
+/* ---------- Recuperar notas en Valoraciones ----------
+   Ejecútala a mano (elige «recuperarNotas» arriba y pulsa ▶ Ejecutar). Lee TODAS las filas de Resultados que tienen
+   nota y las vuelve a poner en Valoraciones (la última nota de cada alumno e indicador). No borra nada.
+   En «Registro de ejecución» verás cuántas notas del profe hay por día y grupo. */
+function recuperarNotas() {
+  const libro = abrirLibro(), res = libro.getSheetByName("Resultados");
+  if (!res || res.getLastRow() < 2) { console.log("Resultados está vacía."); return; }
+  const r = res.getDataRange().getValues(), c = r[0].map(String), I = (t) => c.indexOf(t);
+  const iF = I("Fecha"), iN = I("Nombre"), iU = I("Usuario Educacyl"), iC = I("Clase"), iA = I("Actividad"), iP = I("Personaje / robot"), iI = I("Nº indicador"), iV = I("Valoración (0-5)");
+  const filas = r.slice(1).filter((f) => f[iV] !== "" && f[iV] != null && f[iA] !== "");
+  filas.sort((a, b) => new Date(a[iF]) - new Date(b[iF]));
+  const resumen = {};
+  filas.forEach((f) => { if (String(f[iP]) === "Profe") { const k = Utilities.formatDate(new Date(f[iF]), "Europe/Madrid", "yyyy-MM-dd") + " " + normGrupo(f[iC]); resumen[k] = (resumen[k] || 0) + 1; } });
+  console.log("Notas del profe en Resultados (día y grupo): " + JSON.stringify(resumen, null, 1));
+  const lock = LockService.getScriptLock(); lock.waitLock(20000);
+  try {
+    const hoja = libro.getSheetByName("Valoraciones") || libro.insertSheet("Valoraciones");
+    let v = hoja.getLastRow() > 0 ? hoja.getDataRange().getValues() : [["Nombre", "Usuario Educacyl", "Clase"]];
+    const cab = v[0].map(String), igual = (a, b) => String(a).trim().toLowerCase() === String(b).trim().toLowerCase();
+    let puestas = 0;
+    filas.forEach((f) => {
+      const columna = String(f[iA]).slice(0, 60) + (f[iI] ? " · Ind. " + String(f[iI]).slice(0, 10) : "");
+      let col = cab.indexOf(columna);
+      if (col < 0) { cab.push(columna); col = cab.length - 1; v.forEach((x, k) => { while (x.length < cab.length) x.push(k === 0 ? cab[x.length] : ""); }); }
+      const u = String(f[iU] || ""), n = String(f[iN] || ""), cl = normGrupo(f[iC]);
+      let fila = v.findIndex((x, k) => k > 0 && (u ? igual(x[1], u) : (igual(x[0], n) && igual(normGrupo(x[2]), cl))));
+      if (fila < 0) { const x = cab.map(() => ""); x[0] = n; x[1] = u; x[2] = cl; v.push(x); fila = v.length - 1; }
+      if (v[fila][col] !== Number(f[iV])) { v[fila][col] = Number(f[iV]); puestas++; }
+    });
+    v[0] = cab; v = v.map((x) => { while (x.length < cab.length) x.push(""); return x; });
+    hoja.getRange(1, 1, v.length, cab.length).setValues(v);
+    hoja.getRange(1, 1, 1, cab.length).setFontWeight("bold");
+    SpreadsheetApp.flush();
+    console.log("Notas recuperadas o corregidas en Valoraciones: " + puestas + " (de " + filas.length + " filas con nota en Resultados).");
+  } finally { lock.releaseLock(); }
+  ordenarTodo(libro);
+}
+
 /* ---------- Dar de baja a un alumno (panel del profe) ---------- */
 // Borra al alumno de Alumnado, Valoraciones, Autoevaluación y Resultados (por su usuario; si no tiene, por nombre y clase).
 function borrarAlumno(libro, d) {
