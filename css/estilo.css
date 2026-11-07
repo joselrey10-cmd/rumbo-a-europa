@@ -461,3 +461,17 @@ a.volver { text-decoration: none; }
 .que-nota h3 { margin: 0 0 6px; }
 .que-nota p { margin: 6px 0; }
 
+
+/* Entrada del alumnado con código */
+.acceso { margin-top: 14px; padding: 12px 16px; border-radius: 14px; border: 2px dashed var(--line); background: var(--paper-2); }
+.acceso[data-estado="dentro"] { border-style: solid; border-color: var(--green); display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; }
+.acceso-t { margin: 0 0 8px; }
+.acceso[data-estado="dentro"] .acceso-t { margin: 0; flex: 1 1 260px; }
+.acceso-fila { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.acceso-cod { width: 5.5em; font: 700 1.4rem var(--f-mono); letter-spacing: .3em; text-align: center; padding: 6px 8px; border-radius: 10px; border: 2px solid var(--line); background: #fff; color: var(--ink); }
+.acceso-msg { margin: 8px 0 0; font-weight: 700; font-size: 14px; }
+.acceso-msg[data-tipo="error"] { color: #b3261e; }
+.alumno :disabled { opacity: .75; cursor: not-allowed; }
+#acceso-aviso { position: fixed; left: 50%; transform: translateX(-50%); bottom: 16px; z-index: 9000; max-width: min(560px, calc(100% - 32px));
+  background: #b3261e; color: #fff; padding: 12px 16px; border-radius: 12px; font-weight: 700; box-shadow: 0 6px 20px rgba(0,0,0,.3); }
+#acceso-aviso a { color: #fff; }

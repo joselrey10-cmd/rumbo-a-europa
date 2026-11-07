@@ -126,6 +126,11 @@ window.Valoraciones = (function () {
     const a = alumno();
     const d = Object.assign({ fecha: new Date().toISOString(), nombre: a.nombre || "(sin nombre)", usuario: a.usuario || "", clase: a.clase || "",
       destino: "", ciudad: "", estrellas: "", bloques: "", intentos: "", personaje: "", programa: "", indicador: "", valoracion: "" }, datos);
+    // Notas del alumno: van con su sesión (código de acceso). Las del profe llevan su clave y no la necesitan.
+    if (!d.clave && window.Acceso) {
+      if (window.Acceso.requiere() && !window.Acceso.token()) { window.Acceso.avisar(); return Promise.resolve(false); }
+      Object.assign(d, window.Acceso.datosEnvio());
+    }
     try {
       return fetch(R.url, { method: "POST", mode: "no-cors", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify(d) }).then(() => true, () => false);
     } catch (e) { return Promise.resolve(false); }

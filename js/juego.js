@@ -566,6 +566,10 @@
       indicador: val ? val.codigo || "" : "",
       valoracion: val ? val.nota : ""
     };
+    if (window.Acceso) {
+      if (window.Acceso.requiere() && !window.Acceso.token()) { window.Acceso.avisar(); return; }
+      Object.assign(datos, window.Acceso.datosEnvio());
+    }
     try {
       fetch(REGISTRO.url, { method: "POST", mode: "no-cors", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify(datos) }).catch(() => {});
     } catch (e) { /* sin conexión: el juego sigue */ }
@@ -592,6 +596,7 @@
     c.addEventListener("input", () => pintarInicio());
     $("#form-alumno").addEventListener("submit", (e) => e.preventDefault());
     if (window.ListaAlumnos) window.ListaAlumnos.montar(n, c, u);
+    if (window.Acceso) window.Acceso.montar($("#form-alumno"), { clase: c, nombre: n, usuario: u });
     pintarOk();
   }
 

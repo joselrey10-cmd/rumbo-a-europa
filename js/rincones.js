@@ -122,6 +122,7 @@ window.Rincones = (function () {
     $("#r-form").addEventListener("submit", (e) => e.preventDefault());
     $("#r-excel").onclick = () => V().excel();
     if (window.ListaAlumnos) window.ListaAlumnos.montar(n, c, u);
+    if (window.Acceso) window.Acceso.montar($("#r-form"), { clase: c, nombre: n, usuario: u });
     ok();
   }
   function pintarTarjetas() {

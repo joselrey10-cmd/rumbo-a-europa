@@ -49,6 +49,15 @@ En «Navegar» los botones funcionan para entrar en un destino de Programa, un r
 Cada cambio vale para esa pantalla y ese texto exacto (los textos que llevan el curso, como «Retos de 5º…», se cambian
 una vez para 5.º y otra para 6.º). Pulsa «Terminar de editar» para salir.
 
+## Entrada del alumnado con código
+Cada alumno elige su grupo y su nombre, escribe su usuario de Educacyl y pulsa **Enviarme el código**. Le llega un
+código de 3 cifras a `usuario@educa.jcyl.es` (vale 15 minutos y admite 5 intentos). Al escribirlo, ese ordenador queda
+con su sesión durante 120 días y sus datos se bloquean; con «Salir (no soy yo)» se cierra la sesión.
+Sin sesión, la hoja **no guarda** las notas del alumno. Así un compañero no puede enviar notas con el nombre de otro.
+Las notas que pone el profe desde el panel no necesitan código.
+En el script: `CODIGO_ALUMNO = false` lo desactiva; `DOMINIO_ALUMNADO` y `DIAS_SESION_ALUMNO` cambian el correo y la duración.
+El alumno tiene que estar en la pestaña Alumnado con su usuario correcto.
+
 ## Autoevaluación (Programa y Robótica)
 En la portada, los botones **Autoevaluación** de Programa y Robótica llevan a una página donde el alumno elige de 0 a 5
 lo que sabe hacer en cada indicador de su curso. Va a una pestaña aparte de la hoja, **Autoevaluación** (no cuenta en

@@ -369,6 +369,7 @@ window.Profe = (function () {
       pintarGrupo();
   }
 
+  function claveGuardada() { try { return sessionStorage.getItem(CLAVE_SES) || ""; } catch (e) { return ""; } }
   async function enviarProfe(caja, todas) {
     const a = alumnoSel, x = catalogo(cursoDe(a.clase))[+caja.dataset.k], est = $(".estado", caja), filas = [];
     caja.querySelectorAll(".chips").forEach((g, i) => {
@@ -376,7 +377,7 @@ window.Profe = (function () {
       if (!b) return;
       const nota = +b.dataset.n, cod = x.inds[i];
       if (!todas && a.notas[g.dataset.col] === nota) return;   // sin cambios
-      filas.push({ col: g.dataset.col, nota, d: { nombre: a.nombre, usuario: a.usuario, clase: a.clase, destino: x.destino, ciudad: x.ciudad, personaje: "Profe", programa: "Nota del profe", indicador: cod, valoracion: nota } });
+      filas.push({ col: g.dataset.col, nota, d: { clave: claveGuardada(), nombre: a.nombre, usuario: a.usuario, clase: a.clase, destino: x.destino, ciudad: x.ciudad, personaje: "Profe", programa: "Nota del profe", indicador: cod, valoracion: nota } });
     });
     if (!filas.length) { if (todas) { est.textContent = "Elige al menos una nota."; est.dataset.tipo = "error"; } return; }
     const btn = $(".enviar-p", caja); btn.disabled = true; est.textContent = "Enviando…"; est.dataset.tipo = "";
