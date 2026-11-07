@@ -409,8 +409,8 @@ const ORDEN_EXCEL = {
     "1.1.5 2.1.4 2.2.3 2.3.2 3.1.4 3.2.7 3.2.8 3.2.9 3.3.3 3.4.2 4.1.2 4.1.4 4.2.3 4.3.3 4.3.4 5.1.3 5.2.1 5.2.4 5.3.1 5.3.2 5.3.3"
   ],
   "6º": [
-    "1.1.1 1.1.2 1.2.1 1.2.2 1.2.3 2.1.1 2.3.1 3.1.2 3.2.1 3.2.2 3.2.5 3.2.6 3.3.1 4.1.1 4.1.2 4.3.1 4.3.2 5.2.1",
-    "1.1.2 1.1.3 2.1.1 2.2.2 2.3.2 3.1.1 3.1.2 3.2.2 3.2.3 3.2.5 3.2.6 3.4.1 3.4.2 4.1.3 5.3.1",
+    "1.1.1 1.1.2 1.1.4 1.2.1 1.2.2 1.2.3 2.1.1 2.3.1 3.1.4 3.2.1 3.2.2 3.2.5 3.2.6 3.3.1 4.1.1 4.1.2 4.3.1 4.3.2 5.2.1",
+    "1.1.2 1.1.3 2.1.1 2.2.2 2.3.2 3.1.1 3.1.2 3.1.4 3.2.2 3.2.3 3.2.5 3.2.6 3.4.1 3.4.2 4.1.3 5.3.1",
     "1.2.2 2.1.2 2.1.3 2.2.1 3.1.3 3.2.4 3.2.5 3.2.6 3.3.2 4.1.2 4.1.3 4.2.1 4.2.2 4.3.2 5.1.1 5.1.2 5.2.2 5.3.1 5.3.2"
   ]
 };
@@ -449,7 +449,10 @@ function prepararExcel(libro) {
   // 2) Media por alumno, trimestre e indicador.
   const suma = {};
   Object.keys(ultima).forEach((k) => {
-    const f = ultima[k].f, id = idDe(f[iU], f[iN], f[iC]), tri = trimestreDe(f[iA], f[iF]), cod = String(f[iI]).trim();
+    const f = ultima[k].f, id = idDe(f[iU], f[iN], f[iC]), tri = trimestreDe(f[iA], f[iF]);
+    let cod = String(f[iI]).trim();
+    // 6º: la presentación de PowerPoint (Crea SA1 S2) era el 3.1.2 y en la programación nueva es el 3.1.4.
+    if (/6/.test(normGrupo(f[iC])) && cod === "3.1.2" && /SA1 S2/.test(String(f[iA]))) cod = "3.1.4";
     const kk = id + "#" + tri + "#" + cod; (suma[kk] = suma[kk] || []).push(Number(f[iV]));
   });
   const notaDe = (id, tri, cod) => { const l = suma[id + "#" + tri + "#" + cod]; return l ? Math.round(l.reduce((a, b) => a + b, 0) / l.length * 10) / 10 : ""; };
