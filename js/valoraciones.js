@@ -132,7 +132,15 @@ window.Valoraciones = (function () {
       Object.assign(d, window.Acceso.datosEnvio());
     }
     try {
-      return fetch(R.url, { method: "POST", mode: "no-cors", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify(d) }).then(() => true, () => false);
+      // Se lee la respuesta de la hoja: solo cuenta como guardada si contesta «ok».
+      return fetch(R.url, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify(d) })
+        .then((r) => r.text()).then((t) => {
+          t = String(t || "").trim();
+          if (t === "sesion") { if (!d.clave && window.Acceso) window.Acceso.avisar(); console.warn("La hoja no ha guardado la nota: falta el código de acceso."); return false; }
+          if (t.charAt(0) === "{") { try { const j = JSON.parse(t); if (j.sesion && window.Acceso) window.Acceso.avisar(); return !!j.ok; } catch (e) {} }
+          if (t !== "ok") console.warn("La hoja ha contestado:", t.slice(0, 200));
+          return t === "ok";
+        }, () => false);
     } catch (e) { return Promise.resolve(false); }
   }
   /* Varias filas, una detrás de otra (una por indicador). */
