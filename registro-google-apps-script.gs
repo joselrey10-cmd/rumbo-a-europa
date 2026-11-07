@@ -56,6 +56,7 @@ function doPost(e) {
   if (pedido.accion === "alumnoSesion") return alumnoSesion(libro, pedido);
   if (pedido.accion === "alumnoDirecto") return alumnoDirecto(libro, pedido);
   if (pedido.accion === "adaptacion") return ponerAdaptacion(libro, pedido);
+  if (pedido.accion === "excel") return excelProfe(libro, pedido);
   if (pedido.accion === "guardarTexto") return guardarTexto(libro, pedido);
   const hoja = libro.getSheetByName("Resultados") || libro.insertSheet("Resultados");
   if (hoja.getLastRow() === 0) {
@@ -393,6 +394,90 @@ function ordenarTodo(libro) {
   ordenarHoja(libro, "Autoevaluación", 1, 2, 3);
   SpreadsheetApp.flush();
   calcularMedias(libro);
+}
+
+/* ---------- Notas para el Excel de evaluación ----------
+   Crea una pestaña por grupo («Excel P5A»…) con los alumnos por apellidos y los indicadores EN EL MISMO ORDEN que
+   las pestañas TIAC1, TIAC2 y TIAC3 del Excel de evaluación. Se copia el bloque de notas y se pega en el Excel (D9).
+   Nota de cada indicador = media de las notas de ese indicador en el trimestre (la última de cada actividad).
+   Trimestre: el de la SA de la actividad (Crea · SA1 → 1.º); si no tiene SA, por la fecha (sep-dic 1.º, ene-mar 2.º, abr-ago 3.º).
+   Se ejecuta con el botón «Notas para el Excel» del panel o eligiendo prepararExcel aquí arriba. */
+const ORDEN_EXCEL = {
+  "5º": [
+    "1.1.1 1.2.1 1.2.2 2.1.1 2.1.2 2.1.4 2.2.1 2.3.1 3.1.1 3.2.1 3.2.2 3.2.3 3.3.1 3.4.1 4.1.1 4.1.2 4.3.1 4.3.2 4.3.4 5.1.1 5.2.1 5.2.2 5.3.1 5.3.2",
+    "1.1.2 1.1.3 1.1.4 1.2.3 2.1.3 2.1.4 2.2.2 3.1.2 3.1.3 3.2.4 3.2.5 3.2.6 3.3.2 4.1.2 4.1.3 4.2.1 4.2.2 4.3.4 5.1.2 5.2.3 5.3.1 5.3.2",
+    "1.1.5 2.1.4 2.2.3 2.3.2 3.1.4 3.2.7 3.2.8 3.2.9 3.3.3 3.4.2 4.1.2 4.1.4 4.2.3 4.3.3 4.3.4 5.1.3 5.2.1 5.2.4 5.3.1 5.3.2 5.3.3"
+  ],
+  "6º": [
+    "1.1.1 1.1.2 1.2.1 1.2.2 1.2.3 2.1.1 2.3.1 3.1.2 3.2.1 3.2.2 3.2.5 3.2.6 3.3.1 4.1.1 4.1.2 4.3.1 4.3.2 5.2.1",
+    "1.1.2 1.1.3 2.1.1 2.2.2 2.3.2 3.1.1 3.1.2 3.2.2 3.2.3 3.2.5 3.2.6 3.4.1 3.4.2 4.1.3 5.3.1",
+    "1.2.2 2.1.2 2.1.3 2.2.1 3.1.3 3.2.4 3.2.5 3.2.6 3.3.2 4.1.2 4.1.3 4.2.1 4.2.2 4.3.2 5.1.1 5.1.2 5.2.2 5.3.1 5.3.2"
+  ]
+};
+const GRUPOS_EXCEL = ["P5A", "P5B", "P6A", "P6B"];
+function trimestreDe(actividad, fecha) {
+  const m = String(actividad || "").match(/\bSA\s?([123])\b/);
+  if (m) return +m[1] - 1;
+  const d = new Date(fecha); if (isNaN(d)) return 0;
+  const mes = d.getMonth() + 1;
+  return mes >= 9 ? 0 : mes <= 3 ? 1 : 2;
+}
+function prepararExcel(libro) {
+  libro = libro || abrirLibro();
+  const res = libro.getSheetByName("Resultados");
+  const r = res && res.getLastRow() > 1 ? res.getDataRange().getValues() : [[]];
+  const c = r[0].map(String), I = (t) => c.indexOf(t);
+  const iF = I("Fecha"), iN = I("Nombre"), iU = I("Usuario Educacyl"), iC = I("Clase"), iA = I("Actividad"), iI = I("Nº indicador"), iV = I("Valoración (0-5)");
+  const mapa = mapaApellidos(libro);
+  const idDe = (u, n, cl) => u ? "u:" + minus(u) : "n:" + minus(n) + "|" + normGrupo(cl);
+  // 1) Última nota de cada alumno en cada actividad e indicador.
+  const ultima = {};
+  r.slice(1).forEach((f) => {
+    if (f[iV] === "" || f[iV] == null || !f[iI]) return;
+    const k = idDe(f[iU], f[iN], f[iC]) + "#" + f[iA] + "#" + f[iI], t = new Date(f[iF]).getTime() || 0;
+    if (!ultima[k] || ultima[k].t <= t) ultima[k] = { t, f };
+  });
+  // 2) Media por alumno, trimestre e indicador.
+  const suma = {};
+  Object.keys(ultima).forEach((k) => {
+    const f = ultima[k].f, id = idDe(f[iU], f[iN], f[iC]), tri = trimestreDe(f[iA], f[iF]), cod = String(f[iI]).trim();
+    const kk = id + "#" + tri + "#" + cod; (suma[kk] = suma[kk] || []).push(Number(f[iV]));
+  });
+  const notaDe = (id, tri, cod) => { const l = suma[id + "#" + tri + "#" + cod]; return l ? Math.round(l.reduce((a, b) => a + b, 0) / l.length * 10) / 10 : ""; };
+  // 3) Una pestaña por grupo.
+  const alumnado = filasAlumnado(libro), hechos = [];
+  GRUPOS_EXCEL.forEach((g) => {
+    const curso = /6/.test(g) ? "6º" : "5º";
+    let lista = alumnado.filter((f) => normGrupo(f[3]) === g && f[2]).map((f) => ({ id: idDe(f[2]), nombre: textoAlumno(f), k: claveOrden(mapa, f[0], f[2], g, f[1]) }));
+    // Alumnos con notas que no están en Alumnado (van al final).
+    const vistos = {}; lista.forEach((a) => (vistos[a.id] = 1));
+    Object.keys(ultima).forEach((k) => { const f = ultima[k].f; if (normGrupo(f[iC]) !== g) return; const id = idDe(f[iU], f[iN], f[iC]); if (!vistos[id]) { vistos[id] = 1; lista.push({ id, nombre: String(f[iN]) + " (no está en Alumnado)", k: ["~", minus(f[iN]), ""] }); } });
+    lista.sort((a, b) => { for (let i = 0; i < 3; i++) { const x = a.k[i].localeCompare(b.k[i], "es"); if (x) return x; } return 0; });
+    const filas = [], negritas = [];
+    ORDEN_EXCEL[curso].forEach((txt, tri) => {
+      const cods = txt.split(" ");
+      const ini = filas.length + 1;
+      filas.push([`${tri + 1}.º TRIMESTRE · copia las notas (desde la columna B, sin la fila de los números) y pégalas en la pestaña TIAC${tri + 1} del Excel de ${g.charAt(1)}º${g.charAt(2)}, en la celda D9`]);
+      filas.push(["Alumno/a"].concat(cods)); negritas.push(ini, ini + 1);
+      lista.forEach((a) => filas.push([a.nombre].concat(cods.map((cod) => notaDe(a.id, tri, cod)))));
+      filas.push([""]);
+    });
+    const ancho = Math.max.apply(null, filas.map((f) => f.length));
+    const datos = filas.map((f) => { const x = f.slice(); while (x.length < ancho) x.push(""); return x; });
+    const nombre = "Excel " + g, h = libro.getSheetByName(nombre) || libro.insertSheet(nombre);
+    h.clearContents();
+    h.getRange(1, 1, datos.length, ancho).setValues(datos);
+    negritas.forEach((n) => h.getRange(n, 1, 1, ancho).setFontWeight("bold"));
+    h.setFrozenColumns(1);
+    hechos.push(nombre + " (" + lista.length + " alumnos)");
+  });
+  SpreadsheetApp.flush();
+  console.log("Pestañas preparadas: " + hechos.join(", "));
+  return hechos;
+}
+function excelProfe(libro, d) {
+  if (CLAVE_PROFE === "cambia-esta-clave" || String(d.clave || "") !== CLAVE_PROFE) return json({ ok: false, error: "Clave incorrecta." });
+  return json({ ok: true, pestanas: prepararExcel(libro), url: libro.getUrl() });
 }
 
 /* ---------- Recuperar notas en Valoraciones ----------
