@@ -746,7 +746,7 @@ function alumnoSesion(libro, d) {
    y la web le muestra los contenidos adaptados. */
 function leerAdaptados() { return JSON.parse(PropertiesService.getScriptProperties().getProperty("adaptados") || "[]"); }
 function ponerAdaptacion(libro, d) {
-  if (CLAVE_PROFE === "47001559" || String(d.clave || "") !== CLAVE_PROFE) return json({ ok: false, error: "Clave incorrecta." });
+  if (CLAVE_PROFE === "cambia-esta-clave" || String(d.clave || "") !== CLAVE_PROFE) return json({ ok: false, error: "Clave incorrecta." });
   const u = minus(d.usuario); if (!u) return json({ ok: false, error: "Falta el usuario de Educacyl." });
   const l = leerAdaptados().filter((x) => x !== u);
   if (d.valor) l.push(u);

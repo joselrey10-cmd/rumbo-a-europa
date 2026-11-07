@@ -163,7 +163,7 @@ window.Profe = (function () {
 
   function barraGrupos() {
     return `<div class="p-barra"><div class="rutas p-grupos" role="radiogroup" aria-label="Grupo">${GRUPOS.map((g) => `<button type="button" role="radio" class="ruta p-grupo" aria-checked="${g === grupo}" data-g="${g}"><b>${g}</b></button>`).join("")}</div>
-      <button type="button" class="btn sec" id="p-textos" title="Cambia los textos que ve el alumnado en los rincones">✏️ Editar textos</button><button type="button" class="btn sec" id="p-recargar">Recargar datos</button><button type="button" class="btn sec" id="p-salir">Salir</button></div>`;
+      <button type="button" class="btn sec" id="p-textos" title="Cambia los textos que ve el alumnado en los rincones">✏️ Editar textos</button><button type="button" class="btn sec" id="p-excel" title="Prepara en la hoja una pestaña por grupo con los indicadores en el orden del Excel de evaluación">📊 Notas para el Excel</button><button type="button" class="btn sec" id="p-recargar">Recargar datos</button><span class="estado" id="p-excel-est" aria-live="polite"></span><button type="button" class="btn sec" id="p-salir">Salir</button></div>`;
   }
   function pintarGrupo() {
     alumnoSel = null;
@@ -203,6 +203,13 @@ window.Profe = (function () {
     const bg = $("#p-cod-grupo"); if (bg) bg.onclick = () => mandarCodigos(lista, bg, `las familias de ${grupo}`);
     const bt = $("#p-cod-todos"); if (bt) bt.onclick = () => mandarCodigos(alumnos().filter((x) => GRUPOS.indexOf(G(x.clase)) >= 0), bt, "las familias de todos los grupos");
     raiz.querySelectorAll(".p-papelera").forEach((b) => b.onclick = () => darDeBaja(lista[+b.dataset.i], b, null));
+    $("#p-excel").onclick = async () => {
+      const b = $("#p-excel"), est = $("#p-excel-est"); b.disabled = true; est.textContent = "Preparando las pestañas…"; est.dataset.tipo = "";
+      const j = await llamar({ accion: "excel" }).catch(() => null);
+      b.disabled = false;
+      if (j && j.ok) { est.innerHTML = `✓ Listo: pestañas «Excel P5A», «Excel P5B», «Excel P6A» y «Excel P6B». <a href="${esc(j.url)}" target="_blank" rel="noopener">Abrir la hoja ↗</a>`; est.dataset.tipo = "ok"; }
+      else { est.textContent = (j && j.error) || "No se ha podido preparar."; est.dataset.tipo = "error"; }
+    };
     $("#p-plantilla").onclick = () => descargar("plantilla_alumnado.csv", "nombre;apellidos;usuario;curso;correo tutor 1;correo tutor 2\nLucía;Martín Pérez;lucia.martper;P5A;madre.martin@ejemplo.com;padre.martin@ejemplo.com\n");
     $("#p-csv").onchange = (e) => leerCSV(e.target.files[0]);
   }
