@@ -171,7 +171,8 @@ window.Rincones = (function () {
     return `<article class="reto-r ac-reto" data-tipo="crea" data-i="${i}">
       <div class="reto-r-cab"><span class="ses">${a.sa} · ${a.s}</span><h3>${esc(x.facil)}</h3></div>
       <ol class="ac-pasos">${x.pasos.map((p) => `<li>${esc(p)}</li>`).join("")}</ol>
-      <div class="ac-ficha"><p>${esc(ficha)}</p><button type="button" class="btn sec leer" data-leer="${esc(ficha)}" aria-label="Escuchar la ficha">🔊 Escuchar</button></div>
+      <div class="ac-ficha"><p>${esc(ficha)}</p><button type="button" class="btn sec leer" data-leer="${esc(ficha)}" aria-label="Escuchar la ficha">🔊 Escuchar</button>
+        ${window.FichaDocx ? `<button type="button" class="btn sec ac-docx">📄 Descargar ficha (Word)</button>` : ""}</div>
       <div class="ac-preguntas">${x.preguntas.map((q, k) => `<label class="ac-preg"><span><button type="button" class="leer mini" data-leer="${esc(q[0])}" aria-label="Escuchar la pregunta">🔊</button> ${esc(q[0])}</span>
         <input class="ac-resp" data-k="${k}" maxlength="30" autocomplete="off" value="${esc(guard[k] || "")}"><b class="ac-ok" aria-live="polite"></b></label>`).join("")}</div>
       <div class="inds"><p class="inds-t">Lo que valora tu profe</p>${a.ind.map((cod) => `<div class="fila-ind"><div class="fila-ind-t"><span class="cod">Ind. ${esc(cod)}</span> ${esc(textoInd(cod))}</div></div>`).join("")}</div>
@@ -223,6 +224,7 @@ window.Rincones = (function () {
   const enviada = (p) => indPiensa(p).every(([cod]) => valorDe(clavePiensa(p, cod)) !== null);
   function pintarPiensa() {
     const r = RINCONES[3], L = llaves();
+    if (window.ADAPTADO && window.PIENSA_AC) return pintarPiensaAC(r, L);
     raiz.innerHTML = cabecera(r, "Piensa · Pasaporte TIC", `Diez paradas de ciudadanía digital. Abre la actividad, termínala y vuelve aquí: la llave se rellena sola (o pégala). Pulsa «Enviar mi llave» y tu profe verá tu resultado.`) +
       `<div class="envoltura seccion"><div class="retos-r">${(window.PIENSA || []).map((p, i) => {
         const g = L[p.pre], auto = g ? leerLlave(g.llave, p) : {};
@@ -234,6 +236,24 @@ window.Rincones = (function () {
           <div class="inds"><p class="inds-t">Indicadores de tu curso</p>${indPiensa(p).map(([cod, t]) => `<div class="fila-ind"><div class="fila-ind-t"><span class="cod">Ind. ${esc(cod)}</span> ${esc(t)}</div></div>`).join("")}</div>
           ${enviada(p) ? `<p class="hecho-ok">✓ Llave enviada a tu profe</p>` : ""}
           <div class="enviar-fila"><button type="button" class="btn enviar-llave">${enviada(p) ? "Volver a enviar la llave" : "Enviar mi llave"}</button><span class="estado" aria-live="polite"></span></div>
+        </article>`;
+      }).join("")}</div></div>`;
+  }
+
+  /* Piensa con adaptación curricular: solo título, dibujo, «Empezar» y «Enviar». Sin llaves ni indicadores a la vista. */
+  function pintarPiensaAC(r, L) {
+    const intro = "Elige una parada. Lee, mira el vídeo y juega. Al volver, pulsa «Enviar».";
+    raiz.innerHTML = cabecera(r, "Piensa", `${esc(intro)} <button type="button" class="leer mini" data-leer="${esc(intro)}" aria-label="Escuchar">🔊</button>`) +
+      `<div class="envoltura seccion"><div class="retos-r ac-piensa">${(window.PIENSA || []).map((p, i) => {
+        const A = window.PIENSA_AC[p.slug]; if (!A) return "";
+        const g = L[p.pre], hecha = enviada(p);
+        return `<article class="reto-r ac-reto" data-tipo="piensa" data-i="${i}">
+          <div class="reto-r-cab"><span class="ses">${i + 1}</span><h3><span aria-hidden="true">${A.juego[0][0]}</span> ${esc(p.titulo)}</h3></div>
+          <input type="hidden" class="llave" value="${esc(g ? g.llave : "")}">
+          ${g ? `<p class="nota-llave">⭐ ¡Terminada!</p>` : ""}
+          <p><a class="btn abrir" href="piensa/facil.html?p=${p.slug}" target="_blank" rel="noopener">▶ Empezar</a></p>
+          ${hecha ? `<p class="hecho-ok">✓ Enviada</p>` : ""}
+          <div class="enviar-fila"${g ? "" : " hidden"}><button type="button" class="btn enviar-llave">📨 Enviar</button><span class="estado" aria-live="polite"></span></div>
         </article>`;
       }).join("")}</div></div>`;
   }
@@ -250,8 +270,9 @@ window.Rincones = (function () {
         <article class="reto-r auto-r" data-tipo="auto" data-rincon="${id}">
           <div class="reto-r-cab"><span class="ses">Autoevaluación</span><h3>¿Qué sé hacer en ${r.nombre}?</h3></div>
           <p>Elige de 0 a 5 en cada frase. Sé sincero o sincera: sirve para que tu profe sepa en qué ayudarte.</p>
-          <ol class="escala escala-auto" start="0">${ESC.map((t, n) => `<li><b>${n}</b> ${t}</li>`).join("")}</ol>
-          <div class="inds">${cods.map((cod) => `<div class="fila-ind"><div class="fila-ind-t"><span class="cod">Ind. ${esc(cod)}</span> <b>${esc(frases[cod] || textoInd(cod))}</b></div>${chips(`auto-${cursoN()}-${id}|${cod}`, guardada(cod))}</div>`).join("")}</div>
+          <p><button type="button" class="btn sec oir" data-oir="${esc("Elige de 0 a 5 en cada frase. " + ESC.map((t, n) => n + ": " + String(t).replace(/<[^>]+>/g, "")).join(". "))}">🔊 Escuchar cómo se puntúa</button></p>
+          <ol class="escala escala-auto" start="0">${ESC.map((t, n) => `<li><button type="button" class="leer mini oir" data-oir="${esc(n + ". " + String(t).replace(/<[^>]+>/g, ""))}" aria-label="Escuchar">🔊</button> <b>${n}</b> ${t}</li>`).join("")}</ol>
+          <div class="inds">${cods.map((cod) => `<div class="fila-ind"><div class="fila-ind-t"><button type="button" class="leer mini oir" data-oir="${esc(frases[cod] || textoInd(cod))}" aria-label="Escuchar la frase">🔊</button> <span class="cod">Ind. ${esc(cod)}</span> <b>${esc(frases[cod] || textoInd(cod))}</b></div>${chips(`auto-${cursoN()}-${id}|${cod}`, guardada(cod))}</div>`).join("")}</div>
           <div class="enviar-fila"><button type="button" class="btn enviar-auto">Enviar mi autoevaluación</button><span class="estado" aria-live="polite"></span></div>
         </article>
         <h2 class="sa-tit" style="margin-top:24px">Mis notas jugando</h2>
@@ -279,6 +300,15 @@ window.Rincones = (function () {
     ok.textContent = r.value.trim() && respuestaOk(q, r.value) ? "✅" : "";
   });
   raiz.addEventListener("click", async (e) => {
+    const oir = e.target.closest(".oir");
+    if (oir) { e.preventDefault(); if (window.LeerAC) window.LeerAC(oir.dataset.oir); return; }
+    const dx = e.target.closest(".ac-docx");
+    if (dx) {
+      const a = crea()[+dx.closest(".reto-r").dataset.i], q = a && a.ac, al = V().alumno();
+      if (q) window.FichaDocx({ titulo: `${q.facil} · ${paisAC()}`, nombre: al.nombre, clase: al.clase, pasos: q.pasos, ficha: rellenar(q.ficha),
+        preguntas: q.preguntas.map((x) => x[0]), archivo: `Ficha ${a.sa} ${a.s} ${paisAC()}${al.nombre ? " " + al.nombre : ""}`.replace(/[\\/:*?"<>|]/g, "") });
+      return;
+    }
     const fl = e.target.closest(".ac-flag");
     if (fl) { try { localStorage.setItem("rumbo-pais-ac", fl.dataset.pais); } catch (x) {} pintarCrea(); return; }
     const chip = e.target.closest(".chips button, .rutas .ruta");
