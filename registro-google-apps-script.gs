@@ -81,7 +81,7 @@ function doPost(e) {
   hoja.appendRow([
     new Date(d.fecha), nombre, usuario, clase, limpiar(d.destino, 60), limpiar(d.ciudad, 40),
     d.estrellas === "" ? "" : Number(d.estrellas), Number(d.bloques) || "", Number(d.intentos) || "",
-    limpiar(d.personaje, 30), limpiar(d.programa, 500), limpiar(d.indicador, 10), nota
+    limpiar(d.personaje, 30), limpiar(d.programa, 500), d.indicador ? "'" + limpiar(d.indicador, 10) : "", nota
   ]);
   if (nota !== "") {
     const columna = limpiar(d.destino, 60) + (d.indicador ? " · Ind. " + limpiar(d.indicador, 10) : "");
@@ -152,6 +152,14 @@ function guardarAutoevaluacion(libro, d) {
 
 /* ---------- Alumnado (importado por el profe desde un CSV) ---------- */
 const ALUMNADO = ["Nombre", "Apellidos", "Usuario Educacyl", "Clase", "Correo familia"];
+// Google Sheets convierte «1.1.1» en la fecha 1/1/2001. Esto devuelve el código del indicador aunque la celda sea una fecha.
+function codigoDe(v) {
+  if (v instanceof Date && !isNaN(v)) {
+    const p = Utilities.formatDate(v, Session.getScriptTimeZone(), "d.M.yyyy").split(".");
+    return p[0] + "." + p[1] + "." + (Number(p[2]) - 2000);
+  }
+  return String(v == null ? "" : v).trim().replace(/^'/, "");
+}
 const json = (o) => ContentService.createTextOutput(JSON.stringify(o)).setMimeType(ContentService.MimeType.JSON);
 const minus = (v) => String(v == null ? "" : v).trim().toLowerCase();
 // Grupo como P5A, P5B, P6A, P6B (P = Primaria). Convierte también el nombre antiguo 5ºA. Otros grupos (I5A de Infantil…) se quedan como están.
@@ -443,16 +451,20 @@ function prepararExcel(libro) {
   const ultima = {};
   r.slice(1).forEach((f) => {
     if (f[iV] === "" || f[iV] == null || !f[iI]) return;
-    const k = idDe(f[iU], f[iN], f[iC]) + "#" + f[iA] + "#" + f[iI], t = new Date(f[iF]).getTime() || 0;
+    const k = idDe(f[iU], f[iN], f[iC]) + "#" + f[iA] + "#" + codigoDe(f[iI]), t = new Date(f[iF]).getTime() || 0;
     if (!ultima[k] || ultima[k].t <= t) ultima[k] = { t, f };
   });
   // 2) Media por alumno, trimestre e indicador.
   const suma = {};
   Object.keys(ultima).forEach((k) => {
-    const f = ultima[k].f, id = idDe(f[iU], f[iN], f[iC]), tri = trimestreDe(f[iA], f[iF]);
-    let cod = String(f[iI]).trim();
+    const f = ultima[k].f, id = idDe(f[iU], f[iN], f[iC]), curso = /6/.test(normGrupo(f[iC])) ? "6º" : "5º";
+    let tri = trimestreDe(f[iA], f[iF]), cod = codigoDe(f[iI]);
     // 6º: la presentación de PowerPoint (Crea SA1 S2) era el 3.1.2 y en la programación nueva es el 3.1.4.
-    if (/6/.test(normGrupo(f[iC])) && cod === "3.1.2" && /SA1 S2/.test(String(f[iA]))) cod = "3.1.4";
+    if (curso === "6º" && cod === "3.1.2" && /SA1 S2/.test(String(f[iA]))) cod = "3.1.4";
+    // Si el indicador no se evalúa en ese trimestre según el Excel, la nota va al trimestre en el que sí está
+    // (primero los siguientes y, si no, los anteriores). Así no queda ninguna nota aparte.
+    const en = (t) => ORDEN_EXCEL[curso][t].split(" ").indexOf(cod) >= 0;
+    if (!en(tri)) { const otro = [tri + 1, tri + 2, tri - 1, tri - 2].find((t) => t >= 0 && t < 3 && en(t)); if (otro != null) tri = otro; }
     const kk = id + "#" + tri + "#" + cod; (suma[kk] = suma[kk] || []).push(Number(f[iV]));
   });
   const notaDe = (id, tri, cod) => { const l = suma[id + "#" + tri + "#" + cod]; return l ? Math.round(l.reduce((a, b) => a + b, 0) / l.length * 10) / 10 : ""; };
@@ -482,7 +494,9 @@ function prepararExcel(libro) {
     const ancho = Math.max.apply(null, filas.map((f) => f.length));
     const datos = filas.map((f) => { const x = f.slice(); while (x.length < ancho) x.push(""); return x; });
     const nombre = "Excel " + g, h = libro.getSheetByName(nombre) || libro.insertSheet(nombre);
-    h.clearContents();
+    h.clear();
+    // Las filas de los códigos van como texto (si no, Google pone «1.1.1» como fecha).
+    negritas.forEach((n) => h.getRange(n, 1, 1, ancho).setNumberFormat("@"));
     h.getRange(1, 1, datos.length, ancho).setValues(datos);
     negritas.forEach((n) => h.getRange(n, 1, 1, ancho).setFontWeight("bold"));
     h.setFrozenColumns(1);
@@ -518,7 +532,7 @@ function recuperarNotas() {
     const cab = v[0].map(String), igual = (a, b) => String(a).trim().toLowerCase() === String(b).trim().toLowerCase();
     let puestas = 0;
     filas.forEach((f) => {
-      const columna = String(f[iA]).slice(0, 60) + (f[iI] ? " · Ind. " + String(f[iI]).slice(0, 10) : "");
+      const columna = String(f[iA]).slice(0, 60) + (f[iI] ? " · Ind. " + codigoDe(f[iI]).slice(0, 10) : "");
       let col = cab.indexOf(columna);
       if (col < 0) { cab.push(columna); col = cab.length - 1; v.forEach((x, k) => { while (x.length < cab.length) x.push(k === 0 ? cab[x.length] : ""); }); }
       const u = String(f[iU] || ""), n = String(f[iN] || ""), cl = normGrupo(f[iC]);
