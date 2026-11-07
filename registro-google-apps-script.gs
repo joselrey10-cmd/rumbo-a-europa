@@ -13,7 +13,7 @@
 */
 // CLAVE DEL PANEL DEL PROFESOR: cámbiala por una tuya (la pedirá la página "Profe" de la web).
 // Está solo aquí, en el script, así que el alumnado no la puede ver.
-const CLAVE_PROFE = "47001559";
+const CLAVE_PROFE = "cambia-esta-clave";
 
 // CORREO PARA LAS RESPUESTAS DE LAS FAMILIAS: si una familia contesta al correo del código, le llega a esta dirección.
 // Vacío ("") = las respuestas llegan a esta misma cuenta. Una dirección de otro dominio hace que más correos acaben en spam.
@@ -746,7 +746,7 @@ function alumnoSesion(libro, d) {
    y la web le muestra los contenidos adaptados. */
 function leerAdaptados() { return JSON.parse(PropertiesService.getScriptProperties().getProperty("adaptados") || "[]"); }
 function ponerAdaptacion(libro, d) {
-  if (CLAVE_PROFE === "cambia-esta-clave" || String(d.clave || "") !== CLAVE_PROFE) return json({ ok: false, error: "Clave incorrecta." });
+  if (CLAVE_PROFE === "47001559" || String(d.clave || "") !== CLAVE_PROFE) return json({ ok: false, error: "Clave incorrecta." });
   const u = minus(d.usuario); if (!u) return json({ ok: false, error: "Falta el usuario de Educacyl." });
   const l = leerAdaptados().filter((x) => x !== u);
   if (d.valor) l.push(u);
