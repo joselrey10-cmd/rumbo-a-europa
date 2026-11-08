@@ -1,7 +1,8 @@
 /*
   ENTRADA DEL ALUMNADO CON CÓDIGO
-  El alumno elige su grupo y su nombre y escribe su usuario de Educacyl. Pulsa «Enviarme el código» y le llega
-  un código de 3 cifras a usuario@educa.jcyl.es. Con el código, ese ordenador queda con su sesión (se recuerda
+  El alumno elige su grupo y su nombre, escribe su usuario de Educacyl y su código. El código es FIJO (de 3 a 6 cifras):
+  lo apunta en la agenda. Si no lo sabe, «Enviarme mi código» se lo manda a usuario@educa.jcyl.es (o se lo da el profe).
+  Ya dentro, puede cambiarlo por otro que recuerde mejor. Con el código, ese ordenador queda con su sesión (se recuerda
   varios meses) y sus notas llegan a la hoja. Sin sesión, la hoja no guarda las notas (CODIGO_ALUMNO en el script).
   Así un compañero no puede enviar notas con el nombre de otro.
 */
@@ -51,8 +52,11 @@ window.Acceso = (function () {
       const b = e.target.closest("[data-acc]"); if (!b) return;
       if (b.dataset.acc === "pedir") pedir(c);
       else if (b.dataset.acc === "entrar") entrar(c);
-      else if (b.dataset.acc === "salir") { ponerSesion(null); c.paso = "inicio"; c.msg = ""; pintar(c); }
+      else if (b.dataset.acc === "salir") { if (window.SalirAlumno) { window.SalirAlumno.salir(); return; } ponerSesion(null); c.paso = "inicio"; c.msg = ""; pintar(c); }
       else if (b.dataset.acc === "otro") { c.paso = "inicio"; c.msg = ""; pintar(c); pedir(c); }
+      else if (b.dataset.acc === "cambiar") { c.paso = "cambiar"; c.msg = ""; pintar(c); const i = c.caja.querySelector(".acceso-act"); if (i) i.focus(); }
+      else if (b.dataset.acc === "cancelar") { c.paso = "inicio"; c.msg = ""; pintar(c); }
+      else if (b.dataset.acc === "guardar") cambiar(c);
     });
     // Alumnado con adaptación curricular: entra solo con elegir su nombre (sin código).
     const directo = async () => {
@@ -63,7 +67,11 @@ window.Acceso = (function () {
       if (j && j.ok && j.token && !sesion()) ponerSesion({ token: j.token, usuario: j.usuario, nombre: j.nombre, clase: j.clase, adaptado: !!j.adaptado });
     };
     campos.nombre.addEventListener("change", directo);
-    caja.addEventListener("keydown", (e) => { if (e.key === "Enter" && e.target.matches(".acceso-cod")) { e.preventDefault(); entrar(c); } });
+    caja.addEventListener("keydown", (e) => {
+      if (e.key !== "Enter") return;
+      if (e.target.matches(".acceso-cod")) { e.preventDefault(); entrar(c); }
+      else if (e.target.matches(".acceso-act, .acceso-nuevo, .acceso-rep")) { e.preventDefault(); cambiar(c); }
+    });
     pintar(c);
   }
   function valores(c) {
@@ -77,25 +85,42 @@ window.Acceso = (function () {
     const j = await llamar(Object.assign({ accion: "alumnoCodigo" }, v));
     if (!j) { c.msg = "No hay conexión con la hoja. Inténtalo otra vez."; c.tipo = "error"; pintar(c); return; }
     if (!j.ok) { c.msg = j.error || "No se ha podido enviar el código."; c.tipo = "error"; pintar(c); return; }
-    c.paso = "codigo"; c.correo = j.correo || ""; c.datos = v;
+    c.paso = "codigo"; c.correo = j.correo || "";
     c.msg = j.mensaje || ""; c.tipo = ""; pintar(c);
     const i = c.caja.querySelector(".acceso-cod"); if (i) i.focus();
   }
   async function entrar(c) {
     const i = c.caja.querySelector(".acceso-cod"), cod = (i ? i.value : "").replace(/\D/g, "");
-    if (cod.length !== 3) { c.msg = "El código tiene 3 cifras."; c.tipo = "error"; pintar(c); return; }
+    const v = valores(c);
+    if (!v.clase || !v.nombre || !v.usuario) { c.msg = "Primero elige tu grupo y tu nombre y escribe tu usuario de Educacyl."; c.tipo = "error"; pintar(c); return; }
+    if (cod.length < 3 || cod.length > 6) { c.msg = "Escribe tu código (de 3 a 6 números)."; c.tipo = "error"; pintar(c); return; }
     c.msg = "Comprobando…"; c.tipo = ""; pintar(c, true);
-    const j = await llamar(Object.assign({ accion: "alumnoEntrar", codigo: cod }, c.datos || valores(c)));
+    const j = await llamar(Object.assign({ accion: "alumnoEntrar", codigo: cod }, v));
     if (!j) { c.msg = "No hay conexión con la hoja. Inténtalo otra vez."; c.tipo = "error"; pintar(c); return; }
-    if (!j.ok) { c.msg = j.error || "Código incorrecto."; c.tipo = "error"; if (/caducado|Demasiados/.test(c.msg)) c.paso = "inicio"; pintar(c); return; }
+    if (!j.ok) { c.msg = j.error || "Código incorrecto."; c.tipo = "error"; pintar(c); return; }
     c.paso = "inicio"; c.msg = "";
     ponerSesion({ token: j.token, usuario: j.usuario, nombre: j.nombre, clase: j.clase, adaptado: !!j.adaptado });
+  }
+  // Ya dentro: cambiar el código por otro que recuerde mejor.
+  async function cambiar(c) {
+    const q = (k) => { const i = c.caja.querySelector(k); return i ? i.value.replace(/\D/g, "") : ""; };
+    const actual = q(".acceso-act"), nuevo = q(".acceso-nuevo"), rep = q(".acceso-rep");
+    const fallo = (t) => { c.msg = t; c.tipo = "error"; pintar(c, false, { actual, nuevo, rep }); };
+    if (!actual) return fallo("Escribe tu código de ahora.");
+    if (nuevo.length < 3 || nuevo.length > 6) return fallo("El código nuevo tiene que tener de 3 a 6 números.");
+    if (nuevo !== rep) return fallo("Los dos códigos nuevos no son iguales.");
+    c.msg = "Guardando…"; c.tipo = ""; pintar(c, true, { actual, nuevo, rep });
+    const s = sesion() || {};
+    const j = await llamar({ accion: "alumnoCambiarCodigo", usuario: s.usuario, token: s.token, actual, nuevo });
+    if (!j) return fallo("No hay conexión con la hoja. Inténtalo otra vez.");
+    if (!j.ok) return fallo(j.error || "No se ha podido cambiar el código.");
+    c.paso = "inicio"; c.msg = "✓ Código cambiado. Apunta el nuevo en tu agenda: " + nuevo; c.tipo = "ok"; pintar(c);
   }
   function bloquear(c, si) {
     const nom = c.campos.nombre, sel = nom.parentElement && nom.parentElement.querySelector(".lista-nombres");
     [c.campos.clase, nom, sel, c.campos.usuario].forEach((el) => { if (el) el.disabled = si; });
   }
-  function pintar(c, ocupado) {
+  function pintar(c, ocupado, val) {
     if (!c.caja.isConnected) { cajas.delete(c); return; }
     const s = sesion();
     if (!requiere() && !s) { c.caja.hidden = true; bloquear(c, false); return; }
@@ -110,19 +135,34 @@ window.Acceso = (function () {
       if (c.campos.usuario.value !== s.usuario) c.campos.usuario.value = s.usuario;
       bloquear(c, true);
       c.caja.dataset.estado = "dentro";
+      if (c.paso === "cambiar") {
+        const v = val || {}, dis = ocupado ? " disabled" : "";
+        c.caja.dataset.estado = "cambiar";
+        c.caja.innerHTML = `<p class="acceso-t">🔑 <b>Cambiar mi código.</b> Elige uno de 3 a 6 números que recuerdes bien (no vale 111 ni 123) y apúntalo en tu agenda.</p>
+          <div class="acceso-fila">
+          <label class="acceso-lab">Código de ahora<input class="acceso-cod acceso-act" type="password" inputmode="numeric" maxlength="6" autocomplete="current-password" value="${esc(v.actual || "")}"></label>
+          <label class="acceso-lab">Código nuevo<input class="acceso-cod acceso-nuevo" inputmode="numeric" maxlength="6" autocomplete="new-password" value="${esc(v.nuevo || "")}"></label>
+          <label class="acceso-lab">Repite el nuevo<input class="acceso-cod acceso-rep" inputmode="numeric" maxlength="6" autocomplete="new-password" value="${esc(v.rep || "")}"></label></div>
+          <div class="acceso-fila" style="margin-top:8px"><button type="button" class="btn" data-acc="guardar"${dis}>Guardar</button>
+          <button type="button" class="btn sec" data-acc="cancelar"${dis}>Cancelar</button></div>${msg}`;
+        return;
+      }
       c.caja.innerHTML = `<p class="acceso-t">🔓 Has entrado como <b>${esc(s.nombre)}</b> · ${esc(s.clase)}. Tus notas llegan a tu profe.</p>
-        <button type="button" class="btn sec" data-acc="salir">Salir (no soy yo)</button>`;
+        <button type="button" class="btn sec" data-acc="cambiar">🔑 Cambiar mi código</button>
+        <button type="button" class="btn sec" data-acc="salir">Salir (no soy yo)</button>${msg}`;
       return;
     }
     bloquear(c, false);
     c.caja.dataset.estado = c.paso;
-    c.caja.innerHTML = c.paso === "codigo"
-      ? `<p class="acceso-t">📧 Te hemos enviado un código de 3 cifras a <b>${esc(c.correo)}</b>. Abre tu correo de Educacyl y escríbelo aquí:</p>
-        <div class="acceso-fila"><input class="acceso-cod" inputmode="numeric" maxlength="3" autocomplete="one-time-code" placeholder="000" aria-label="Código de 3 cifras">
-        <button type="button" class="btn" data-acc="entrar"${ocupado ? " disabled" : ""}>Entrar</button>
-        <button type="button" class="btn sec" data-acc="otro"${ocupado ? " disabled" : ""}>Enviarme otro código</button></div>${msg}`
-      : `<p class="acceso-t">🔐 <b>Entra con tu código</b> para que tus notas lleguen a tu profe. Te llega a tu correo de Educacyl.</p>
-        <div class="acceso-fila"><button type="button" class="btn" data-acc="pedir"${ocupado ? " disabled" : ""}>Enviarme el código</button></div>${msg}`;
+    if (c.paso === "cambiar") c.paso = "inicio";
+    const dis = ocupado ? " disabled" : "";
+    const viejo = c.caja.querySelector(".acceso-cod"), escrito = viejo ? viejo.value : "";
+    c.caja.innerHTML = (c.paso === "codigo"
+      ? `<p class="acceso-t">📧 Te hemos enviado tu código a <b>${esc(c.correo)}</b>. Es siempre el mismo: <b>apúntalo en tu agenda</b> y escríbelo aquí.</p>`
+      : `<p class="acceso-t">🔐 <b>Escribe tu código</b> para abrir los retos y que tus notas lleguen a tu profe. Es siempre el mismo (el que tienes apuntado en la agenda).</p>`) +
+      `<div class="acceso-fila"><input class="acceso-cod" type="password" inputmode="numeric" maxlength="6" autocomplete="current-password" placeholder="•••" aria-label="Tu código (de 3 a 6 números)" value="${esc(escrito)}">
+        <button type="button" class="btn" data-acc="entrar"${dis}>Entrar</button>
+        <button type="button" class="btn sec" data-acc="pedir"${dis}>${c.paso === "codigo" ? "Enviármelo otra vez" : "No sé mi código: enviármelo al correo"}</button></div>${msg}`;
   }
   function pintarTodas() { cajas.forEach((c) => pintar(c)); }
 

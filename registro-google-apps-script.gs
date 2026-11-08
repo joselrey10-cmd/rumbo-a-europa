@@ -30,7 +30,7 @@ const HOJA_URL = "https://docs.google.com/spreadsheets/d/1_6XcAUVOc52FE5fTFvh8pr
 const WEB_FAMILIAS = "https://rumbo-a-europa.vercel.app/#familias";
 // Días que vale el código cuando lo envía el profe desde el panel.
 const DIAS_CODIGO_PROFE = 7;
-// Entrada del alumnado con código de 3 cifras que llega a su correo de Educacyl.
+// Entrada del alumnado con su código fijo (3 a 6 cifras; se lo envía a su correo de Educacyl o se lo da el profe).
 // true: las notas solo se guardan si el alumno ha entrado con su código. false: como antes (sin código).
 const CODIGO_ALUMNO = true;
 const DOMINIO_ALUMNADO = "educa.jcyl.es";    // el correo del alumno es usuario@educa.jcyl.es
@@ -55,6 +55,8 @@ function doPost(e) {
   if (pedido.accion === "alumnoEntrar") return alumnoEntrar(libro, pedido);
   if (pedido.accion === "alumnoSesion") return alumnoSesion(libro, pedido);
   if (pedido.accion === "alumnoDirecto") return alumnoDirecto(libro, pedido);
+  if (pedido.accion === "alumnoCambiarCodigo") return alumnoCambiarCodigo(libro, pedido);
+  if (pedido.accion === "codigosAlumnos") return codigosAlumnos(libro, pedido);
   if (pedido.accion === "adaptacion") return ponerAdaptacion(libro, pedido);
   if (pedido.accion === "excel") return excelProfe(libro, pedido);
   if (pedido.accion === "guardarTexto") return guardarTexto(libro, pedido);
@@ -710,44 +712,85 @@ function guardarTexto(libro, d) {
 }
 
 /* ---------- Entrada del alumnado con código ----------
-   1) alumnoCodigo: el alumno elige grupo y nombre y escribe su usuario. Si coinciden con la pestaña Alumnado,
-      le llega a usuario@educa.jcyl.es un código de 3 cifras (vale 15 minutos, 5 intentos).
-   2) alumnoEntrar: con el código correcto se crea una sesión para ese ordenador (DIAS_SESION_ALUMNO días).
-   3) Cada nota que llega lleva la sesión; sin sesión válida no se guarda (si CODIGO_ALUMNO = true). */
+   Cada alumno tiene un código FIJO (de 3 a 6 cifras) que no cambia: lo apunta en la agenda y lo usa siempre.
+   1) alumnoCodigo: «Enviarme mi código». Si coinciden grupo, nombre y usuario con la pestaña Alumnado, le llega
+      su código a usuario@educa.jcyl.es (si aún no tenía, se crea uno de 3 cifras).
+   2) alumnoEntrar: con su código se crea una sesión para ese ordenador (DIAS_SESION_ALUMNO días).
+      5 fallos seguidos bloquean la entrada de ese alumno 10 minutos.
+   3) alumnoCambiarCodigo: ya dentro, el alumno puede poner otro código que recuerde mejor.
+   4) codigosAlumnos (profe): ver los códigos de un grupo para dárselos en clase.
+   Cada nota que llega lleva la sesión; sin sesión válida no se guarda (si CODIGO_ALUMNO = true).
+   Los códigos se guardan en las propiedades del script (apin_usuario), no en la hoja. */
 function filaAlumno(libro, clase, nombre, usuario) {
   clase = normGrupo(clase);
   return filasAlumnado(libro).find((x) => normGrupo(x[3]) === clase && minus(textoAlumno(x)) === minus(nombre) && minus(x[2]) === minus(usuario));
 }
 const correoAlumno = (u) => (String(u).indexOf("@") >= 0 ? minus(u) : minus(u) + "@" + DOMINIO_ALUMNADO);
 function tapar(c) { const p = c.split("@"); return p[0].slice(0, 2) + "•••@" + p[1]; }
+function leerPin(usuario) { return JSON.parse(PropertiesService.getScriptProperties().getProperty("apin_" + minus(usuario)) || "null"); }
+function guardarPin(usuario, p) { PropertiesService.getScriptProperties().setProperty("apin_" + minus(usuario), JSON.stringify(p)); }
+// Devuelve el código fijo del alumno; si no tiene, crea uno de 3 cifras.
+function pinDe(usuario) {
+  let p = leerPin(usuario);
+  if (!p || !p.c) { p = { c: String(Math.floor(Math.random() * 1000)).padStart(3, "0"), f: 0, b: 0 }; guardarPin(usuario, p); }
+  return p;
+}
 function alumnoCodigo(libro, d) {
   const f = filaAlumno(libro, d.clase, d.nombre, d.usuario);
   if (!f) return json({ ok: false, error: "Ese usuario no es el de " + String(d.nombre || "ese nombre") + ". Revisa tu usuario de Educacyl." });
   const usuario = minus(f[2]), correo = correoAlumno(usuario), cache = CacheService.getScriptCache();
-  if (cache.get("aesp_" + usuario)) return json({ ok: true, correo: tapar(correo), mensaje: "Ya te hemos enviado un código hace menos de un minuto. Mira tu correo." });
-  const codigo = String(Math.floor(Math.random() * 1000)).padStart(3, "0");
-  cache.put("acod_" + usuario, JSON.stringify({ codigo, fallos: 0 }), 900);
+  if (cache.get("aesp_" + usuario)) return json({ ok: true, correo: tapar(correo), mensaje: "Ya te hemos enviado tu código hace menos de un minuto. Mira tu correo." });
+  const codigo = pinDe(usuario).c;
   cache.put("aesp_" + usuario, "1", 60);
   const texto = "Hola, " + String(f[0] || "") + ":\n\nTu código para entrar en Rumbo a Europa es: " + codigo +
-    "\n\nEscríbelo en la web. Vale 15 minutos. No se lo digas a nadie: es como tu contraseña.\n\nCEIP Tierra de Pinares";
+    "\n\nEs siempre el mismo: apúntalo en tu agenda. Si quieres, cuando entres puedes cambiarlo por otro que recuerdes mejor (pulsa «Cambiar mi código»)." +
+    "\nNo se lo digas a nadie: es como tu contraseña.\n\nCEIP Tierra de Pinares";
   try {
-    MailApp.sendEmail(opcionesCorreo({ to: correo, subject: "Tu código de Rumbo a Europa: " + codigo, body: texto, htmlBody: htmlDe(texto) }));
-  } catch (e) { console.log("No se pudo enviar el código a " + correo + ": " + e); return json({ ok: false, error: "No se ha podido enviar el correo. Avisa a tu profe." }); }
+    MailApp.sendEmail(opcionesCorreo({ to: correo, subject: "Tu código de Rumbo a Europa", body: texto, htmlBody: htmlDe(texto) }));
+  } catch (e) { console.log("No se pudo enviar el código a " + correo + ": " + e); return json({ ok: false, error: "No se ha podido enviar el correo. Pídele tu código a tu profe." }); }
   return json({ ok: true, correo: tapar(correo) });
+}
+// Comprueba el código fijo. Devuelve "" si está bien o el texto del error.
+function comprobarPin(usuario, codigo) {
+  const p = leerPin(usuario);
+  if (!p || !p.c) return "Todavía no tienes código. Pulsa «Enviarme mi código» o pídeselo a tu profe.";
+  if (p.b && p.b > Date.now()) return "Demasiados intentos. Espera 10 minutos o pídele tu código a tu profe.";
+  if (String(codigo || "").trim() !== p.c) {
+    p.f = (p.f || 0) + 1;
+    if (p.f >= 5) { p.f = 0; p.b = Date.now() + 10 * 60000; }
+    guardarPin(usuario, p);
+    return p.b > Date.now() ? "Demasiados intentos. Espera 10 minutos o pídele tu código a tu profe." : "Código incorrecto.";
+  }
+  if (p.f || p.b) { p.f = 0; p.b = 0; guardarPin(usuario, p); }
+  return "";
 }
 function alumnoEntrar(libro, d) {
   const f = filaAlumno(libro, d.clase, d.nombre, d.usuario);
   if (!f) return json({ ok: false, error: "Revisa tu grupo, tu nombre y tu usuario." });
-  const usuario = minus(f[2]), cache = CacheService.getScriptCache();
-  const g = JSON.parse(cache.get("acod_" + usuario) || "null");
-  if (!g) return json({ ok: false, error: "El código ha caducado. Pide uno nuevo." });
-  if (String(d.codigo || "").trim() !== g.codigo) {
-    g.fallos++;
-    if (g.fallos >= 5) cache.remove("acod_" + usuario); else cache.put("acod_" + usuario, JSON.stringify(g), 900);
-    return json({ ok: false, error: g.fallos >= 5 ? "Demasiados intentos. Pide un código nuevo." : "Código incorrecto." });
-  }
-  cache.remove("acod_" + usuario);
+  const error = comprobarPin(minus(f[2]), d.codigo);
+  if (error) return json({ ok: false, error });
   return json(crearSesion(f));
+}
+// Con la sesión abierta, el alumno cambia su código (escribe el actual y el nuevo).
+function alumnoCambiarCodigo(libro, d) {
+  const s = alumnoDeSesion(libro, d);
+  if (!s) return json({ ok: false, error: "Tu sesión ha caducado. Sal y vuelve a entrar con tu código." });
+  const nuevo = String(d.nuevo || "").trim();
+  if (!/^\d{3,6}$/.test(nuevo)) return json({ ok: false, error: "El código nuevo tiene que tener de 3 a 6 números." });
+  if (/^(\d)\1+$/.test(nuevo) || "0123456789".indexOf(nuevo) >= 0 || "9876543210".indexOf(nuevo) >= 0) return json({ ok: false, error: "Ese código es muy fácil de adivinar (como 111 o 123). Elige otro." });
+  const p = leerPin(s.usuario);
+  if (p && p.c) { const error = comprobarPin(s.usuario, d.actual); if (error) return json({ ok: false, error: error === "Código incorrecto." ? "Tu código actual no es ese." : error }); }
+  guardarPin(s.usuario, { c: nuevo, f: 0, b: 0 });
+  return json({ ok: true });
+}
+// Panel del profe: códigos de los alumnos de un grupo (crea los que falten).
+function codigosAlumnos(libro, d) {
+  if (CLAVE_PROFE === "cambia-esta-clave" || String(d.clave || "") !== CLAVE_PROFE) return json({ ok: false, error: "Clave incorrecta." });
+  const clase = normGrupo(d.clase);
+  const lista = filasAlumnado(libro).filter((f) => normGrupo(f[3]) === clase && f[2])
+    .map((f) => ({ nombre: textoAlumno(f), usuario: minus(f[2]), codigo: pinDe(f[2]).c }))
+    .sort((a, b) => a.nombre.localeCompare(b.nombre, "es", { sensitivity: "base" }));
+  return json({ ok: true, clase, alumnos: lista });
 }
 function crearSesion(f) {
   const usuario = minus(f[2]), token = Utilities.getUuid().replace(/-/g, "");
