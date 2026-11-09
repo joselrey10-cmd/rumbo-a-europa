@@ -115,6 +115,22 @@ window.Profe = (function () {
     });
     return out;
   }
+  // Desglose de Robótica por modalidad para que el profesor compare Robot, Essential y Prime.
+  function resumenRobotica(a, c) {
+    const cat = catalogo(c), modos = (window.Robotica && window.Robotica.MODOS) || {};
+    return Object.keys(modos).map((k) => {
+      const nombre = modos[k].nombre;
+      const retos = cat.filter((x) => x.rincon === "rob" && x.destino.indexOf(`Robótica · ${nombre} ·`) === 0);
+      const notas = [];
+      retos.forEach((x) => indsAl(x, a).forEach((cod) => {
+        const v = a.notas[columna(x.destino, cod)];
+        if (v !== undefined) notas.push(v);
+      }));
+      return { nombre, hechas: notas.length, total: retos.reduce((n, x) => n + indsAl(x, a).length, 0),
+        media: notas.length ? Math.round(notas.reduce((s, v) => s + v, 0) / notas.length * 10) / 10 : null };
+    });
+  }
+
   function mediasInd(lista, c) {
     const cat = catalogo(c), por = {};
     lista.forEach((a) => cat.forEach((x) => indsAl(x, a).forEach((cod) => {
@@ -329,6 +345,8 @@ window.Profe = (function () {
         <span class="estado" id="p-correo-est">${a.usuario ? "Con cualquiera de estos correos la familia puede ver los resultados en la pestaña Familias." : "Este alumno no tiene usuario de Educacyl: impórtalo con su usuario."}</span>
       </form>
       <div class="p-resumen">${RINC.map((r) => `<div style="--rc:${r.color}"><b>${r.nombre}</b><span>${res[r.id].media === null ? "–" : res[r.id].media}</span><small>${res[r.id].hechas} de ${res[r.id].total} con nota${r.id === "crea" ? ` · ✓ ${res.crea.retos}/${res.crea.nRetos} retos terminados` : ""}</small></div>`).join("")}</div>
+      <h2 class="sa-tit">Robótica · resultados por modalidad</h2>
+      <div class="p-resumen">${resumenRobotica(a, c).map((m, i) => `<div style="--rc:${["#3a7bd5", "#e8489b", "#14225a"][i] || "#2f8f5b"}"><b>${esc(m.nombre)}</b><span>${m.media === null ? "–" : m.media}</span><small>${m.hechas} de ${m.total} indicadores con nota</small></div>`).join("")}</div>
       <p class="intro">Las casillas marcadas son las notas que ya hay en la hoja. En Crea, el alumno solo marca el reto como terminado: la nota de cada indicador la pones tú aquí. Al pulsar una nota se guarda sola en la hoja (verás «✓ Guardada»).</p>
       ${autoTabla(a, c)}
       ${RINC.map((r) => `<details class="p-rincon" ${r.id === "crea" ? "open" : ""}><summary style="color:${r.color}">${r.nombre}</summary>

@@ -82,7 +82,7 @@ Al pegar el script nuevo hay que darle permiso para enviar correos: en Apps Scri
 ## Pantalla de Robótica
 En el menú de arriba hay dos pantallas: **Programación · Rumbo a Europa** (el juego con Pini) y **Robótica**.
 En Robótica se programa un robot sobre un mapa de Europa con todos los países, dividido en 6 × 6 casillas de 15 × 15 cm.
-Hay tres niveles, con los mismos 6 retos (ir de un país a otro):
+Hay tres modalidades, con 10 retos cada una (ir de un país a otro):
 - **Robot:** Avanzar (una casilla), Girar a la derecha y Girar a la izquierda.
 - **SPIKE Essential:** bloques de iconos (avanzar y retroceder en cm, girar en grados, repetir, esperar, luz y sonido).
 - **SPIKE Prime:** todos los bloques de palabras de Movimiento: mover ↑/↓ durante (rotaciones, grados, segundos, cm o pulgadas),
@@ -125,7 +125,7 @@ en la pantalla de la actividad y en la ventana final.
 
 - El curso se saca de la **clase** que escribe el alumno: si empieza por 6 (6ºA, 6B…) se usan los indicadores de 6.º; si no, los de 5.º.
 - Textos y relaciones en `js/indicadores.js`: `INDICADORES` (número → texto), `INDICADOR_PROGRAMACION` (ciudad → indicador)
-  e `INDICADOR_ROBOTICA` (indicador de cada uno de los 6 retos de cada nivel). Cambia ahí cualquier relación.
+  e `INDICADOR_ROBOTICA` (indicador de cada uno de los 10 retos de cada modalidad). Cambia ahí cualquier relación.
 - Valoración automática: 0 no hecho · 1 intentado sin conseguir nada · 2 conseguida una parte ·
   3 conseguido con más de 4 intentos o un programa mucho más largo · 4 con 3 o 4 intentos o algo más largo ·
   5 realizado perfectamente (1 o 2 intentos y sin pasarse del reto de bloques). Se guarda siempre la mejor nota.

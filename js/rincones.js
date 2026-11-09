@@ -107,7 +107,7 @@ window.Rincones = (function () {
       <span class="etiqueta">Paso 2</span>
       <h2>Elige un rincón</h2>
       <div class="rincones" id="r-lista"></div>
-      <div class="excel-fila"><button class="btn sec" id="r-excel">Descargar mi valoración (Excel)</button><span>Todas tus notas de los cuatro rincones y la media de cada indicador.</span></div>
+      <div class="excel-fila"><a class="btn sec" href="#insignias">🏅 Mis insignias</a><button class="btn sec" id="r-excel">Descargar mi valoración (Excel)</button><span>Todas tus notas de los cuatro rincones y la media de cada indicador.</span></div>
     </div></section>
     <section class="seccion" style="padding-top:0"><div class="envoltura">
       <h2>Escala de notas</h2>
@@ -427,6 +427,67 @@ window.Rincones = (function () {
       : ok ? `✓ Enviado: ${filas.length} ${filas.length === 1 ? "nota" : "notas"} a la hoja.` : "Guardado aquí, pero no se ha podido enviar. Revisa la conexión y vuelve a pulsar.", ok ? "ok" : "error");
   });
 
+
+  /* ---------- Insignias y pasaporte final ---------- */
+  function datosInsignias() {
+    const a = V().alumno(), registros = V().leer(), filas = V().filas();
+    const mapa = new Map();
+    filas.forEach((f) => {
+      if (!f.destino || !f.clave) return;
+      const k = f.grupo + "|" + f.destino;
+      if (!mapa.has(k)) mapa.set(k, { grupo: f.grupo, destino: f.destino, actividad: f.actividad || f.destino, notas: [], total: 0, registradas: 0 });
+      const g = mapa.get(k), r = registros[f.clave];
+      g.total++;
+      if (r && typeof r.nota === "number") { g.notas.push(r.nota); g.registradas++; }
+    });
+    // Los retos Crea también requieren que el alumno haya marcado que los ha terminado.
+    const resultado = Array.from(mapa.values()).map((g) => {
+      const media = g.notas.length ? g.notas.reduce((x,y)=>x+y,0)/g.notas.length : 0;
+      const completa = g.total > 0 && g.registradas === g.total;
+      return Object.assign(g, { media: Math.round(media*10)/10, completa, ganada: completa && media >= 2.5 });
+    });
+    return resultado.sort((x,y) => x.grupo.localeCompare(y.grupo) || x.destino.localeCompare(y.destino));
+  }
+  function pintarInsignias() {
+    const a = V().alumno(), lista = datosInsignias(), ganadas = lista.filter(x=>x.ganada).length;
+    const todas = lista.length > 0 && ganadas === lista.length;
+    const grupoNombre = { crea:"Crea", prog:"Programación", rob:"Robótica", piensa:"Piensa" };
+    raiz.innerHTML = `<header class="portada insignias-portada"><div class="envoltura"><a class="volver-r" href="#">← Rincones</a>
+      <h1>🏅 Mis insignias <span>Rumbo a Europa</span></h1>
+      <p class="sub">${esc(a.nombre || "Alumno/a")} · ${esc(a.clase || "")}</p>
+      <div class="insignias-progreso"><b>${ganadas} / ${lista.length}</b><span>insignias conseguidas</span></div>
+    </div></header>
+    <section class="seccion"><div class="envoltura">
+      ${["crea","prog","rob","piensa"].map(id=>{
+        const items=lista.filter(x=>x.grupo===id);
+        if(!items.length) return "";
+        return `<h2 class="sa-tit">${grupoNombre[id]}</h2><div class="insignias-grid">${items.map(x=>`
+          <article class="insignia ${x.ganada?"ganada":"pendiente"}">
+            <div class="insignia-sello">${x.ganada?"🏅":"🔒"}</div>
+            <h3>${esc(x.actividad)}</h3><p>${x.completa?`Media: ${x.media.toFixed(1)} / 5`:"Pendiente de completar las valoraciones"}</p>
+            <span>${x.ganada?"¡Insignia conseguida!":x.completa?"Necesitas una media de 2,5":"Aún no conseguida"}</span>
+          </article>`).join("")}</div>`;
+      }).join("")}
+      <div class="pasaporte-final ${todas?"desbloqueado":"bloqueado"}">
+        <h2>🌍 Pasaporte Rumbo a Europa</h2>
+        <p>${todas?"¡Enhorabuena! Has conseguido todas las insignias del curso.":"Consigue todas las insignias para desbloquear tu pasaporte final."}</p>
+        <button class="btn" id="imprimir-pasaporte" ${todas?"":"disabled"}>🖨️ Imprimir mi pasaporte</button>
+      </div>
+    </div></section>`;
+    const btn=$("#imprimir-pasaporte");
+    if(btn) btn.onclick=()=>imprimirPasaporte(a,lista);
+  }
+  function imprimirPasaporte(a,lista) {
+    const w=window.open("","_blank");
+    if(!w) { alert("Permite las ventanas emergentes para imprimir el pasaporte."); return; }
+    w.document.write(`<!doctype html><html lang="es"><head><meta charset="utf-8"><title>Pasaporte Rumbo a Europa</title>
+    <style>body{font-family:Arial,sans-serif;color:#173b62;margin:25px}.pas{border:8px double #b78a36;border-radius:18px;padding:28px;text-align:center;min-height:850px}h1{font-size:34px;margin:12px}h2{color:#b78a36}.nombre{font-size:24px;border-bottom:1px solid #aaa;padding:14px}.sellos{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin:28px 0}.sello{border:2px solid #b78a36;border-radius:14px;padding:16px;min-height:90px}.emoji{font-size:32px}.pie{margin-top:40px}@media print{button{display:none}}</style></head><body>
+    <main class="pas"><h2>CEIP TIERRA DE PINARES</h2><h1>🌍 PASAPORTE</h1><h2>RUMBO A EUROPA</h2><p class="nombre">${esc(a.nombre||"")} · ${esc(a.clase||"")}</p>
+    <h2>Mis insignias de aprendizaje</h2><div class="sellos">${lista.map(x=>`<div class="sello"><div class="emoji">🏅</div><b>${esc(x.actividad)}</b><p>Media ${x.media.toFixed(1)} / 5</p></div>`).join("")}</div>
+    <h2>¡MISIÓN CUMPLIDA!</h2><p>Explorador/a digital de Europa</p><p class="pie">Fecha: ${new Date().toLocaleDateString("es-ES")}</p></main><script>window.onload=()=>window.print();</script></body></html>`);
+    w.document.close();
+  }
+
   /* ---------- Rutas ---------- */
   function ruta(hash) {
     const h = hash || "";
@@ -436,6 +497,7 @@ window.Rincones = (function () {
     else if (h === "#piensa") pintarPiensa();
     else if (h === "#notas-prog") pintarNotas("prog");
     else if (h === "#notas-rob") pintarNotas("rob");
+    else if (h === "#insignias") pintarInsignias();
     else if (h === "#profe" && window.Profe) window.Profe.pintar(raiz);
     else if (h === "#familias" && window.Familias) window.Familias.pintar(raiz);
     else hecho = false;

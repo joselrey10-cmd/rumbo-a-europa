@@ -213,25 +213,41 @@ function importarAlumnado(libro, d) {
 }
 
 /* ---------- Consulta de las familias ---------- */
-// 1) La familia escribe su correo: si está en la pestaña Alumnado, se le envía un código de 6 cifras (vale 15 minutos).
+// Separa y valida los correos de la familia (admite coma, punto y coma o espacios).
+function correosFamilia(valor) {
+  return Array.from(new Set(String(valor || "").toLowerCase().split(/[;,\s]+/)
+    .map((c) => c.trim()).filter((c) => /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(c))));
+}
+
+// La familia escribe uno de sus correos: el mismo código se envía a TODOS los correos
+// asociados al alumno y queda válido si cualquiera de los dos progenitores lo introduce.
 function familiaCodigo(libro, d) {
   const correo = minus(d.correo);
-  const resp = { ok: true, mensaje: "Si ese correo está registrado en el colegio, recibirás un código en unos minutos." };
+  const resp = { ok: true, mensaje: "Si ese correo está registrado, recibiréis el código en los correos familiares asociados." };
   if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(correo)) return json({ ok: false, error: "Escribe un correo válido." });
-  const cache = CacheService.getScriptCache();
-  if (cache.get("espera_" + correo)) { console.log("Familias: " + correo + " ya pidió un código hace menos de 1 minuto."); return json(resp); }
   const h = libro.getSheetByName("Alumnado");
   const filas = h && h.getLastRow() > 1 ? h.getRange(2, 1, h.getLastRow() - 1, ALUMNADO.length).getValues() : [];
-  const hijos = filas.filter((f) => minus(f[4]).split(/[;,\s]+/).indexOf(correo) >= 0);
-  console.log("Familias: " + correo + " → " + hijos.length + " alumno(s) con ese correo en la pestaña Alumnado.");
+  const hijos = filas.filter((f) => correosFamilia(f[4]).indexOf(correo) >= 0);
   if (!hijos.length) return json(resp);
+  const destinatarios = Array.from(new Set(hijos.reduce((acc, f) => acc.concat(correosFamilia(f[4])), [])));
+  const cache = CacheService.getScriptCache();
+  if (destinatarios.some((c) => cache.get("espera_" + c))) return json(resp);
+  if (destinatarios.length > MailApp.getRemainingDailyQuota()) return json({ ok: false, error: "Hoy no quedan envíos suficientes para enviar el código a los dos correos. Prueba mañana." });
   const codigo = String(Math.floor(100000 + Math.random() * 900000));
-  cache.put("codigo_" + correo, JSON.stringify({ codigo, fallos: 0 }), 900);
-  cache.put("espera_" + correo, "1", 60);
-  const texto = "Hola:\n\nTu código para ver los resultados de " + hijos.map((f) => f[0]).join(" y ") + " en Rumbo a Europa es: " + codigo +
-    "\n\nEl código vale 15 minutos. Si no lo has pedido tú, no hagas nada.\n\nCEIP Tierra de Pinares";
-  MailApp.sendEmail(opcionesCorreo({ to: correo, subject: "Código de acceso a Rumbo a Europa", body: texto, htmlBody: htmlDe(texto) }));
-  return json(resp);
+  const texto = "Hola:\n\nTu código para ver los resultados de " + hijos.map((f) => f[0]).join(" y ") +
+    " en Rumbo a Europa es: " + codigo + "\n\nEste mismo código se ha enviado a los correos familiares registrados y vale 15 minutos. Cualquiera de los dos progenitores puede utilizarlo.\n\nCEIP Tierra de Pinares";
+  let enviados = 0; const fallos = [];
+  destinatarios.forEach((c) => {
+    try {
+      MailApp.sendEmail(opcionesCorreo({ to: c, subject: "Código de acceso a Rumbo a Europa", body: texto, htmlBody: htmlDe(texto) }));
+      cache.put("codigo_" + c, JSON.stringify({ codigo, fallos: 0 }), 900);
+      cache.put("espera_" + c, "1", 60);
+      enviados++;
+    } catch (e) { fallos.push(c); console.error("No se pudo enviar el código a " + c + ": " + e); }
+  });
+  if (!enviados) return json({ ok: false, error: "No se ha podido enviar el correo. Comprueba los permisos y la cuota de Google." });
+  console.log("Familias: código enviado a " + enviados + " de " + destinatarios.length + " correos. Fallos: " + fallos.join(", "));
+  return json({ ok: true, mensaje: fallos.length ? "El código se ha enviado, pero ha fallado uno de los correos. Revisad la dirección del segundo progenitor." : "Código enviado a los dos correos familiares. Cualquiera de los dos puede utilizarlo." });
 }
 
 // 2) Con el código correcto devuelve solo los datos de sus hijos.
@@ -256,7 +272,7 @@ function familiaDatos(libro, d) {
   }
   const h = libro.getSheetByName("Alumnado");
   const filas = h && h.getLastRow() > 1 ? h.getRange(2, 1, h.getLastRow() - 1, ALUMNADO.length).getValues() : [];
-  const hijos = filas.filter((f) => minus(f[4]).split(/[;,\s]+/).indexOf(correo) >= 0);
+  const hijos = filas.filter((f) => correosFamilia(f[4]).indexOf(correo) >= 0);
   const val = libro.getSheetByName("Valoraciones");
   const v = val && val.getLastRow() > 0 ? val.getDataRange().getValues() : [[]];
   const cab = v[0], iU = cab.indexOf("Usuario Educacyl");

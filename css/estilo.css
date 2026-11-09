@@ -507,3 +507,13 @@ html.adaptado #texto-objetivo, html.adaptado #rb-texto-reto { font-size: 22px; }
 .codigo-desbloqueo { margin: 18px auto; padding: 14px 18px; max-width: 420px; border: 2px dashed #d2a900; border-radius: 14px; background: #fff8d9; color: #18213f; text-align: center; }
 .codigo-desbloqueo strong { display: inline-block; padding: 8px 18px; border-radius: 9px; background: #14225a; color: #ffdf45; font: 800 1.8rem/1.2 "DM Mono", monospace; letter-spacing: .12em; }
 .codigo-desbloqueo p { margin: 5px 0; }
+
+/* Insignias Rumbo a Europa */
+.insignias-progreso{display:flex;align-items:center;gap:12px;margin-top:18px;padding:14px 18px;background:#ffffff20;border:1px solid #ffffff55;border-radius:14px;width:max-content;max-width:100%}
+.insignias-progreso b{font-size:1.7rem;color:#f5d58a}.insignias-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:14px;margin:16px 0 28px}
+.insignia{border:2px solid #d7dce3;border-radius:16px;padding:16px;text-align:center;background:#fff;box-shadow:0 2px 8px #0000000a}
+.insignia.ganada{border-color:#c59a42;background:#fffaf0}.insignia.pendiente{filter:grayscale(.75);opacity:.78}
+.insignia-sello{font-size:2.7rem;margin-bottom:8px}.insignia h3{font-size:1rem;margin:6px 0}.insignia p,.insignia span{font-size:.88rem;color:#526071}
+.pasaporte-final{margin:28px 0;padding:24px;border-radius:18px;text-align:center;border:2px dashed #b8c0ca;background:#f5f6f8}
+.pasaporte-final.desbloqueado{border:3px solid #c59a42;background:#fff8e8}.pasaporte-final.bloqueado{opacity:.8}
+@media(max-width:600px){.insignias-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.insignia{padding:10px}.insignia h3{font-size:.9rem}}

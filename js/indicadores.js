@@ -6,7 +6,7 @@
 
   - INDICADORES[curso]: número del indicador -> texto.
   - INDICADOR_PROGRAMACION[curso]: ciudad -> indicador de ese destino.
-  - INDICADOR_ROBOTICA[curso]: para cada nivel, el indicador de cada uno de sus 6 retos (en orden).
+  - INDICADOR_ROBOTICA[curso]: para cada nivel, el indicador de cada uno de sus 10 retos (en orden).
   Puedes cambiar cualquier relación aquí.
 
   Valoración automática de cada actividad (de 0 a 5):
@@ -138,13 +138,17 @@ window.INDICADOR_PROGRAMACION = {
 
 window.INDICADOR_ROBOTICA = {
   "5º": {
-    robot: ["3.2.3", "3.2.3", "3.2.6", "3.2.6", "3.2.6", "3.2.6"],
-    essential: ["3.2.3", "3.2.3", "3.2.9", "3.2.9", "3.2.9", "3.2.9"],
-    prime: ["3.2.9", "3.2.9", "3.2.9", "3.2.9", "3.2.9", "3.2.9"]
+    // Robot básico: secuencias y planificación de rutas (indicadores 3.2.3 y 3.2.6).
+    robot: ["3.2.3", "3.2.3", "3.2.3", "3.2.3", "3.2.6", "3.2.6", "3.2.6", "3.2.6", "3.2.6", "3.2.6"],
+    // SPIKE Essential: progresión desde programación del robot hasta el indicador específico de SPIKE.
+    essential: ["3.2.3", "3.2.3", "3.2.9", "3.2.9", "3.2.9", "3.2.9", "3.2.9", "3.2.9", "3.2.9", "3.2.9"],
+    // En 5.º, el indicador curricular específico de SPIKE disponible es 3.2.9.
+    prime: ["3.2.9", "3.2.9", "3.2.9", "3.2.9", "3.2.9", "3.2.9", "3.2.9", "3.2.9", "3.2.9", "3.2.9"]
   },
   "6º": {
-    robot: ["3.2.5", "3.2.5", "3.2.5", "3.2.5", "3.2.5", "3.2.5"],
-    essential: ["3.2.5", "3.2.5", "3.2.5", "3.2.5", "3.2.5", "3.2.5"],
-    prime: ["3.2.5", "3.2.5", "3.2.5", "3.2.5", "3.2.5", "3.2.5"]
+    robot: ["3.2.5", "3.2.5", "3.2.5", "3.2.5", "3.2.5", "3.2.5", "3.2.5", "3.2.5", "3.2.5", "3.2.5"],
+    essential: ["3.2.5", "3.2.5", "3.2.5", "3.2.5", "3.2.5", "3.2.5", "3.2.5", "3.2.5", "3.2.5", "3.2.5"],
+    // Los retos avanzados de Prime incorporan depuración explícita del programa.
+    prime: ["3.2.5", "3.2.5", "3.2.5", "3.2.5", "3.2.5", "3.2.6", "3.2.6", "3.2.6", "3.2.6", "3.2.6"]
   }
 };
