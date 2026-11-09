@@ -176,3 +176,19 @@ Consejo: con un filtro o una tabla dinámica por Clase y Nombre verás de un vis
 - La lista solo muestra nombres (ni usuarios ni correos) y la ve cualquiera que abra la web y elija un grupo.
 - Panel Profe → «✉️ Acceso de las familias»: envía a cada familia un correo con las instrucciones y su código (vale 7 días; cambia DIAS_CODIGO_PROFE en el script). Una familia con dos hijos recibe un solo código. También hay «✉️ Enviar código» en la ficha de cada alumno. La familia entra en la web → Familias → escribe su correo → «Ya tengo un código».
 - probarCorreo (en el editor de Apps Script) envía un correo de prueba y dice cuántos alumnos tienen correo de familia.
+
+## Retos encadenados con códigos individuales
+
+Programa, Piensa y cada modalidad de Robótica (Robot, SPIKE Essential y SPIKE Prime) tienen ahora una secuencia independiente. Al terminar un reto, el servidor genera un código individual de 8 caracteres para el siguiente. Para continuar, el alumno debe introducir ese código. Los códigos y el progreso se guardan en las propiedades del proyecto de Apps Script, vinculados al usuario Educacyl y a su sesión; no dependen del almacenamiento local del navegador. El rincón Crea no se modifica.
+
+**Importante para activar esta mejora:** sustituye el contenido del proyecto de Apps Script por el archivo actualizado `registro-google-apps-script.gs` y publica una **nueva versión** de la aplicación web (Gestionar implementaciones → Editar → Nueva versión). No cambies la URL de la implementación en la configuración de la web. Después, publica los archivos web actualizados en Vercel. Si no actualizas Apps Script, los retos no podrán validar ni emitir códigos.
+
+## Retos encadenados y valoración proporcional (actualización)
+Programa, Piensa y cada modalidad de Robótica (Robot, SPIKE Essential y SPIKE Prime) tienen secuencias independientes. Al superar una pantalla, el servidor genera un código individual de 8 caracteres para desbloquear la siguiente; el código no sirve para otro alumno ni para otra secuencia. Crea conserva su funcionamiento y su valoración por rúbrica; Piensa mantiene su valoración actual.
+
+La nota automática de **Programa** se calcula sobre sus 17 pantallas: `5 × pantallas superadas / 17`.
+En **Robótica**, la nota se calcula dentro de cada modalidad: Robot (máximo 2,5), SPIKE Essential (máximo 3,5) y SPIKE Prime (máximo 5), multiplicando el máximo por la proporción de pantallas superadas. En adaptación curricular, Robot tiene 4 pantallas y mantiene el máximo de 2,5.
+
+La hoja de Google crea/actualiza la pestaña **Progreso por rutas**, con el número de pantallas superadas, el total y la nota proporcional de cada ruta para cada alumno. La pestaña **Resultados** sigue registrando cada pantalla superada y **Valoraciones** recibe la nota de progreso correspondiente. Crea y Piensa no cambian sus criterios de valoración.
+
+**Para activar el conjunto de mejoras:** sustituye el contenido del proyecto de Apps Script por el archivo actualizado `registro-google-apps-script.gs` y publica una **nueva versión** (Gestionar implementaciones → Editar → Nueva versión), conservando la URL actual. Después publica en Vercel todos los archivos de esta versión del proyecto. Los códigos y las notas proporcionales no funcionarán correctamente si se actualiza solo la web o solo Apps Script.

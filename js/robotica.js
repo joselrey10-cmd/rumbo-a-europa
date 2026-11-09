@@ -424,12 +424,12 @@
   const contarB = (l) => l.reduce((n, b) => n + 1 + (b.cuerpo ? contarB(b.cuerpo) : 0), 0);
   const VAL = () => window.Valoraciones;
   const indicadorReto = (m, i) => (VAL() ? VAL().indicador("rob", [m, i]) : null);
-  function valorar(completado, prog) {
+  function valorar(completado, prog, notaRuta) {
     if (!VAL()) return null;
     const ind = indicadorReto(modo, retoI) || {};
-    const nota = VAL().nota({ completado, parcial: metaI > 0, intentos });
-    const r = VAL().registrar(`rob-${modo}-${retoI}`, { nota, intentos, bloques: contarB(prog), codigo: ind.codigo || "", pantalla: "Robótica", actividad: `${MODOS[modo].nombre} · ${reto.titulo}` });
-    return Object.assign({}, r, { codigo: ind.codigo, nota: Math.max(nota, r.nota) });
+    const nota = Number.isFinite(notaRuta) ? notaRuta : VAL().nota({ completado, parcial: metaI > 0, intentos });
+    const r = VAL().registrar(`rob-${modo}-${retoI}`, { nota, intentos, bloques: contarB(prog), codigo: ind.codigo || "", pantalla: "Robótica", actividad: `${MODOS[modo].nombre} · ${reto.titulo}` }, Number.isFinite(notaRuta));
+    return Object.assign({}, r, { codigo: ind.codigo, nota: Number.isFinite(notaRuta) ? r.nota : Math.max(nota, r.nota) });
   }
   function enviarResultado(prog, val) {
     const R = window.REGISTRO || {};
@@ -467,17 +467,22 @@
       if (!(e instanceof Fin)) throw e;
       if (e.tipo === "cancelado") return;
       corriendo = false; botones(); ws.highlightBlock(null);
-      if (e.tipo === "victoria") { const val = valorar(true, prog); enviarResultado(prog, val); return victoria(val); }
+      if (e.tipo === "victoria") return victoria(prog);
       valorar(false, prog);
       aviso(e.txt);
     }
   }
 
-  function victoria(val) {
+  async function victoria(prog) {
+    const cadena = window.RetosCadena ? await window.RetosCadena.completar(`robot-${modo}`, retoI, RETOS.length) : null;
+    const val = valorar(true, prog, cadena && cadena.ok && Number.isFinite(cadena.nota) ? cadena.nota : null);
+    enviarResultado(prog, val);
     hechos[modo] = hechos[modo] || {}; hechos[modo][retoI] = true; guardar();
     const sig = retoI + 1 < RETOS.length;
     $("#rb-ventana").innerHTML = `<h2>¡Reto conseguido!</h2><p>${reto.titulo}: el robot ha visitado ${reto.metas.map((m) => m[1]).join(", ")}.</p>
       ${val && val.codigo ? `<p class="val-ind">Indicador ${val.codigo}: <b>${val.nota} de 5</b></p>` : ""}
+      ${cadena && cadena.ok && Number.isFinite(cadena.nota) ? `<p class="val-ind">Valoración de ${MODOS[modo].nombre}: <b>${cadena.completados} de ${cadena.total} pantallas · ${cadena.nota} de ${cadena.maximo}</b></p>` : ""}
+      ${cadena && cadena.ok && cadena.codigo ? `<div class="codigo-desbloqueo"><p>🔐 <b>Código para el siguiente reto de ${MODOS[modo].nombre}</b></p><strong>${cadena.codigo}</strong><p>Guárdalo: lo necesitarás para continuar en esta modalidad.</p></div>` : cadena && !cadena.ok ? `<p class="aviso">${cadena.error || "No se ha podido generar el código."}</p>` : ""}
       <p class="pista">Ahora prueba el mismo programa con el robot de verdad sobre el tapete.</p>
       ${!sig && window.XLSX ? `<p><button class="btn sec" id="rbv-excel">Descargar mi valoración (Excel)</button></p>` : ""}
       <div class="acciones"><button class="btn sec" id="rbv-otra">Repetir</button>${sig ? `<button class="btn" id="rbv-sig">Siguiente reto</button>` : `<button class="btn" id="rbv-menu">Elegir otro nivel</button>`}</div>`;
@@ -502,7 +507,8 @@
     }).join("");
   }
 
-  function abrirReto(m, i) {
+  async function abrirReto(m, i) {
+    if (window.RetosCadena && !(await window.RetosCadena.entrar(`robot-${m}`, i, RETOS.length))) { location.hash = "robotica"; return; }
     modo = m; retoI = i; reto = RETOS[i]; intentos = 0;
     $("#rb-menu").hidden = true; $("#rb-juego").hidden = false;
     $("#rb-titulo").textContent = reto.titulo;
@@ -526,7 +532,7 @@
     window.scrollTo(0, 0);
   }
 
-  function ruta(hash) {
+  async function ruta(hash) {
     $("#robotica").hidden = false;
     const m = /^#robotica-(robot|essential|prime)-(\d+)$/.exec(hash);
     if (m && MODOS[m[1]] && +m[2] >= 1 && +m[2] <= RETOS.length) return abrirReto(m[1], +m[2] - 1);

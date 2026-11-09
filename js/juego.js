@@ -199,10 +199,11 @@
     n.focus();
   }
 
-  function irANivel(i) {
+  async function irANivel(i) {
     if (!desbloqueadoNivel(i)) return;
     if (!progreso.alumno.nombre) { if ($("#juego").hidden) pedirNombre(); else mostrarInicio(), pedirNombre(); return; }
     if (location.hash !== "#destino-" + (i + 1)) { location.hash = "destino-" + (i + 1); return; }
+    if (window.RetosCadena && !(await window.RetosCadena.entrar("programa", i, NIVELES.length))) return;
     abrirNivel(i);
   }
 
@@ -501,14 +502,15 @@
     aviso(txt);
   }
 
-  function victoria() {
+  async function victoria() {
     marcar(null); corriendo = false; botones();
     $("#sprite").classList.add("fiesta");
     const n = contar(programa);
     const est = n <= nivel.reto ? 3 : n <= nivel.reto + 2 ? 2 : 1;
     progreso[EST][nivelI] = Math.max(progreso[EST][nivelI] || 0, est);
     guardar();
-    const val = valorar(true);
+    const cadena = window.RetosCadena ? await window.RetosCadena.completar("programa", nivelI, NIVELES.length) : null;
+    const val = valorar(true, null, cadena && cadena.ok && Number.isFinite(cadena.nota) ? cadena.nota : null);
     enviarResultado(n, est, val);
     const av = AVENTURAS[nivel.aventura];
     const ultimo = nivel.pos === av.niveles.length - 1;
@@ -519,7 +521,9 @@
       <h2>¡${nivel.ciudad} conseguido!</h2>
       <div class="grandes" aria-label="${est} de 3 estrellas"><b>${"★".repeat(est)}</b>${"★".repeat(3 - est)}</div>
       <p>${est === 3 ? `Programa perfecto: ${n} bloques.` : `Lo has hecho con ${n} bloques. ¿Puedes conseguirlo con ${nivel.reto}?`}</p>
-      ${val && val.codigo ? `<p class="val-ind">Indicador ${val.codigo}: <b>${val.nota} de 5</b></p>` : ""}`;
+      ${val && val.codigo ? `<p class="val-ind">Indicador ${val.codigo}: <b>${val.nota} de 5</b></p>` : ""}
+      ${cadena && cadena.ok && Number.isFinite(cadena.nota) ? `<p class="val-ind">Valoración de Programa: <b>${cadena.completados} de ${cadena.total} pantallas · ${cadena.nota} de 5</b></p>` : ""}
+      ${cadena && cadena.ok && cadena.codigo ? `<div class="codigo-desbloqueo"><p>🔐 <b>Código para el siguiente reto</b></p><strong>${cadena.codigo}</strong><p>Guárdalo: lo necesitarás para abrir el siguiente reto.</p></div>` : cadena && !cadena.ok ? `<p class="aviso">${cadena.error || "No se ha podido generar el código. Vuelve a intentarlo."}</p>` : ""}`;
     if (nuevo) html += `<p><strong>¡Nuevo personaje desbloqueado: ${nuevo.nombre}!</strong></p>`;
     if (ultimo && todos) html += `<div class="diploma">${COLEGIO.logo ? `<img src="${COLEGIO.logo}" alt="Escudo" style="height:90px;width:auto;display:block;margin:0 auto 6px">` : ""}<span class="etiqueta">Diploma</span><strong>${progreso.alumno.nombre || p.nombre}: ${av.nombre} completada</strong><p style="margin:4px 0 0">Has recorrido ${av.niveles.length} destinos programando con ${p.nombre}. ${COLEGIO.nombre} · ${COLEGIO.lema}</p></div>`;
     if (ultimo && todos && window.XLSX) html += `<p><button class="btn sec" id="v-excel">Descargar mi valoración (Excel)</button></p>`;
@@ -536,13 +540,13 @@
 
   /* ---------- Indicadores y valoración ---------- */
   function indicadorNivel(n) { return window.Valoraciones ? window.Valoraciones.indicador("prog", n.ciudad) : null; }
-  function valorar(completado, parcialExtra) {
+  function valorar(completado, parcialExtra, notaRuta) {
     if (!window.Valoraciones) return null;
     const ind = indicadorNivel(nivel) || {};
     const n = contar(programa);
-    const nota = window.Valoraciones.nota({ completado, parcial: pj.sellos.size > 0 || !!parcialExtra, intentos, bloques: n, reto: nivel.reto });
-    const r = window.Valoraciones.registrar("prog-" + nivelI, { nota, intentos, bloques: n, codigo: ind.codigo || "", pantalla: "Programación", actividad: `${AVENTURAS[nivel.aventura].nombre} · ${nivel.ciudad}` });
-    return Object.assign({}, r, { codigo: ind.codigo, nota: Math.max(nota, r.nota) });
+    const nota = Number.isFinite(notaRuta) ? notaRuta : window.Valoraciones.nota({ completado, parcial: pj.sellos.size > 0 || !!parcialExtra, intentos, bloques: n, reto: nivel.reto });
+    const r = window.Valoraciones.registrar("prog-" + nivelI, { nota, intentos, bloques: n, codigo: ind.codigo || "", pantalla: "Programación", actividad: `${AVENTURAS[nivel.aventura].nombre} · ${nivel.ciudad}` }, Number.isFinite(notaRuta));
+    return Object.assign({}, r, { codigo: ind.codigo, nota: Number.isFinite(notaRuta) ? r.nota : Math.max(nota, r.nota) });
   }
   function descargarExcel() {
     if (!window.Valoraciones || !window.Valoraciones.excel()) aviso("No se ha podido crear el Excel en este navegador.");
@@ -613,7 +617,7 @@
     $("#juego").hidden = true; $("#inicio").hidden = false;
     pintarInicio();
   }
-  function enrutar() {
+  async function enrutar() {
     const h = location.hash;
     const sec = /^#robotica/.test(h) ? "robotica" : /^#(destino-\d+|programa)$/.test(h) ? "programa" : /^#crea/.test(h) ? "crea" : /^#piensa/.test(h) ? "piensa" : h === "#profe" ? "profe" : h === "#familias" ? "familias" : "inicio";
     document.body.dataset.seccion = sec;
@@ -634,7 +638,10 @@
     if (window.Robotica) window.Robotica.ocultar();
     const m = /^#destino-(\d+)$/.exec(location.hash);
     const i = m ? +m[1] - 1 : -1;
-    if (i >= 0 && i < NIVELES.length && desbloqueadoNivel(i) && progreso.alumno.nombre) abrirNivel(i);
+    if (i >= 0 && i < NIVELES.length && desbloqueadoNivel(i) && progreso.alumno.nombre) {
+      if (window.RetosCadena && !(await window.RetosCadena.entrar("programa", i, NIVELES.length))) { mostrarInicio(); return; }
+      abrirNivel(i);
+    }
     else mostrarInicio();
   }
 

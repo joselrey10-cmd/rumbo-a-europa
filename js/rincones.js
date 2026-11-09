@@ -329,6 +329,8 @@ window.Rincones = (function () {
     if (el) {
       const caja = el.closest(".reto-r"), p = window.PIENSA[+caja.dataset.i];
       if (faltanDatos()) { estado(caja, avisoDatos, "error"); return; }
+      const indiceCadena = +caja.dataset.i, totalCadena = (window.PIENSA || []).length;
+      if (window.RetosCadena && !(await window.RetosCadena.entrar("piensa", indiceCadena, totalCadena))) { estado(caja, "Necesitas el código de la parada anterior para continuar.", "error"); return; }
       const texto = $(".llave", caja).value.trim();
       if (!texto) { estado(caja, "Termina la actividad para conseguir la llave (o pégala aquí).", "error"); return; }
       const res = leerLlave(texto, p);
@@ -340,7 +342,15 @@ window.Rincones = (function () {
       el.disabled = true; estado(caja, "Enviando…", "");
       const ok = await V().enviarVarias(filas);
       el.disabled = false;
-      if (ok) { pintarPiensa(); const c2 = raiz.querySelector(`.reto-r[data-i="${caja.dataset.i}"]`); if (c2) { estado(c2, "✓ Enviada.", "ok"); c2.scrollIntoView({ block: "center" }); } }
+      if (ok) {
+        const indice = +caja.dataset.i, total = (window.PIENSA || []).length;
+        const cadena = window.RetosCadena ? await window.RetosCadena.completar("piensa", indice, total) : null;
+        pintarPiensa(); const c2 = raiz.querySelector(`.reto-r[data-i="${indice}"]`);
+        if (c2) {
+          estado(c2, cadena && cadena.ok && cadena.codigo ? `✓ Enviada. Código para la siguiente parada: <b>${esc(cadena.codigo)}</b>. Guárdalo.` : cadena && !cadena.ok ? `✓ Enviada, pero no se pudo generar el código: ${esc(cadena.error || "error de conexión")}` : "✓ Enviada.", cadena && !cadena.ok ? "error" : "ok");
+          c2.scrollIntoView({ block: "center" });
+        }
+      }
       else estado(caja, "No se ha podido enviar. Revisa la conexión y vuelve a pulsar.", "error");
       return;
     }

@@ -475,3 +475,9 @@ body.editando-textos main :is(h1,h2,h3,h4,p,li,span,b,a,button,label,small,div):
 #textos-dialogo textarea { width: 100%; box-sizing: border-box; font: inherit; padding: 10px; border-radius: 10px; border: 2px solid var(--line); margin: 10px 0; resize: vertical; background: transparent; color: inherit; }
 #textos-dialogo .td-acc { display: flex; flex-wrap: wrap; gap: 8px; }
 #textos-dialogo .td-estado[data-tipo="error"] { color: #c0392b; }
+
+
+/* Código de desbloqueo de retos encadenados */
+.codigo-desbloqueo { margin: 18px auto; padding: 14px 18px; max-width: 420px; border: 2px dashed #d2a900; border-radius: 14px; background: #fff8d9; color: #18213f; text-align: center; }
+.codigo-desbloqueo strong { display: inline-block; padding: 8px 18px; border-radius: 9px; background: #14225a; color: #ffdf45; font: 800 1.8rem/1.2 "DM Mono", monospace; letter-spacing: .12em; }
+.codigo-desbloqueo p { margin: 5px 0; }

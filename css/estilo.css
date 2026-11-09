@@ -502,3 +502,8 @@ html.adaptado .paleta .bloque-btn { font-size: 22px; padding: 14px 18px; min-wid
 html.adaptado .paleta .bloque-btn span { font-size: 44px; line-height: 1; }
 html.adaptado .programa .bloque span { font-size: 22px; }
 html.adaptado #texto-objetivo, html.adaptado #rb-texto-reto { font-size: 22px; }
+
+/* Código de desbloqueo de retos encadenados */
+.codigo-desbloqueo { margin: 18px auto; padding: 14px 18px; max-width: 420px; border: 2px dashed #d2a900; border-radius: 14px; background: #fff8d9; color: #18213f; text-align: center; }
+.codigo-desbloqueo strong { display: inline-block; padding: 8px 18px; border-radius: 9px; background: #14225a; color: #ffdf45; font: 800 1.8rem/1.2 "DM Mono", monospace; letter-spacing: .12em; }
+.codigo-desbloqueo p { margin: 5px 0; }

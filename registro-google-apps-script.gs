@@ -10,6 +10,7 @@
   - "Valoraciones": una fila por alumno (usuario Educacyl, o nombre + clase) y una columna por actividad
     e indicador de los cuatro rincones (Crea, Programa, Robótica, Piensa), con la última nota enviada. Las casillas vacías son 0 (no hecho).
   - "Medias por indicador": la media de cada indicador por alumno (se recalcula sola).
+  - "Progreso por rutas": nota proporcional por pantallas superadas en Programa y cada modalidad de Robótica.
 */
 // CLAVE DEL PANEL DEL PROFESOR: cámbiala por una tuya (la pedirá la página "Profe" de la web).
 // Está solo aquí, en el script, así que el alumnado no la puede ver.
@@ -60,6 +61,7 @@ function doPost(e) {
   if (pedido.accion === "adaptacion") return ponerAdaptacion(libro, pedido);
   if (pedido.accion === "excel") return excelProfe(libro, pedido);
   if (pedido.accion === "guardarTexto") return guardarTexto(libro, pedido);
+  if (pedido.accion === "retoCadena") return gestionarRetoCadena(libro, pedido);
   const hoja = libro.getSheetByName("Resultados") || libro.insertSheet("Resultados");
   if (hoja.getLastRow() === 0) {
     hoja.appendRow(COLUMNAS);
@@ -833,4 +835,107 @@ function alumnoDirecto(libro, d) {
   const f = filasAlumnado(libro).find((x) => normGrupo(x[3]) === clase && minus(textoAlumno(x)) === nombre);
   if (!f || ad.indexOf(minus(f[2])) < 0) return json({ ok: false });
   return json(crearSesion(f));
+}
+
+
+/* ---------- Valoración proporcional de Programa y Robótica ----------
+   Una pestaña de resumen por alumno. Cada pantalla superada aporta la misma fracción
+   del máximo de su ruta: Programa 5/17; Robot 2,5/6; Essential 3,5/6; Prime 5/6.
+   En adaptación, Robot tiene cuatro pantallas y mantiene el máximo de 2,5. */
+function actualizarResumenRutas(libro, alumno) {
+  const props = PropertiesService.getScriptProperties();
+  const rutas = [
+    { id: "programa", maximo: 5, total: 17, clave: "programa" },
+    { id: "robot-robot", maximo: 2.5, total: alumno.adaptado ? 4 : 6, clave: "robot" },
+    { id: "robot-essential", maximo: 3.5, total: 6, clave: "essential" },
+    { id: "robot-prime", maximo: 5, total: 6, clave: "prime" }
+  ];
+  const salida = {};
+  rutas.forEach((r) => {
+    const clave = "cadena_" + Utilities.base64EncodeWebSafe(alumno.usuario + "|" + r.id).replace(/=+$/g, "");
+    let estado = {};
+    try { estado = JSON.parse(props.getProperty(clave) || "{}"); } catch (e) { estado = {}; }
+    const total = Math.max(1, Number(estado.total) || r.total);
+    const hechas = Array.isArray(estado.completados) ? estado.completados.length : 0;
+    salida[r.clave] = { hechas, total, maximo: r.maximo, nota: Math.round((r.maximo * hechas / total) * 100) / 100 };
+  });
+  const hoja = libro.getSheetByName("Progreso por rutas") || libro.insertSheet("Progreso por rutas");
+  const cab = ["Última actualización", "Nombre", "Usuario Educacyl", "Clase",
+    "Programa pantallas", "Programa total", "Nota Programa /5",
+    "Robot pantallas", "Robot total", "Nota Robot /2,5",
+    "SPIKE Essential pantallas", "SPIKE Essential total", "Nota Essential /3,5",
+    "SPIKE Prime pantallas", "SPIKE Prime total", "Nota Prime /5"];
+  if (hoja.getLastRow() === 0) { hoja.appendRow(cab); hoja.setFrozenRows(1); hoja.getRange(1, 1, 1, cab.length).setFontWeight("bold"); }
+  else if (hoja.getRange(1, 1).getValue() !== cab[0]) { hoja.clearContents(); hoja.appendRow(cab); hoja.setFrozenRows(1); hoja.getRange(1, 1, 1, cab.length).setFontWeight("bold"); }
+  const datos = hoja.getLastRow() > 1 ? hoja.getRange(2, 1, hoja.getLastRow() - 1, 4).getValues() : [];
+  const igual = (a, b) => String(a || "").trim().toLowerCase() === String(b || "").trim().toLowerCase();
+  let fila = datos.findIndex((f) => alumno.usuario ? igual(f[2], alumno.usuario) : (igual(f[1], alumno.nombre) && igual(normGrupo(f[3]), alumno.clase))) + 2;
+  if (fila < 2) fila = hoja.getLastRow() + 1;
+  const valores = [new Date(), alumno.nombre, alumno.usuario, alumno.clase,
+    salida.programa.hechas, salida.programa.total, salida.programa.nota,
+    salida.robot.hechas, salida.robot.total, salida.robot.nota,
+    salida.essential.hechas, salida.essential.total, salida.essential.nota,
+    salida.prime.hechas, salida.prime.total, salida.prime.nota];
+  hoja.getRange(fila, 1, 1, valores.length).setValues([valores]);
+  [7, 10, 13, 16].forEach((c) => hoja.getRange(fila, c).setNumberFormat("0.00"));
+  hoja.autoResizeColumns(1, cab.length);
+  return salida;
+}
+
+/* ---------- Retos encadenados: progreso y códigos individuales por alumno ----------
+   Secuencias independientes: programa, piensa, robot-robot, robot-essential y robot-prime.
+   El navegador nunca decide qué reto está desbloqueado: lo valida este servidor. */
+function gestionarRetoCadena(libro, d) {
+  const alumno = alumnoDeSesion(libro, d);
+  if (!alumno) return json({ ok: false, sesion: true, error: "La sesión del alumno no es válida. Vuelve a entrar." });
+  const secuencia = String(d.secuencia || "");
+  if (!["programa", "piensa", "robot-robot", "robot-essential", "robot-prime"].includes(secuencia)) return json({ ok: false, error: "Secuencia no válida." });
+  let total = Math.max(1, Math.min(100, Number(d.total) || 1));
+  // Los totales evaluables se fijan en el servidor para que el navegador no pueda alterar la nota.
+  if (secuencia === "programa") total = 17;
+  if (secuencia.indexOf("robot-") === 0) total = alumno.adaptado ? 4 : 6;
+  const props = PropertiesService.getScriptProperties();
+  const clave = "cadena_" + Utilities.base64EncodeWebSafe(alumno.usuario + "|" + secuencia).replace(/=+$/g, "");
+  const lock = LockService.getScriptLock();
+  lock.waitLock(10000);
+  try {
+    let estado = {};
+    try { estado = JSON.parse(props.getProperty(clave) || "{}"); } catch (e) { estado = {}; }
+    estado.desbloqueado = Math.max(0, Math.min(total - 1, Number(estado.desbloqueado) || 0));
+    estado.completados = estado.completados || [];
+    estado.codigos = estado.codigos || {};
+    if (estado.total && Number(estado.total) !== total) return json({ ok: false, error: "Ha cambiado el número de pantallas de esta ruta. Contacta con tu profesor." });
+    estado.total = total;
+    const op = String(d.op || "estado");
+    if (op === "estado") return json({ ok: true, desbloqueado: estado.desbloqueado, completados: estado.completados });
+    const indice = Number(d.indice);
+    if (!Number.isInteger(indice) || indice < 0 || indice >= total) return json({ ok: false, error: "Reto no válido." });
+    if (op === "completar") {
+      if (indice > estado.desbloqueado) return json({ ok: false, error: "Este reto todavía está bloqueado." });
+      if (estado.completados.indexOf(indice) < 0) estado.completados.push(indice);
+      let codigo = "";
+      if (indice === estado.desbloqueado && indice + 1 < total) {
+        if (!estado.codigos[indice + 1]) estado.codigos[indice + 1] = Utilities.getUuid().replace(/-/g, "").slice(0, 8).toUpperCase();
+        codigo = estado.codigos[indice + 1];
+      }
+      props.setProperty(clave, JSON.stringify(estado));
+      const claveResumen = secuencia === "programa" ? "programa" : secuencia === "robot-robot" ? "robot" : secuencia === "robot-essential" ? "essential" : secuencia === "robot-prime" ? "prime" : "";
+      const resumen = claveResumen ? actualizarResumenRutas(libro, alumno) : null;
+      const datoRuta = claveResumen ? resumen[claveResumen] : null;
+      return json({ ok: true, codigo, siguiente: indice + 1 < total ? indice + 1 : null, completado: indice,
+        completados: estado.completados.length, total, nota: datoRuta ? datoRuta.nota : null, maximo: datoRuta ? datoRuta.maximo : null });
+    }
+    if (op === "desbloquear") {
+      if (indice <= estado.desbloqueado) return json({ ok: true, desbloqueado: estado.desbloqueado });
+      const esperado = estado.codigos[indice];
+      const recibido = String(d.codigo || "").trim().toUpperCase();
+      if (indice !== estado.desbloqueado + 1 || !esperado || recibido !== esperado || estado.completados.indexOf(indice - 1) < 0)
+        return json({ ok: false, error: "El código no es correcto para este reto. Comprueba el código del reto anterior." });
+      estado.desbloqueado = indice;
+      delete estado.codigos[indice];
+      props.setProperty(clave, JSON.stringify(estado));
+      return json({ ok: true, desbloqueado: indice });
+    }
+    return json({ ok: false, error: "Operación no válida." });
+  } finally { lock.releaseLock(); }
 }
