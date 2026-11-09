@@ -10,21 +10,58 @@
   - "Valoraciones": una fila por alumno (usuario Educacyl, o nombre + clase) y una columna por actividad
     e indicador de los cuatro rincones (Crea, Programa, Robótica, Piensa), con la última nota enviada. Las casillas vacías son 0 (no hecho).
   - "Medias por indicador": la media de cada indicador por alumno (se recalcula sola).
+  - "Progreso por rutas": nota proporcional por pantallas superadas en Programa y cada modalidad de Robótica.
 */
 // CLAVE DEL PANEL DEL PROFESOR: cámbiala por una tuya (la pedirá la página "Profe" de la web).
 // Está solo aquí, en el script, así que el alumnado no la puede ver.
 const CLAVE_PROFE = "47001559";
 
+// CORREO PARA LAS RESPUESTAS DE LAS FAMILIAS: si una familia contesta al correo del código, le llega a esta dirección.
+// Vacío ("") = las respuestas llegan a esta misma cuenta. Una dirección de otro dominio hace que más correos acaben en spam.
+const CORREO_RESPUESTA = "";
+// Opciones comunes de los correos (nombre del remitente y, si hay, dirección de respuesta).
+function opcionesCorreo(o) { o.name = "Rumbo a Europa · CEIP Tierra de Pinares"; if (CORREO_RESPUESTA) o.replyTo = CORREO_RESPUESTA; return o; }
+const htmlDe = (t) => "<div style=\"font-family:Arial,sans-serif;font-size:15px;line-height:1.5\">" + String(t).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/\n/g, "<br>").replace(/(https:\/\/[^\s<]+)/g, "<a href=\"$1\">$1</a>") + "</div>";
+
+// HOJA DE GOOGLE donde se guarda todo. Déjalo vacío ("") y el script usa (o crea) la suya.
+// Si quieres usar una hoja que ya tienes, pega aquí su enlace (docs.google.com/spreadsheets/d/...).
+const HOJA_URL = "https://docs.google.com/spreadsheets/d/1_6XcAUVOc52FE5fTFvh8pritJGjrx_7n3RM0rPN1QjY/edit";
+
+// DIRECCIÓN DE LA WEB que se pone en los correos con el código para las familias.
+const WEB_FAMILIAS = "https://rumbo-a-europa.vercel.app/#familias";
+// Días que vale el código cuando lo envía el profe desde el panel.
+const DIAS_CODIGO_PROFE = 7;
+// Entrada del alumnado con su código fijo (3 a 6 cifras; se lo envía a su correo de Educacyl o se lo da el profe).
+// true: las notas solo se guardan si el alumno ha entrado con su código. false: como antes (sin código).
+const CODIGO_ALUMNO = true;
+const DOMINIO_ALUMNADO = "educa.jcyl.es";    // el correo del alumno es usuario@educa.jcyl.es
+const DIAS_SESION_ALUMNO = 120;               // días que el ordenador recuerda que el alumno ha entrado
+
 const COLUMNAS = ["Fecha", "Nombre", "Usuario Educacyl", "Clase", "Actividad", "Ciudad / reto", "Estrellas", "Bloques", "Intentos", "Personaje / robot", "Programa", "Nº indicador", "Valoración (0-5)"];
 
 function doPost(e) {
-  const libro = SpreadsheetApp.getActiveSpreadsheet();
+  const libro = abrirLibro();
   const pedido = JSON.parse(e.postData.contents);
   if (pedido.accion === "datos") return datosProfe(libro, pedido);
   if (pedido.accion === "importar") return importarAlumnado(libro, pedido);
+  if (pedido.accion === "borrar") return borrarAlumno(libro, pedido);
   if (pedido.accion === "autoevaluacion") return guardarAutoevaluacion(libro, pedido);
   if (pedido.accion === "familiaCodigo") return familiaCodigo(libro, pedido);
   if (pedido.accion === "familiaDatos") return familiaDatos(libro, pedido);
+  if (pedido.accion === "nombresGrupo") return nombresGrupo(libro, pedido);
+  if (pedido.accion === "comprobarAlumno") return comprobarAlumno(libro, pedido);
+  if (pedido.accion === "enviarCodigos") return enviarCodigos(libro, pedido);
+  if (pedido.accion === "textos") return leerTextos(libro);
+  if (pedido.accion === "alumnoCodigo") return alumnoCodigo(libro, pedido);
+  if (pedido.accion === "alumnoEntrar") return alumnoEntrar(libro, pedido);
+  if (pedido.accion === "alumnoSesion") return alumnoSesion(libro, pedido);
+  if (pedido.accion === "alumnoDirecto") return alumnoDirecto(libro, pedido);
+  if (pedido.accion === "alumnoCambiarCodigo") return alumnoCambiarCodigo(libro, pedido);
+  if (pedido.accion === "codigosAlumnos") return codigosAlumnos(libro, pedido);
+  if (pedido.accion === "adaptacion") return ponerAdaptacion(libro, pedido);
+  if (pedido.accion === "excel") return excelProfe(libro, pedido);
+  if (pedido.accion === "guardarTexto") return guardarTexto(libro, pedido);
+  if (pedido.accion === "retoCadena") return gestionarRetoCadena(libro, pedido);
   const hoja = libro.getSheetByName("Resultados") || libro.insertSheet("Resultados");
   if (hoja.getLastRow() === 0) {
     hoja.appendRow(COLUMNAS);
@@ -37,12 +74,18 @@ function doPost(e) {
   }
   const d = pedido;
   const limpiar = (v, max) => String(v == null ? "" : v).slice(0, max);
-  const nombre = limpiar(d.nombre, 30), usuario = limpiar(d.usuario, 60), clase = limpiar(d.clase, 12);
+  // Las notas que pone el profe desde el panel llevan su clave y no necesitan el código del alumno.
+  const esProfe = CLAVE_PROFE !== "cambia-esta-clave" && String(d.clave || "") === CLAVE_PROFE;
+  const ses = esProfe ? null : alumnoDeSesion(libro, d);
+  if (CODIGO_ALUMNO && !ses && !esProfe) { console.log("Nota sin código de acceso: no se guarda (" + limpiar(d.nombre, 60) + ")."); return ContentService.createTextOutput("sesion"); }
+  const clase = ses ? ses.clase : normGrupo(limpiar(d.clase, 12));
+  const usuario = ses ? ses.usuario : usuarioDeLista(libro, limpiar(d.nombre, 60), limpiar(d.usuario, 60), clase);
+  const nombre = ses ? ses.nombre : nombreCompleto(libro, limpiar(d.nombre, 60), usuario);
   const nota = d.valoracion === "" || d.valoracion == null ? "" : Number(d.valoracion);
   hoja.appendRow([
     new Date(d.fecha), nombre, usuario, clase, limpiar(d.destino, 60), limpiar(d.ciudad, 40),
     d.estrellas === "" ? "" : Number(d.estrellas), Number(d.bloques) || "", Number(d.intentos) || "",
-    limpiar(d.personaje, 30), limpiar(d.programa, 500), limpiar(d.indicador, 10), nota
+    limpiar(d.personaje, 30), limpiar(d.programa, 500), d.indicador ? "'" + limpiar(d.indicador, 10) : "", nota
   ]);
   if (nota !== "") {
     const columna = limpiar(d.destino, 60) + (d.indicador ? " · Ind. " + limpiar(d.indicador, 10) : "");
@@ -72,9 +115,9 @@ function datosProfe(libro, d) {
   const al = libro.getSheetByName("Alumnado");
   const alumnado = al && al.getLastRow() > 1 ? al.getRange(2, 1, al.getLastRow() - 1, ALUMNADO.length).getValues() : [];
   const hoja = libro.getSheetByName("Valoraciones");
-  if (!hoja || hoja.getLastRow() < 1) return salida({ ok: true, cab: [], filas: [], hechos, alumnado, autoeval });
+  if (!hoja || hoja.getLastRow() < 1) return salida({ ok: true, cab: [], filas: [], hechos, alumnado, autoeval, adaptados: leerAdaptados() });
   const v = hoja.getDataRange().getValues();
-  return salida({ ok: true, cab: v[0], filas: v.slice(1), hechos, alumnado, autoeval });
+  return salida({ ok: true, cab: v[0], filas: v.slice(1), hechos, alumnado, autoeval, adaptados: leerAdaptados() });
 }
 
 /* ---------- Autoevaluación (Programa y Robótica) ---------- */
@@ -82,7 +125,12 @@ function datosProfe(libro, d) {
 // con lo que el alumno dice que sabe hacer (0-5). Va aparte: no cuenta en las medias de las notas.
 function guardarAutoevaluacion(libro, d) {
   const limpiar = (v, max) => String(v == null ? "" : v).slice(0, max);
-  const nombre = limpiar(d.nombre, 30), usuario = limpiar(d.usuario, 60), clase = limpiar(d.clase, 12), rincon = limpiar(d.rincon, 20);
+  const ses = alumnoDeSesion(libro, d);
+  if (CODIGO_ALUMNO && !ses) return json({ ok: false, sesion: true, error: "Entra con tu código antes de enviar." });
+  const rincon = limpiar(d.rincon, 20);
+  const clase = ses ? ses.clase : normGrupo(limpiar(d.clase, 12));
+  const usuario = ses ? ses.usuario : usuarioDeLista(libro, limpiar(d.nombre, 60), limpiar(d.usuario, 60), clase);
+  const nombre = ses ? ses.nombre : nombreCompleto(libro, limpiar(d.nombre, 60), usuario);
   const lock = LockService.getScriptLock(); lock.waitLock(10000);
   try {
     const h = libro.getSheetByName("Autoevaluación") || libro.insertSheet("Autoevaluación");
@@ -90,7 +138,7 @@ function guardarAutoevaluacion(libro, d) {
     const cab = h.getRange(1, 1, 1, h.getLastColumn()).getValues()[0];
     const filas = h.getLastRow() > 1 ? h.getRange(2, 1, h.getLastRow() - 1, 4).getValues() : [];
     const igual = (a, b) => String(a).trim().toLowerCase() === String(b).trim().toLowerCase();
-    let fila = filas.findIndex((f) => usuario ? igual(f[2], usuario) : (igual(f[1], nombre) && igual(f[3], clase))) + 2;
+    let fila = filas.findIndex((f) => usuario ? igual(f[2], usuario) : (igual(f[1], nombre) && igual(normGrupo(f[3]), clase))) + 2;
     if (fila < 2) fila = h.getLastRow() + 1;
     h.getRange(fila, 1, 1, 4).setValues([[new Date(), nombre, usuario || (filas[fila - 2] || [])[2] || "", clase]]);
     Object.keys(d.notas || {}).slice(0, 60).forEach((cod) => {
@@ -100,14 +148,30 @@ function guardarAutoevaluacion(libro, d) {
       if (!col) { cab.push(t); col = cab.length; h.getRange(1, col).setValue(t).setFontWeight("bold"); }
       h.getRange(fila, col).setValue(n);
     });
+    SpreadsheetApp.flush();
+    ordenarHoja(libro, "Autoevaluación", 1, 2, 3);
     return ContentService.createTextOutput("ok");
   } finally { lock.releaseLock(); }
 }
 
 /* ---------- Alumnado (importado por el profe desde un CSV) ---------- */
 const ALUMNADO = ["Nombre", "Apellidos", "Usuario Educacyl", "Clase", "Correo familia"];
+// Google Sheets convierte «1.1.1» en la fecha 1/1/2001. Esto devuelve el código del indicador aunque la celda sea una fecha.
+function codigoDe(v) {
+  if (v instanceof Date && !isNaN(v)) {
+    const p = Utilities.formatDate(v, Session.getScriptTimeZone(), "d.M.yyyy").split(".");
+    return p[0] + "." + p[1] + "." + (Number(p[2]) - 2000);
+  }
+  return String(v == null ? "" : v).trim().replace(/^'/, "");
+}
 const json = (o) => ContentService.createTextOutput(JSON.stringify(o)).setMimeType(ContentService.MimeType.JSON);
 const minus = (v) => String(v == null ? "" : v).trim().toLowerCase();
+// Grupo como P5A, P5B, P6A, P6B (P = Primaria). Convierte también el nombre antiguo 5ºA. Otros grupos (I5A de Infantil…) se quedan como están.
+function normGrupo(t) {
+  const s = String(t == null ? "" : t).trim();
+  const m = /^p\s*([56])\s*([ab])$/i.exec(s) || /^([56])\s*[º°o.]*\s*([ab])$/i.exec(s);   // P5A, o el nombre antiguo 5ºA
+  return m ? "P" + m[1] + m[2].toUpperCase() : String(t == null ? "" : t).trim();
+}
 
 function hojaAlumnado(libro) {
   const h = libro.getSheetByName("Alumnado") || libro.insertSheet("Alumnado");
@@ -115,7 +179,8 @@ function hojaAlumnado(libro) {
   return h;
 }
 
-// Añade o actualiza alumnos por su usuario de Educacyl. El correo de la familia solo se cambia si viene escrito.
+// Añade o actualiza alumnos por su usuario de Educacyl. El correo de la familia (hasta dos, separados por coma)
+// solo se cambia si viene escrito; "-" lo borra.
 function importarAlumnado(libro, d) {
   if (CLAVE_PROFE === "cambia-esta-clave" || String(d.clave || "") !== CLAVE_PROFE) return json({ ok: false, error: "Clave incorrecta." });
   const lock = LockService.getScriptLock(); lock.waitLock(20000);
@@ -127,16 +192,21 @@ function importarAlumnado(libro, d) {
     (d.alumnos || []).slice(0, 2000).forEach((a) => {
       const u = String(a.usuario || "").trim().slice(0, 60);
       if (!u) { sinUsuario++; return; }
-      const fila = [String(a.nombre || "").trim().slice(0, 40), String(a.apellidos || "").trim().slice(0, 60), u, String(a.clase || "").trim().slice(0, 12), String(a.correo || "").trim().slice(0, 120)];
+      if (["P5A", "P5B", "P6A", "P6B"].indexOf(String(a.clase || "").trim()) < 0) { sinUsuario++; return; }   // solo esos grupos
+      const fila = limpiarFilaAlumno([String(a.nombre || "").trim().slice(0, 60), String(a.apellidos || "").trim().slice(0, 60), u, normGrupo(String(a.clase || "").trim().slice(0, 12)), String(a.correo || "").trim().slice(0, 250)]);
+      if (String(a.correo || "").trim() === "-") fila[4] = "-";
       const i = pos[minus(u)];
+      if (fila[4] === "-") fila[4] = i === undefined ? "" : "-";
       if (i === undefined) { pos[minus(u)] = filas.length; filas.push(fila); nuevos++; }
       else {
         const v = filas[i];
-        filas[i] = [fila[0] || v[0], fila[1] || v[1], v[2], fila[3] || v[3], fila[4] || v[4]];
+        filas[i] = [fila[0] || v[0], fila[1] || v[1], v[2], fila[3] || v[3], fila[4] === "-" ? "" : (fila[4] || v[4])];
         cambiados++;
       }
     });
     if (filas.length) h.getRange(2, 1, filas.length, ALUMNADO.length).setValues(filas);
+    SpreadsheetApp.flush();
+    ordenarTodo(libro);
     return json({ ok: true, nuevos, cambiados, sinUsuario });
   } finally { lock.releaseLock(); }
 }
@@ -148,29 +218,37 @@ function familiaCodigo(libro, d) {
   const resp = { ok: true, mensaje: "Si ese correo está registrado en el colegio, recibirás un código en unos minutos." };
   if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(correo)) return json({ ok: false, error: "Escribe un correo válido." });
   const cache = CacheService.getScriptCache();
-  if (cache.get("espera_" + correo)) return json(resp);
+  if (cache.get("espera_" + correo)) { console.log("Familias: " + correo + " ya pidió un código hace menos de 1 minuto."); return json(resp); }
   const h = libro.getSheetByName("Alumnado");
   const filas = h && h.getLastRow() > 1 ? h.getRange(2, 1, h.getLastRow() - 1, ALUMNADO.length).getValues() : [];
   const hijos = filas.filter((f) => minus(f[4]).split(/[;,\s]+/).indexOf(correo) >= 0);
+  console.log("Familias: " + correo + " → " + hijos.length + " alumno(s) con ese correo en la pestaña Alumnado.");
   if (!hijos.length) return json(resp);
   const codigo = String(Math.floor(100000 + Math.random() * 900000));
   cache.put("codigo_" + correo, JSON.stringify({ codigo, fallos: 0 }), 900);
   cache.put("espera_" + correo, "1", 60);
-  MailApp.sendEmail({
-    to: correo, name: "Rumbo a Europa · CEIP Tierra de Pinares",
-    subject: "Tu código para ver los resultados de Rumbo a Europa",
-    body: "Hola:\n\nTu código para ver los resultados de " + hijos.map((f) => f[0]).join(" y ") + " en Rumbo a Europa es: " + codigo +
-      "\n\nEl código vale 15 minutos. Si no lo has pedido tú, no hagas nada.\n\nCEIP Tierra de Pinares"
-  });
+  const texto = "Hola:\n\nTu código para ver los resultados de " + hijos.map((f) => f[0]).join(" y ") + " en Rumbo a Europa es: " + codigo +
+    "\n\nEl código vale 15 minutos. Si no lo has pedido tú, no hagas nada.\n\nCEIP Tierra de Pinares";
+  MailApp.sendEmail(opcionesCorreo({ to: correo, subject: "Código de acceso a Rumbo a Europa", body: texto, htmlBody: htmlDe(texto) }));
   return json(resp);
 }
 
 // 2) Con el código correcto devuelve solo los datos de sus hijos.
 function familiaDatos(libro, d) {
   const correo = minus(d.correo), cache = CacheService.getScriptCache();
+  const props = PropertiesService.getScriptProperties();
+  const p = JSON.parse(props.getProperty("fam_" + correo) || "null");   // código enviado por el profe (vale varios días)
+  const delProfe = p && p.hasta > Date.now() && String(d.codigo || "").trim() === p.codigo;
   const g = JSON.parse(cache.get("codigo_" + correo) || "null");
-  if (!g) return json({ ok: false, error: "El código ha caducado. Pide uno nuevo." });
-  if (String(d.codigo || "").trim() !== g.codigo) {
+  if (!g && !delProfe) {
+    if (p && p.hasta > Date.now()) {
+      p.fallos = (p.fallos || 0) + 1;
+      if (p.fallos >= 5) props.deleteProperty("fam_" + correo); else props.setProperty("fam_" + correo, JSON.stringify(p));
+      return json({ ok: false, error: p.fallos >= 5 ? "Demasiados intentos. Pide un código nuevo." : "Código incorrecto." });
+    }
+    return json({ ok: false, error: "El código ha caducado. Pide uno nuevo." });
+  }
+  if (!delProfe && String(d.codigo || "").trim() !== g.codigo) {
     g.fallos++;
     if (g.fallos >= 5) cache.remove("codigo_" + correo); else cache.put("codigo_" + correo, JSON.stringify(g), 900);
     return json({ ok: false, error: g.fallos >= 5 ? "Demasiados intentos. Pide un código nuevo." : "Código incorrecto." });
@@ -194,9 +272,22 @@ function familiaDatos(libro, d) {
 
 // Prueba: abre la URL de la aplicación web en el navegador. Si todo está bien verás
 // "Funciona" y aparecerá una fila de prueba en la pestaña Resultados.
+// Busca la hoja: la del script si está unido a una hoja; si no, la guardada; si no hay, crea una nueva.
+function abrirLibro() {
+  const activo = SpreadsheetApp.getActiveSpreadsheet();
+  if (activo) return activo;
+  if (HOJA_URL) return SpreadsheetApp.openByUrl(HOJA_URL);
+  const props = PropertiesService.getScriptProperties();
+  const id = props.getProperty("HOJA_ID");
+  if (id) { try { return SpreadsheetApp.openById(id); } catch (e) {} }
+  const nuevo = SpreadsheetApp.create("Rumbo a Europa · Resultados");
+  props.setProperty("HOJA_ID", nuevo.getId());
+  return nuevo;
+}
+
 function doGet() {
   doPost({ postData: { contents: JSON.stringify({ fecha: new Date().toISOString(), nombre: "PRUEBA", clase: "-", destino: "Prueba de conexión", ciudad: "", estrellas: "", valoracion: "" }) } });
-  return ContentService.createTextOutput("Funciona: revisa la pestaña Resultados de tu hoja.");
+  return ContentService.createTextOutput("Funciona: revisa la pestaña Resultados de tu hoja: " + abrirLibro().getUrl());
 }
 
 function actualizarValoraciones(libro, nombre, usuario, clase, columna, nota) {
@@ -219,12 +310,13 @@ function actualizarValoraciones(libro, nombre, usuario, clase, columna, nota) {
     const filas = hoja.getLastRow() > 1 ? hoja.getRange(2, 1, hoja.getLastRow() - 1, 3).getValues() : [];
     const igual = (a, b) => String(a).trim().toLowerCase() === String(b).trim().toLowerCase();
     // El alumno se reconoce por su usuario de Educacyl; si no lo tiene, por nombre y clase.
-    let fila = filas.findIndex((f) => usuario ? igual(f[1], usuario) : (igual(f[0], nombre) && igual(f[2], clase))) + 2;
+    let fila = filas.findIndex((f) => usuario ? igual(f[1], usuario) : (igual(f[0], nombre) && igual(normGrupo(f[2]), clase))) + 2;
     if (fila < 2) { fila = hoja.getLastRow() + 1; hoja.getRange(fila, 1, 1, 3).setValues([[nombre, usuario, clase]]); }
     else hoja.getRange(fila, 1, 1, 3).setValues([[nombre, usuario || filas[fila - 2][1], clase]]);
     // Se guarda la última nota enviada (el alumno puede revisarla y volver a enviarla).
     hoja.getRange(fila, col).setValue(nota);
     SpreadsheetApp.flush();
+    ordenarHoja(libro, "Valoraciones", 0, 1, 2);
     calcularMedias(libro);
   } finally {
     lock.releaseLock();
@@ -235,7 +327,7 @@ function actualizarValoraciones(libro, nombre, usuario, clase, columna, nota) {
 // con la media de todas las actividades de ese indicador (las no hechas cuentan 0).
 function calcularMedias(libro) {
   const val = libro.getSheetByName("Valoraciones");
-  if (!val || val.getLastRow() < 2) return;
+  if (!val || val.getLastRow() < 2) { const m = libro.getSheetByName("Medias por indicador"); if (m) m.clearContents(); return; }
   const datos = val.getDataRange().getValues(), cab = datos[0];
   const grupos = {};
   cab.forEach((t, i) => { const m = String(t).match(/Ind\. ([\d.]+)$/); if (m) (grupos[m[1]] = grupos[m[1]] || []).push(i); });
@@ -252,4 +344,598 @@ function calcularMedias(libro) {
   hoja.getRange(1, 1, filas.length, filas[0].length).setValues(filas);
   hoja.getRange(1, 1, 1, filas[0].length).setFontWeight("bold");
   hoja.setFrozenRows(1); hoja.setFrozenColumns(3);
+}
+
+/* ---------- Orden por clase y apellidos ---------- */
+// Las pestañas Alumnado, Valoraciones, Autoevaluación y Medias se ordenan por clase, luego apellidos y luego nombre.
+// Los apellidos salen de la pestaña Alumnado (por el usuario de Educacyl); si el alumno no está, de su nombre
+// escrito (todo lo que va detrás de la primera palabra). "Resultados" se queda por fecha, como un diario.
+function mapaApellidos(libro) {
+  const h = libro.getSheetByName("Alumnado"), m = {};
+  if (h && h.getLastRow() > 1) h.getRange(2, 1, h.getLastRow() - 1, 3).getValues().forEach((f) => { if (f[2]) m[minus(f[2])] = [String(f[1] || ""), String(f[0] || "")]; });
+  return m;
+}
+// Nombre del alumno en las pestañas: "Apellidos, Nombre" (de la pestaña Alumnado si está importado).
+function nombreCompleto(libro, nombre, usuario, mapa) {
+  const a = usuario ? (mapa || mapaApellidos(libro))[minus(usuario)] : null;
+  if (!a) return nombre;
+  return a[0] ? a[0] + ", " + a[1] : a[1];
+}
+function claveOrden(mapa, nombre, usuario, clase, apellidos) {
+  let ap = apellidos, no = nombre;
+  if (ap == null) {
+    const a = mapa[minus(usuario)];
+    if (a) { ap = a[0]; no = a[1]; }
+    else if (String(nombre).indexOf(", ") > 0) { const p = String(nombre).split(", "); ap = p[0]; no = p.slice(1).join(", "); }
+    else { const p = String(nombre || "").trim().split(/\s+/); no = p.shift() || ""; ap = p.join(" "); }
+  }
+  return [minus(clase), minus(ap), minus(no)];
+}
+function ordenarHoja(libro, nombreHoja, iN, iU, iC, iA) {
+  const h = libro.getSheetByName(nombreHoja);
+  if (!h || h.getLastRow() < 3) return;
+  const mapa = mapaApellidos(libro), n = h.getLastRow() - 1, c = h.getLastColumn();
+  const filas = h.getRange(2, 1, n, c).getValues();
+  const cmp = (x, y) => { for (let i = 0; i < 3; i++) { const r = x[i].localeCompare(y[i], "es"); if (r) return r; } return 0; };
+  // Fuera de Alumnado, el nombre se escribe como "Apellidos, Nombre".
+  filas.forEach((f) => { f[iC] = normGrupo(f[iC]); if (iA == null) f[iN] = nombreCompleto(libro, f[iN], f[iU], mapa); });
+  const ord = filas.map((f) => ({ f, k: claveOrden(mapa, f[iN], f[iU], f[iC], iA == null ? null : f[iA]) })).sort((a, b) => cmp(a.k, b.k)).map((x) => x.f);
+  h.getRange(2, 1, n, c).setValues(ord);
+}
+// Arregla la pestaña Alumnado: separa "APELLIDOS, NOMBRE" si vino todo junto en Nombre,
+// y quita de "Correo familia" el correo Educacyl del propio alumno (usuario@educa...).
+function limpiarFilaAlumno(f) {
+  if (!String(f[1] || "").trim() && String(f[0] || "").indexOf(",") > 0) {
+    const p = String(f[0]).split(","); f[1] = p[0].trim(); f[0] = p.slice(1).join(",").trim();
+  }
+  const u = minus(f[2]).replace(/@.*$/, "");
+  f[4] = minus(f[4]).split(/[;,\s]+/).filter((c) => c && (!u || c.replace(/@.*$/, "") !== u)).join(", ");
+  return f;
+}
+function limpiarAlumnado(libro) {
+  const h = libro.getSheetByName("Alumnado");
+  if (!h || h.getLastRow() < 2) return;
+  const r = h.getRange(2, 1, h.getLastRow() - 1, ALUMNADO.length);
+  r.setValues(r.getValues().map(limpiarFilaAlumno));
+}
+function ordenarTodo(libro) {
+  libro = libro || abrirLibro();
+  limpiarAlumnado(libro);
+  ordenarHoja(libro, "Alumnado", 0, 2, 3, 1);
+  ordenarHoja(libro, "Valoraciones", 0, 1, 2);
+  ordenarHoja(libro, "Autoevaluación", 1, 2, 3);
+  SpreadsheetApp.flush();
+  calcularMedias(libro);
+}
+
+/* ---------- Notas para el Excel de evaluación ----------
+   Crea una pestaña por grupo («Excel P5A»…) con los alumnos por apellidos y los indicadores EN EL MISMO ORDEN que
+   las pestañas TIAC1, TIAC2 y TIAC3 del Excel de evaluación. Se copia el bloque de notas y se pega en el Excel (D9).
+   Nota de cada indicador = media de las notas de ese indicador en el trimestre (la última de cada actividad).
+   Trimestre: el de la SA de la actividad (Crea · SA1 → 1.º); si no tiene SA, por la fecha (sep-dic 1.º, ene-mar 2.º, abr-ago 3.º).
+   Se ejecuta con el botón «Notas para el Excel» del panel o eligiendo prepararExcel aquí arriba. */
+const ORDEN_EXCEL = {
+  "5º": [
+    "1.1.1 1.2.1 1.2.2 2.1.1 2.1.2 2.1.4 2.2.1 2.3.1 3.1.1 3.2.1 3.2.2 3.2.3 3.3.1 3.4.1 4.1.1 4.1.2 4.3.1 4.3.2 4.3.4 5.1.1 5.2.1 5.2.2 5.3.1 5.3.2",
+    "1.1.2 1.1.3 1.1.4 1.2.3 2.1.3 2.1.4 2.2.2 3.1.2 3.1.3 3.2.4 3.2.5 3.2.6 3.3.2 4.1.2 4.1.3 4.2.1 4.2.2 4.3.4 5.1.2 5.2.3 5.3.1 5.3.2",
+    "1.1.5 2.1.4 2.2.3 2.3.2 3.1.4 3.2.7 3.2.8 3.2.9 3.3.3 3.4.2 4.1.2 4.1.4 4.2.3 4.3.3 4.3.4 5.1.3 5.2.1 5.2.4 5.3.1 5.3.2 5.3.3"
+  ],
+  "6º": [
+    "1.1.1 1.1.2 1.1.4 1.2.1 1.2.2 1.2.3 2.1.1 2.3.1 3.1.4 3.2.1 3.2.2 3.2.5 3.2.6 3.3.1 4.1.1 4.1.2 4.3.1 4.3.2 5.2.1",
+    "1.1.2 1.1.3 2.1.1 2.2.2 2.3.2 3.1.1 3.1.2 3.1.4 3.2.2 3.2.3 3.2.5 3.2.6 3.4.1 3.4.2 4.1.3 5.3.1",
+    "1.2.2 2.1.2 2.1.3 2.2.1 3.1.3 3.2.4 3.2.5 3.2.6 3.3.2 4.1.2 4.1.3 4.2.1 4.2.2 4.3.2 5.1.1 5.1.2 5.2.2 5.3.1 5.3.2"
+  ]
+};
+const GRUPOS_EXCEL = ["P5A", "P5B", "P6A", "P6B"];
+function trimestreDe(actividad, fecha) {
+  const m = String(actividad || "").match(/\bSA\s?([123])\b/);
+  if (m) return +m[1] - 1;
+  const d = new Date(fecha); if (isNaN(d)) return 0;
+  const mes = d.getMonth() + 1;
+  return mes >= 9 ? 0 : mes <= 3 ? 1 : 2;
+}
+function prepararExcel(libro) {
+  libro = libro || abrirLibro();
+  const res = libro.getSheetByName("Resultados");
+  const r = res && res.getLastRow() > 1 ? res.getDataRange().getValues() : [[]];
+  const c = r[0].map(String), I = (t) => c.indexOf(t);
+  const iF = I("Fecha"), iN = I("Nombre"), iU = I("Usuario Educacyl"), iC = I("Clase"), iA = I("Actividad"), iI = I("Nº indicador"), iV = I("Valoración (0-5)");
+  const mapa = mapaApellidos(libro);
+  // Cada fila de Resultados se une a su alumno de Alumnado por el usuario (con o sin @educa…) o, si no, por el nombre.
+  const sinDom = (u) => minus(u).replace(/@.*$/, "");
+  const llano = (t) => minus(t).normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-zñ0-9]+/g, " ").trim();
+  const porUsuario = {}, porNombre = {};
+  filasAlumnado(libro).forEach((f) => {
+    if (!f[2]) return; const id = "u:" + sinDom(f[2]), g = normGrupo(f[3]);
+    porUsuario[sinDom(f[2])] = id;
+    [textoAlumno(f), String(f[0] || "") + " " + String(f[1] || "")].forEach((t) => (porNombre[llano(t) + "|" + g] = id));
+  });
+  const idDe = (u, n, cl) => (u && porUsuario[sinDom(u)]) || porNombre[llano(n) + "|" + normGrupo(cl)] || (u ? "u:" + sinDom(u) : "n:" + llano(n) + "|" + normGrupo(cl));
+  // 1) Última nota de cada alumno en cada actividad e indicador.
+  const ultima = {};
+  r.slice(1).forEach((f) => {
+    if (f[iV] === "" || f[iV] == null || !f[iI]) return;
+    const k = idDe(f[iU], f[iN], f[iC]) + "#" + f[iA] + "#" + codigoDe(f[iI]), t = new Date(f[iF]).getTime() || 0;
+    if (!ultima[k] || ultima[k].t <= t) ultima[k] = { t, f };
+  });
+  // 2) Media por alumno, trimestre e indicador.
+  const suma = {};
+  Object.keys(ultima).forEach((k) => {
+    const f = ultima[k].f, id = idDe(f[iU], f[iN], f[iC]), curso = /6/.test(normGrupo(f[iC])) ? "6º" : "5º";
+    let tri = trimestreDe(f[iA], f[iF]), cod = codigoDe(f[iI]);
+    // 6º: la presentación de PowerPoint (Crea SA1 S2) era el 3.1.2 y en la programación nueva es el 3.1.4.
+    if (curso === "6º" && cod === "3.1.2" && /SA1 S2/.test(String(f[iA]))) cod = "3.1.4";
+    // Si el indicador no se evalúa en ese trimestre según el Excel, la nota va al trimestre en el que sí está
+    // (primero los siguientes y, si no, los anteriores). Así no queda ninguna nota aparte.
+    const en = (t) => ORDEN_EXCEL[curso][t].split(" ").indexOf(cod) >= 0;
+    if (!en(tri)) { const otro = [tri + 1, tri + 2, tri - 1, tri - 2].find((t) => t >= 0 && t < 3 && en(t)); if (otro != null) tri = otro; }
+    const kk = id + "#" + tri + "#" + cod; (suma[kk] = suma[kk] || []).push(Number(f[iV]));
+  });
+  const notaDe = (id, tri, cod) => { const l = suma[id + "#" + tri + "#" + cod]; return l ? Math.round(l.reduce((a, b) => a + b, 0) / l.length * 10) / 10 : ""; };
+  // 3) Una pestaña por grupo.
+  const alumnado = filasAlumnado(libro), hechos = [];
+  GRUPOS_EXCEL.forEach((g) => {
+    const curso = /6/.test(g) ? "6º" : "5º";
+    let lista = alumnado.filter((f) => normGrupo(f[3]) === g && f[2]).map((f) => ({ id: "u:" + sinDom(f[2]), nombre: textoAlumno(f), k: claveOrden(mapa, f[0], f[2], g, f[1]) }));
+    // Alumnos con notas que no están en Alumnado (van al final).
+    const vistos = {}; lista.forEach((a) => (vistos[a.id] = 1));
+    Object.keys(ultima).forEach((k) => { const f = ultima[k].f; if (normGrupo(f[iC]) !== g) return; const id = idDe(f[iU], f[iN], f[iC]); if (!vistos[id]) { vistos[id] = 1; lista.push({ id, nombre: String(f[iN]) + " (no está en Alumnado)", k: ["~", minus(f[iN]), ""] }); } });
+    lista.sort((a, b) => { for (let i = 0; i < 3; i++) { const x = a.k[i].localeCompare(b.k[i], "es"); if (x) return x; } return 0; });
+    const filas = [], negritas = [];
+    ORDEN_EXCEL[curso].forEach((txt, tri) => {
+      const cods = txt.split(" ");
+      // Indicadores con nota en este trimestre que no están en el Excel (p. ej. códigos antiguos): se ponen aparte, al final.
+      const otros = [];
+      Object.keys(suma).forEach((kk) => { const p = kk.split("#"); if (+p[1] === tri && cods.indexOf(p[2]) < 0 && otros.indexOf(p[2]) < 0 && lista.some((a) => a.id === p[0])) otros.push(p[2]); });
+      otros.sort((a, b) => a.localeCompare(b, "es", { numeric: true }));
+      const ini = filas.length + 1;
+      filas.push([`${tri + 1}.º TRIMESTRE · copia las notas (desde la columna B, sin la fila de los números) y pégalas en la pestaña TIAC${tri + 1} del Excel de ${g.charAt(1)}º${g.charAt(2)}, en la celda D9`]);
+      const extra = otros.length ? ["", "NO ESTÁN EN EL EXCEL →"].concat(otros) : [];
+      filas.push(["Alumno/a"].concat(cods, extra)); negritas.push(ini, ini + 1);
+      lista.forEach((a) => filas.push([a.nombre].concat(cods.map((cod) => notaDe(a.id, tri, cod)), otros.length ? ["", ""].concat(otros.map((cod) => notaDe(a.id, tri, cod))) : [])));
+      filas.push([""]);
+    });
+    const ancho = Math.max.apply(null, filas.map((f) => f.length));
+    const datos = filas.map((f) => { const x = f.slice(); while (x.length < ancho) x.push(""); return x; });
+    const nombre = "Excel " + g, h = libro.getSheetByName(nombre) || libro.insertSheet(nombre);
+    h.clear();
+    // Las filas de los códigos van como texto (si no, Google pone «1.1.1» como fecha).
+    negritas.forEach((n) => h.getRange(n, 1, 1, ancho).setNumberFormat("@"));
+    h.getRange(1, 1, datos.length, ancho).setValues(datos);
+    negritas.forEach((n) => h.getRange(n, 1, 1, ancho).setFontWeight("bold"));
+    h.setFrozenColumns(1);
+    hechos.push(nombre + " (" + lista.length + " alumnos)");
+  });
+  SpreadsheetApp.flush();
+  console.log("Pestañas preparadas: " + hechos.join(", "));
+  return hechos;
+}
+function excelProfe(libro, d) {
+  if (CLAVE_PROFE === "cambia-esta-clave" || String(d.clave || "") !== CLAVE_PROFE) return json({ ok: false, error: "Clave incorrecta." });
+  return json({ ok: true, pestanas: prepararExcel(libro), url: libro.getUrl() });
+}
+
+/* ---------- Recuperar notas en Valoraciones ----------
+   Ejecútala a mano (elige «recuperarNotas» arriba y pulsa ▶ Ejecutar). Lee TODAS las filas de Resultados que tienen
+   nota y las vuelve a poner en Valoraciones (la última nota de cada alumno e indicador). No borra nada.
+   En «Registro de ejecución» verás cuántas notas del profe hay por día y grupo. */
+function recuperarNotas() {
+  const libro = abrirLibro(), res = libro.getSheetByName("Resultados");
+  if (!res || res.getLastRow() < 2) { console.log("Resultados está vacía."); return; }
+  const r = res.getDataRange().getValues(), c = r[0].map(String), I = (t) => c.indexOf(t);
+  const iF = I("Fecha"), iN = I("Nombre"), iU = I("Usuario Educacyl"), iC = I("Clase"), iA = I("Actividad"), iP = I("Personaje / robot"), iI = I("Nº indicador"), iV = I("Valoración (0-5)");
+  const filas = r.slice(1).filter((f) => f[iV] !== "" && f[iV] != null && f[iA] !== "");
+  filas.sort((a, b) => new Date(a[iF]) - new Date(b[iF]));
+  const resumen = {};
+  filas.forEach((f) => { if (String(f[iP]) === "Profe") { const k = Utilities.formatDate(new Date(f[iF]), "Europe/Madrid", "yyyy-MM-dd") + " " + normGrupo(f[iC]); resumen[k] = (resumen[k] || 0) + 1; } });
+  console.log("Notas del profe en Resultados (día y grupo): " + JSON.stringify(resumen, null, 1));
+  const lock = LockService.getScriptLock(); lock.waitLock(20000);
+  try {
+    const hoja = libro.getSheetByName("Valoraciones") || libro.insertSheet("Valoraciones");
+    let v = hoja.getLastRow() > 0 ? hoja.getDataRange().getValues() : [["Nombre", "Usuario Educacyl", "Clase"]];
+    const cab = v[0].map(String), igual = (a, b) => String(a).trim().toLowerCase() === String(b).trim().toLowerCase();
+    let puestas = 0;
+    filas.forEach((f) => {
+      const columna = String(f[iA]).slice(0, 60) + (f[iI] ? " · Ind. " + codigoDe(f[iI]).slice(0, 10) : "");
+      let col = cab.indexOf(columna);
+      if (col < 0) { cab.push(columna); col = cab.length - 1; v.forEach((x, k) => { while (x.length < cab.length) x.push(k === 0 ? cab[x.length] : ""); }); }
+      const u = String(f[iU] || ""), n = String(f[iN] || ""), cl = normGrupo(f[iC]);
+      let fila = v.findIndex((x, k) => k > 0 && (u ? igual(x[1], u) : (igual(x[0], n) && igual(normGrupo(x[2]), cl))));
+      if (fila < 0) { const x = cab.map(() => ""); x[0] = n; x[1] = u; x[2] = cl; v.push(x); fila = v.length - 1; }
+      if (v[fila][col] !== Number(f[iV])) { v[fila][col] = Number(f[iV]); puestas++; }
+    });
+    v[0] = cab; v = v.map((x) => { while (x.length < cab.length) x.push(""); return x; });
+    hoja.getRange(1, 1, v.length, cab.length).setValues(v);
+    hoja.getRange(1, 1, 1, cab.length).setFontWeight("bold");
+    SpreadsheetApp.flush();
+    console.log("Notas recuperadas o corregidas en Valoraciones: " + puestas + " (de " + filas.length + " filas con nota en Resultados).");
+  } finally { lock.releaseLock(); }
+  ordenarTodo(libro);
+}
+
+/* ---------- Dar de baja a un alumno (panel del profe) ---------- */
+// Borra al alumno de Alumnado, Valoraciones, Autoevaluación y Resultados (por su usuario; si no tiene, por nombre y clase).
+function borrarAlumno(libro, d) {
+  if (CLAVE_PROFE === "cambia-esta-clave" || String(d.clave || "") !== CLAVE_PROFE) return json({ ok: false, error: "Clave incorrecta." });
+  const usuario = minus(d.usuario), nombre = minus(d.nombre), clase = minus(normGrupo(d.clase));
+  if (!usuario && !nombre) return json({ ok: false, error: "Falta el alumno." });
+  const lock = LockService.getScriptLock(); lock.waitLock(20000);
+  try {
+    const borradas = {};
+    ["Alumnado", "Valoraciones", "Autoevaluación", "Resultados"].forEach((t) => {
+      const h = libro.getSheetByName(t);
+      if (!h || h.getLastRow() < 2) return;
+      const v = h.getDataRange().getValues(), cab = v[0].map(String);
+      const iU = cab.indexOf("Usuario Educacyl"), iN = cab.indexOf("Nombre"), iC = cab.indexOf("Clase"), iA = cab.indexOf("Apellidos");
+      const nombreDe = (f) => minus(iA >= 0 ? (f[iN] + " " + f[iA]) : f[iN]);
+      const es = (f) => usuario ? (iU >= 0 && minus(f[iU]) === usuario) : (nombreDe(f) === nombre && minus(normGrupo(f[iC])) === clase && !(iU >= 0 && f[iU]));
+      const quedan = v.slice(1).filter((f) => !es(f));
+      const n = v.length - 1 - quedan.length;
+      if (!n) return;
+      borradas[t] = n;
+      h.getRange(2, 1, v.length - 1, cab.length).clearContent();
+      if (quedan.length) h.getRange(2, 1, quedan.length, cab.length).setValues(quedan);
+    });
+    SpreadsheetApp.flush();
+    calcularMedias(libro);
+    return json({ ok: true, borradas });
+  } finally { lock.releaseLock(); }
+}
+
+/* ---------- Prueba del correo de las familias ---------- */
+// Elige "probarCorreo" arriba y pulsa Ejecutar: te envía un correo de prueba a ti y te dice
+// en el registro cuántos correos de familias hay guardados en la pestaña Alumnado.
+function probarCorreo() {
+  const yo = Session.getEffectiveUser().getEmail();
+  MailApp.sendEmail(opcionesCorreo({ to: yo, subject: "Prueba de Rumbo a Europa", body: "Si lees esto, el envío de códigos a las familias funciona." }));
+  const h = abrirLibro().getSheetByName("Alumnado");
+  const filas = h && h.getLastRow() > 1 ? h.getRange(2, 1, h.getLastRow() - 1, ALUMNADO.length).getValues() : [];
+  const conCorreo = filas.filter((f) => String(f[4] || "").trim());
+  console.log("Hoja: " + abrirLibro().getUrl());
+  console.log("Correo de prueba enviado a " + yo + ". Quedan " + MailApp.getRemainingDailyQuota() + " envíos hoy.");
+  console.log("Alumnado: " + filas.length + " alumnos, " + conCorreo.length + " con correo de familia.");
+  conCorreo.slice(0, 5).forEach((f) => console.log("  " + f[1] + ", " + f[0] + " (" + f[3] + "): " + f[4]));
+}
+
+/* ---------- Lista de nombres para el alumnado ---------- */
+const GRUPOS_VALIDOS = ["P5A", "P5B", "P6A", "P6B"];
+function filasAlumnado(libro) {
+  const h = libro.getSheetByName("Alumnado");
+  return h && h.getLastRow() > 1 ? h.getRange(2, 1, h.getLastRow() - 1, ALUMNADO.length).getValues() : [];
+}
+const textoAlumno = (f) => (String(f[1] || "").trim() ? String(f[1]).trim() + ", " : "") + String(f[0] || "").trim();
+
+// Devuelve solo los nombres ("Apellidos, Nombre") de un grupo, para el desplegable. Ni usuarios ni correos.
+function nombresGrupo(libro, d) {
+  const clase = normGrupo(d.clase);
+  if (GRUPOS_VALIDOS.indexOf(clase) < 0) return json({ ok: false, nombres: [] });
+  const nombres = filasAlumnado(libro).filter((f) => normGrupo(f[3]) === clase && f[2]).map(textoAlumno)
+    .sort((a, b) => a.localeCompare(b, "es", { sensitivity: "base" }));
+  return json({ ok: true, nombres });
+}
+// Comprueba si el usuario escrito es el del alumno elegido (solo dice sí o no).
+function comprobarAlumno(libro, d) {
+  const clase = normGrupo(d.clase), nombre = minus(d.nombre), usuario = minus(d.usuario);
+  const f = filasAlumnado(libro).find((x) => normGrupo(x[3]) === clase && minus(textoAlumno(x)) === nombre);
+  if (!f) return json({ ok: true, enLista: false });
+  return json({ ok: true, enLista: true, coincide: !!usuario && minus(f[2]) === usuario });
+}
+// Si el alumno eligió su nombre de la lista pero escribió mal su usuario, se usa el de la lista (así no hay alumnos repetidos).
+function usuarioDeLista(libro, nombre, usuario, clase) {
+  const filas = filasAlumnado(libro);
+  if (!filas.length) return usuario;
+  if (usuario && filas.some((f) => minus(f[2]) === minus(usuario))) return usuario;
+  const f = filas.find((x) => normGrupo(x[3]) === clase && minus(textoAlumno(x)) === minus(nombre));
+  return f ? String(f[2]) : usuario;
+}
+
+/* ---------- El profe envía el código a las familias desde el panel ---------- */
+function enviarCodigos(libro, d) {
+  if (CLAVE_PROFE === "cambia-esta-clave" || String(d.clave || "") !== CLAVE_PROFE) return json({ ok: false, error: "Clave incorrecta." });
+  const quienes = (d.usuarios || []).map(minus);
+  const filas = filasAlumnado(libro).filter((f) => quienes.indexOf(minus(f[2])) >= 0);
+  // Un código por correo (una familia con dos hijos recibe un solo código para los dos).
+  const porCorreo = {};
+  filas.forEach((f) => minus(f[4]).split(/[;,\s]+/).filter((c) => /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(c))
+    .forEach((c) => (porCorreo[c] = porCorreo[c] || []).push(String(f[0] || ""))));
+  const correos = Object.keys(porCorreo);
+  if (correos.length > MailApp.getRemainingDailyQuota()) return json({ ok: false, error: "Hoy ya no quedan envíos suficientes de Google. Prueba mañana o con menos familias." });
+  const props = PropertiesService.getScriptProperties(), hasta = Date.now() + DIAS_CODIGO_PROFE * 86400000;
+  let enviados = 0; const fallos = [];
+  correos.forEach((c) => {
+    const codigo = String(Math.floor(100000 + Math.random() * 900000));
+    try {
+      const texto = "Hola:\n\nYa podéis consultar los resultados de " + porCorreo[c].join(" y ") + " en Rumbo a Europa.\n\n" +
+          "1. Entrad en " + WEB_FAMILIAS + "\n2. Escribid este correo: " + c + "\n3. Pulsad «Ya tengo un código» y escribid: " + codigo +
+          "\n\nEl código vale " + DIAS_CODIGO_PROFE + " días. Después podéis pedir uno nuevo desde la misma página.\n\nCEIP Tierra de Pinares";
+      MailApp.sendEmail(opcionesCorreo({ to: c, subject: "Resultados de Rumbo a Europa: código de acceso", body: texto, htmlBody: htmlDe(texto) }));
+      props.setProperty("fam_" + c, JSON.stringify({ codigo, hasta, fallos: 0 }));
+      enviados++;
+    } catch (e) { fallos.push(c); }
+  });
+  const sinCorreo = quienes.length - filas.filter((f) => String(f[4] || "").trim()).length;
+  console.log("Códigos enviados por el profe: " + enviados + " correos; fallos: " + fallos.join(", "));
+  return json({ ok: true, enviados, sinCorreo, fallos });
+}
+
+// Prueba de entrega: escribe tu correo personal entre las comillas, elige "probarEntrega" y pulsa Ejecutar.
+// Envía 3 correos distintos para ver cuál llega (A, B y C en el asunto).
+const PRUEBA_A = "";
+function probarEntrega() {
+  if (!PRUEBA_A) throw new Error("Escribe tu correo en PRUEBA_A (justo encima de esta función) y guarda.");
+  MailApp.sendEmail(PRUEBA_A, "Prueba A Rumbo a Europa", "Correo A: envío sencillo, sin nombre ni respuesta.");
+  MailApp.sendEmail({ to: PRUEBA_A, name: "Rumbo a Europa · CEIP Tierra de Pinares", replyTo: CORREO_RESPUESTA || "rumboaeuropa@ceiptierradepinares.com",
+    subject: "Prueba B Rumbo a Europa", body: "Correo B: igual que el de las familias (con nombre y dirección de respuesta)." });
+  GmailApp.sendEmail(PRUEBA_A, "Prueba C Rumbo a Europa", "Correo C: enviado con Gmail en vez de MailApp.", { name: "Rumbo a Europa · CEIP Tierra de Pinares" });
+  console.log("Enviados A, B y C a " + PRUEBA_A + ". Quedan " + MailApp.getRemainingDailyQuota() + " envíos hoy.");
+}
+
+/* ---------- Textos cambiados por el profe ----------
+   Pestaña «Textos»: Pantalla | Texto original | Texto nuevo | Fecha. La lee toda la web al cargar (no tiene datos del alumnado).
+   Se puede corregir a mano: si borras una fila, vuelve el texto original. */
+const COL_TEXTOS = ["Pantalla", "Texto original", "Texto nuevo", "Fecha"];
+function hojaTextos(libro) {
+  let h = libro.getSheetByName("Textos");
+  if (!h) {
+    h = libro.insertSheet("Textos");
+    h.appendRow(COL_TEXTOS); h.setFrozenRows(1);
+    h.getRange(1, 1, 1, COL_TEXTOS.length).setFontWeight("bold");
+    h.setColumnWidth(2, 380); h.setColumnWidth(3, 380);
+  }
+  return h;
+}
+function leerTextos(libro) {
+  const h = libro.getSheetByName("Textos"), textos = {};
+  if (h && h.getLastRow() > 1) {
+    h.getRange(2, 1, h.getLastRow() - 1, 3).getValues().forEach((f) => {
+      const nuevo = String(f[2] || "").trim();
+      if (f[1] !== "" && nuevo) textos[String(f[0] || "#") + "|" + String(f[1]).replace(/\s+/g, " ").trim()] = nuevo;
+    });
+  }
+  return json({ ok: true, textos: textos });
+}
+function guardarTexto(libro, d) {
+  if (CLAVE_PROFE === "cambia-esta-clave" || String(d.clave || "") !== CLAVE_PROFE) return json({ ok: false, error: "Clave incorrecta: entra otra vez en el panel del profe." });
+  const id = String(d.id || ""), i = id.indexOf("|");
+  if (i < 1) return json({ ok: false, error: "Texto no válido." });
+  const pantalla = id.slice(0, i).slice(0, 40), original = id.slice(i + 1).slice(0, 2000);
+  const nuevo = String(d.texto || "").replace(/\s+/g, " ").trim().slice(0, 2000);
+  const lock = LockService.getScriptLock(); lock.waitLock(20000);
+  try {
+    const h = hojaTextos(libro), n = h.getLastRow() - 1;
+    const filas = n > 0 ? h.getRange(2, 1, n, 2).getValues() : [];
+    let fila = -1;
+    filas.forEach((f, k) => { if (String(f[0]) === pantalla && String(f[1]).replace(/\s+/g, " ").trim() === original) fila = k + 2; });
+    if (!nuevo) { if (fila > 0) h.deleteRow(fila); }
+    else if (fila > 0) h.getRange(fila, 3, 1, 2).setValues([[nuevo, new Date()]]);
+    else h.appendRow([pantalla, original, nuevo, new Date()]);
+  } finally { lock.releaseLock(); }
+  return json({ ok: true });
+}
+
+/* ---------- Entrada del alumnado con código ----------
+   Cada alumno tiene un código FIJO (de 3 a 6 cifras) que no cambia: lo apunta en la agenda y lo usa siempre.
+   1) alumnoCodigo: «Enviarme mi código». Si coinciden grupo, nombre y usuario con la pestaña Alumnado, le llega
+      su código a usuario@educa.jcyl.es (si aún no tenía, se crea uno de 3 cifras).
+   2) alumnoEntrar: con su código se crea una sesión para ese ordenador (DIAS_SESION_ALUMNO días).
+      5 fallos seguidos bloquean la entrada de ese alumno 10 minutos.
+   3) alumnoCambiarCodigo: ya dentro, el alumno puede poner otro código que recuerde mejor.
+   4) codigosAlumnos (profe): ver los códigos de un grupo para dárselos en clase.
+   Cada nota que llega lleva la sesión; sin sesión válida no se guarda (si CODIGO_ALUMNO = true).
+   Los códigos se guardan en las propiedades del script (apin_usuario), no en la hoja. */
+function filaAlumno(libro, clase, nombre, usuario) {
+  clase = normGrupo(clase);
+  return filasAlumnado(libro).find((x) => normGrupo(x[3]) === clase && minus(textoAlumno(x)) === minus(nombre) && minus(x[2]) === minus(usuario));
+}
+const correoAlumno = (u) => (String(u).indexOf("@") >= 0 ? minus(u) : minus(u) + "@" + DOMINIO_ALUMNADO);
+function tapar(c) { const p = c.split("@"); return p[0].slice(0, 2) + "•••@" + p[1]; }
+function leerPin(usuario) { return JSON.parse(PropertiesService.getScriptProperties().getProperty("apin_" + minus(usuario)) || "null"); }
+function guardarPin(usuario, p) { PropertiesService.getScriptProperties().setProperty("apin_" + minus(usuario), JSON.stringify(p)); }
+// Devuelve el código fijo del alumno; si no tiene, crea uno de 3 cifras.
+function pinDe(usuario) {
+  let p = leerPin(usuario);
+  if (!p || !p.c) { p = { c: String(Math.floor(Math.random() * 1000)).padStart(3, "0"), f: 0, b: 0 }; guardarPin(usuario, p); }
+  return p;
+}
+function alumnoCodigo(libro, d) {
+  const f = filaAlumno(libro, d.clase, d.nombre, d.usuario);
+  if (!f) return json({ ok: false, error: "Ese usuario no es el de " + String(d.nombre || "ese nombre") + ". Revisa tu usuario de Educacyl." });
+  const usuario = minus(f[2]), correo = correoAlumno(usuario), cache = CacheService.getScriptCache();
+  if (cache.get("aesp_" + usuario)) return json({ ok: true, correo: tapar(correo), mensaje: "Ya te hemos enviado tu código hace menos de un minuto. Mira tu correo." });
+  const codigo = pinDe(usuario).c;
+  cache.put("aesp_" + usuario, "1", 60);
+  const texto = "Hola, " + String(f[0] || "") + ":\n\nTu código para entrar en Rumbo a Europa es: " + codigo +
+    "\n\nEs siempre el mismo: apúntalo en tu agenda. Si quieres, cuando entres puedes cambiarlo por otro que recuerdes mejor (pulsa «Cambiar mi código»)." +
+    "\nNo se lo digas a nadie: es como tu contraseña.\n\nCEIP Tierra de Pinares";
+  try {
+    MailApp.sendEmail(opcionesCorreo({ to: correo, subject: "Tu código de Rumbo a Europa", body: texto, htmlBody: htmlDe(texto) }));
+  } catch (e) { console.log("No se pudo enviar el código a " + correo + ": " + e); return json({ ok: false, error: "No se ha podido enviar el correo. Pídele tu código a tu profe." }); }
+  return json({ ok: true, correo: tapar(correo) });
+}
+// Comprueba el código fijo. Devuelve "" si está bien o el texto del error.
+function comprobarPin(usuario, codigo) {
+  const p = leerPin(usuario);
+  if (!p || !p.c) return "Todavía no tienes código. Pulsa «Enviarme mi código» o pídeselo a tu profe.";
+  if (p.b && p.b > Date.now()) return "Demasiados intentos. Espera 10 minutos o pídele tu código a tu profe.";
+  if (String(codigo || "").trim() !== p.c) {
+    p.f = (p.f || 0) + 1;
+    if (p.f >= 5) { p.f = 0; p.b = Date.now() + 10 * 60000; }
+    guardarPin(usuario, p);
+    return p.b > Date.now() ? "Demasiados intentos. Espera 10 minutos o pídele tu código a tu profe." : "Código incorrecto.";
+  }
+  if (p.f || p.b) { p.f = 0; p.b = 0; guardarPin(usuario, p); }
+  return "";
+}
+function alumnoEntrar(libro, d) {
+  const f = filaAlumno(libro, d.clase, d.nombre, d.usuario);
+  if (!f) return json({ ok: false, error: "Revisa tu grupo, tu nombre y tu usuario." });
+  const error = comprobarPin(minus(f[2]), d.codigo);
+  if (error) return json({ ok: false, error });
+  return json(crearSesion(f));
+}
+// Con la sesión abierta, el alumno cambia su código (escribe el actual y el nuevo).
+function alumnoCambiarCodigo(libro, d) {
+  const s = alumnoDeSesion(libro, d);
+  if (!s) return json({ ok: false, error: "Tu sesión ha caducado. Sal y vuelve a entrar con tu código." });
+  const nuevo = String(d.nuevo || "").trim();
+  if (!/^\d{3,6}$/.test(nuevo)) return json({ ok: false, error: "El código nuevo tiene que tener de 3 a 6 números." });
+  if (/^(\d)\1+$/.test(nuevo) || "0123456789".indexOf(nuevo) >= 0 || "9876543210".indexOf(nuevo) >= 0) return json({ ok: false, error: "Ese código es muy fácil de adivinar (como 111 o 123). Elige otro." });
+  const p = leerPin(s.usuario);
+  if (p && p.c) { const error = comprobarPin(s.usuario, d.actual); if (error) return json({ ok: false, error: error === "Código incorrecto." ? "Tu código actual no es ese." : error }); }
+  guardarPin(s.usuario, { c: nuevo, f: 0, b: 0 });
+  return json({ ok: true });
+}
+// Panel del profe: códigos de los alumnos de un grupo (crea los que falten).
+function codigosAlumnos(libro, d) {
+  if (CLAVE_PROFE === "cambia-esta-clave" || String(d.clave || "") !== CLAVE_PROFE) return json({ ok: false, error: "Clave incorrecta." });
+  const clase = normGrupo(d.clase);
+  const lista = filasAlumnado(libro).filter((f) => normGrupo(f[3]) === clase && f[2])
+    .map((f) => ({ nombre: textoAlumno(f), usuario: minus(f[2]), codigo: pinDe(f[2]).c }))
+    .sort((a, b) => a.nombre.localeCompare(b.nombre, "es", { sensitivity: "base" }));
+  return json({ ok: true, clase, alumnos: lista });
+}
+function crearSesion(f) {
+  const usuario = minus(f[2]), token = Utilities.getUuid().replace(/-/g, "");
+  const props = PropertiesService.getScriptProperties();
+  const lista = JSON.parse(props.getProperty("ases_" + usuario) || "[]").filter((x) => x.hasta > Date.now()).slice(-4);   // hasta 5 ordenadores
+  lista.push({ t: token, hasta: Date.now() + DIAS_SESION_ALUMNO * 86400000 });
+  props.setProperty("ases_" + usuario, JSON.stringify(lista));
+  return { ok: true, token, usuario, nombre: textoAlumno(f), clase: normGrupo(f[3]), adaptado: leerAdaptados().indexOf(usuario) >= 0 };
+}
+// Devuelve {usuario, nombre, clase} si la sesión que manda el navegador es válida.
+function alumnoDeSesion(libro, d) {
+  const usuario = minus(d.usuario), token = String(d.token || "");
+  if (!usuario || !token) return null;
+  const lista = JSON.parse(PropertiesService.getScriptProperties().getProperty("ases_" + usuario) || "[]");
+  if (!lista.some((x) => x.t === token && x.hasta > Date.now())) return null;
+  const f = filasAlumnado(libro).find((x) => minus(x[2]) === usuario);
+  return f ? { usuario, nombre: textoAlumno(f), clase: normGrupo(f[3]), adaptado: leerAdaptados().indexOf(usuario) >= 0 } : null;
+}
+function alumnoSesion(libro, d) {
+  const s = alumnoDeSesion(libro, d);
+  return json({ ok: true, valida: !!s, requiere: CODIGO_ALUMNO, alumno: s });
+}
+
+/* ---------- Adaptación curricular ----------
+   El profe marca en la ficha del alumno «Adaptación curricular». Se guarda en las propiedades del script
+   (no en la hoja, para no cambiar sus columnas). Ese alumno entra solo con elegir su nombre (sin código)
+   y la web le muestra los contenidos adaptados. */
+function leerAdaptados() { return JSON.parse(PropertiesService.getScriptProperties().getProperty("adaptados") || "[]"); }
+function ponerAdaptacion(libro, d) {
+  if (CLAVE_PROFE === "cambia-esta-clave" || String(d.clave || "") !== CLAVE_PROFE) return json({ ok: false, error: "Clave incorrecta." });
+  const u = minus(d.usuario); if (!u) return json({ ok: false, error: "Falta el usuario de Educacyl." });
+  const l = leerAdaptados().filter((x) => x !== u);
+  if (d.valor) l.push(u);
+  PropertiesService.getScriptProperties().setProperty("adaptados", JSON.stringify(l));
+  return json({ ok: true, adaptados: l });
+}
+// El alumno con adaptación entra solo con elegir grupo y nombre.
+function alumnoDirecto(libro, d) {
+  const clase = normGrupo(d.clase), nombre = minus(d.nombre), ad = leerAdaptados();
+  const f = filasAlumnado(libro).find((x) => normGrupo(x[3]) === clase && minus(textoAlumno(x)) === nombre);
+  if (!f || ad.indexOf(minus(f[2])) < 0) return json({ ok: false });
+  return json(crearSesion(f));
+}
+
+
+/* ---------- Valoración proporcional de Programa y Robótica ----------
+   Una pestaña de resumen por alumno. Cada pantalla superada aporta la misma fracción
+   del máximo de su ruta: Programa 5/17; Robot 2,5/6; Essential 3,5/6; Prime 5/6.
+   En adaptación, Robot tiene cuatro pantallas y mantiene el máximo de 2,5. */
+function actualizarResumenRutas(libro, alumno) {
+  const props = PropertiesService.getScriptProperties();
+  const rutas = [
+    { id: "programa", maximo: 5, total: 17, clave: "programa" },
+    { id: "robot-robot", maximo: 2.5, total: alumno.adaptado ? 4 : 6, clave: "robot" },
+    { id: "robot-essential", maximo: 3.5, total: 6, clave: "essential" },
+    { id: "robot-prime", maximo: 5, total: 6, clave: "prime" }
+  ];
+  const salida = {};
+  rutas.forEach((r) => {
+    const clave = "cadena_" + Utilities.base64EncodeWebSafe(alumno.usuario + "|" + r.id).replace(/=+$/g, "");
+    let estado = {};
+    try { estado = JSON.parse(props.getProperty(clave) || "{}"); } catch (e) { estado = {}; }
+    const total = Math.max(1, Number(estado.total) || r.total);
+    const hechas = Array.isArray(estado.completados) ? estado.completados.length : 0;
+    salida[r.clave] = { hechas, total, maximo: r.maximo, nota: Math.round((r.maximo * hechas / total) * 100) / 100 };
+  });
+  const hoja = libro.getSheetByName("Progreso por rutas") || libro.insertSheet("Progreso por rutas");
+  const cab = ["Última actualización", "Nombre", "Usuario Educacyl", "Clase",
+    "Programa pantallas", "Programa total", "Nota Programa /5",
+    "Robot pantallas", "Robot total", "Nota Robot /2,5",
+    "SPIKE Essential pantallas", "SPIKE Essential total", "Nota Essential /3,5",
+    "SPIKE Prime pantallas", "SPIKE Prime total", "Nota Prime /5"];
+  if (hoja.getLastRow() === 0) { hoja.appendRow(cab); hoja.setFrozenRows(1); hoja.getRange(1, 1, 1, cab.length).setFontWeight("bold"); }
+  else if (hoja.getRange(1, 1).getValue() !== cab[0]) { hoja.clearContents(); hoja.appendRow(cab); hoja.setFrozenRows(1); hoja.getRange(1, 1, 1, cab.length).setFontWeight("bold"); }
+  const datos = hoja.getLastRow() > 1 ? hoja.getRange(2, 1, hoja.getLastRow() - 1, 4).getValues() : [];
+  const igual = (a, b) => String(a || "").trim().toLowerCase() === String(b || "").trim().toLowerCase();
+  let fila = datos.findIndex((f) => alumno.usuario ? igual(f[2], alumno.usuario) : (igual(f[1], alumno.nombre) && igual(normGrupo(f[3]), alumno.clase))) + 2;
+  if (fila < 2) fila = hoja.getLastRow() + 1;
+  const valores = [new Date(), alumno.nombre, alumno.usuario, alumno.clase,
+    salida.programa.hechas, salida.programa.total, salida.programa.nota,
+    salida.robot.hechas, salida.robot.total, salida.robot.nota,
+    salida.essential.hechas, salida.essential.total, salida.essential.nota,
+    salida.prime.hechas, salida.prime.total, salida.prime.nota];
+  hoja.getRange(fila, 1, 1, valores.length).setValues([valores]);
+  [7, 10, 13, 16].forEach((c) => hoja.getRange(fila, c).setNumberFormat("0.00"));
+  hoja.autoResizeColumns(1, cab.length);
+  return salida;
+}
+
+/* ---------- Retos encadenados: progreso y códigos individuales por alumno ----------
+   Secuencias independientes: programa, piensa, robot-robot, robot-essential y robot-prime.
+   El navegador nunca decide qué reto está desbloqueado: lo valida este servidor. */
+function gestionarRetoCadena(libro, d) {
+  const alumno = alumnoDeSesion(libro, d);
+  if (!alumno) return json({ ok: false, sesion: true, error: "La sesión del alumno no es válida. Vuelve a entrar." });
+  const secuencia = String(d.secuencia || "");
+  if (!["programa", "piensa", "robot-robot", "robot-essential", "robot-prime"].includes(secuencia)) return json({ ok: false, error: "Secuencia no válida." });
+  let total = Math.max(1, Math.min(100, Number(d.total) || 1));
+  // Los totales evaluables se fijan en el servidor para que el navegador no pueda alterar la nota.
+  if (secuencia === "programa") total = 17;
+  if (secuencia.indexOf("robot-") === 0) total = alumno.adaptado ? 4 : 6;
+  const props = PropertiesService.getScriptProperties();
+  const clave = "cadena_" + Utilities.base64EncodeWebSafe(alumno.usuario + "|" + secuencia).replace(/=+$/g, "");
+  const lock = LockService.getScriptLock();
+  lock.waitLock(10000);
+  try {
+    let estado = {};
+    try { estado = JSON.parse(props.getProperty(clave) || "{}"); } catch (e) { estado = {}; }
+    estado.desbloqueado = Math.max(0, Math.min(total - 1, Number(estado.desbloqueado) || 0));
+    estado.completados = estado.completados || [];
+    estado.codigos = estado.codigos || {};
+    if (estado.total && Number(estado.total) !== total) return json({ ok: false, error: "Ha cambiado el número de pantallas de esta ruta. Contacta con tu profesor." });
+    estado.total = total;
+    const op = String(d.op || "estado");
+    if (op === "estado") return json({ ok: true, desbloqueado: estado.desbloqueado, completados: estado.completados });
+    const indice = Number(d.indice);
+    if (!Number.isInteger(indice) || indice < 0 || indice >= total) return json({ ok: false, error: "Reto no válido." });
+    if (op === "completar") {
+      if (indice > estado.desbloqueado) return json({ ok: false, error: "Este reto todavía está bloqueado." });
+      if (estado.completados.indexOf(indice) < 0) estado.completados.push(indice);
+      let codigo = "";
+      if (indice === estado.desbloqueado && indice + 1 < total) {
+        if (!estado.codigos[indice + 1]) estado.codigos[indice + 1] = Utilities.getUuid().replace(/-/g, "").slice(0, 8).toUpperCase();
+        codigo = estado.codigos[indice + 1];
+      }
+      props.setProperty(clave, JSON.stringify(estado));
+      const claveResumen = secuencia === "programa" ? "programa" : secuencia === "robot-robot" ? "robot" : secuencia === "robot-essential" ? "essential" : secuencia === "robot-prime" ? "prime" : "";
+      const resumen = claveResumen ? actualizarResumenRutas(libro, alumno) : null;
+      const datoRuta = claveResumen ? resumen[claveResumen] : null;
+      return json({ ok: true, codigo, siguiente: indice + 1 < total ? indice + 1 : null, completado: indice,
+        completados: estado.completados.length, total, nota: datoRuta ? datoRuta.nota : null, maximo: datoRuta ? datoRuta.maximo : null });
+    }
+    if (op === "desbloquear") {
+      if (indice <= estado.desbloqueado) return json({ ok: true, desbloqueado: estado.desbloqueado });
+      const esperado = estado.codigos[indice];
+      const recibido = String(d.codigo || "").trim().toUpperCase();
+      if (indice !== estado.desbloqueado + 1 || !esperado || recibido !== esperado || estado.completados.indexOf(indice - 1) < 0)
+        return json({ ok: false, error: "El código no es correcto para este reto. Comprueba el código del reto anterior." });
+      estado.desbloqueado = indice;
+      delete estado.codigos[indice];
+      props.setProperty(clave, JSON.stringify(estado));
+      return json({ ok: true, desbloqueado: indice });
+    }
+    return json({ ok: false, error: "Operación no válida." });
+  } finally { lock.releaseLock(); }
 }
