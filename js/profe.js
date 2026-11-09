@@ -374,8 +374,8 @@ window.Profe = (function () {
       if (lista.some((x) => !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(x))) { est.textContent = "Revisa los correos: alguno no es válido."; est.dataset.tipo = "error"; return; }
       const correo = unirCorreos(lista);
       const partes = a.nombre.split(" ");
-      const j = await llamar({ accion: "importar", alumnos: [{ nombre: a.registrado ? "" : partes[0], apellidos: a.registrado ? "" : partes.slice(1).join(" "), usuario: a.usuario, clase: a.clase, correo: correo || "-" }] }).catch(() => ({ ok: false, error: "No se ha podido conectar con la hoja." }));
-      if (j.ok) { a.correo = correo; a.registrado = true; $("#p-cod-uno").disabled = !correo; est.textContent = correo ? "✓ Correos guardados." : "✓ Correos borrados."; est.dataset.tipo = "ok"; } else { est.textContent = j.error; est.dataset.tipo = "error"; }
+      const j = await llamar({ accion: "guardarCorreosFamilia", usuario: a.usuario, correo }).catch(() => ({ ok: false, error: "No se ha podido conectar con la hoja." }));
+      if (j.ok) { a.correo = j.correo == null ? correo : j.correo; a.registrado = true; $("#p-cod-uno").disabled = !correo; est.textContent = correo ? "✓ Correos guardados." : "✓ Correos borrados."; est.dataset.tipo = "ok"; } else { est.textContent = j.error; est.dataset.tipo = "error"; }
     });
     window.scrollTo(0, 0);
   }

@@ -45,6 +45,7 @@ function doPost(e) {
   const pedido = JSON.parse(e.postData.contents);
   if (pedido.accion === "datos") return datosProfe(libro, pedido);
   if (pedido.accion === "importar") return importarAlumnado(libro, pedido);
+  if (pedido.accion === "guardarCorreosFamilia") return guardarCorreosFamilia(libro, pedido);
   if (pedido.accion === "borrar") return borrarAlumno(libro, pedido);
   if (pedido.accion === "autoevaluacion") return guardarAutoevaluacion(libro, pedido);
   if (pedido.accion === "familiaCodigo") return familiaCodigo(libro, pedido);
@@ -210,6 +211,27 @@ function importarAlumnado(libro, d) {
     ordenarTodo(libro);
     return json({ ok: true, nuevos, cambiados, sinUsuario });
   } finally { lock.releaseLock(); }
+}
+
+/* Guarda de forma directa los dos correos familiares de un alumno ya registrado. */
+function guardarCorreosFamilia(libro, d) {
+  if (CLAVE_PROFE === "cambia-esta-clave" || String(d.clave || "") !== CLAVE_PROFE)
+    return json({ ok: false, error: "Clave incorrecta." });
+  const usuario = minus(d.usuario);
+  if (!usuario) return json({ ok: false, error: "Falta el usuario de Educacyl." });
+  const correos = Array.from(new Set(String(d.correo || "").toLowerCase().split(/[;,\\s]+/)
+    .map(c => c.trim()).filter(Boolean))).slice(0, 2);
+  if (correos.some(c => !/^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$/.test(c)))
+    return json({ ok: false, error: "Revisa las direcciones de correo." });
+  const h = hojaAlumnado(libro);
+  if (h.getLastRow() < 2) return json({ ok: false, error: "No hay alumnado registrado." });
+  const filas = h.getRange(2, 1, h.getLastRow() - 1, ALUMNADO.length).getValues();
+  const i = filas.findIndex(f => minus(f[2]) === usuario);
+  if (i < 0) return json({ ok: false, error: "No encuentro al alumno. Comprueba su usuario." });
+  const valor = correos.join(", ");
+  h.getRange(i + 2, 5).setValue(valor);
+  SpreadsheetApp.flush();
+  return json({ ok: true, correo: valor });
 }
 
 /* ---------- Consulta de las familias ---------- */
