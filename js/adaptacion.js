@@ -7,7 +7,7 @@
     programación de TIAC de 1.º de Primaria. Así las notas van a las mismas columnas de la hoja.
   - Crea: un texto corto con la información ya buscada y preguntas que se responden con una o dos palabras.
   - Programa: niveles cortos solo con flechas (delante, atrás, girar y saltar), con botones grandes.
-  - Robótica: solo el robot de flechas y retos cortos.
+  - Robótica: solo el robot de flechas y diez retos progresivos adaptados.
   - Piensa: cada parada es una lectura de 2-3 líneas, un vídeo y un juego de «bien o mal» (piensa/facil.html).
   Todos los textos tienen un botón 🔊 para escucharlos.
   Puedes cambiar cualquier texto aquí (o con «Editar textos» del panel del profe).
@@ -148,12 +148,18 @@
   }];
   if (ADAPTADO && window.AVENTURAS) window.AVENTURAS = window.AVENTURAS_AC;
 
-  /* ---------- Robótica: robot de flechas y retos cortos ---------- */
+  /* ---------- Robótica: robot de flechas y diez retos progresivos ---------- */
   window.RETOS_ROB_AC = [
     { titulo: "Hasta Italia", texto: "Ve de España a Italia con la flecha adelante.", inicio: ["A5", "E"], metas: [["D5", "Italia"]] },
     { titulo: "Vuelta a España", texto: "Vuelve a España con la flecha atrás.", inicio: ["D5", "E"], metas: [["A5", "España"]] },
     { titulo: "Sube al Reino Unido", texto: "Sube hasta el Reino Unido.", inicio: ["B5", "N"], metas: [["B3", "Reino Unido"]] },
-    { titulo: "Hasta Alemania", texto: "Sube una casilla, gira y llega a Alemania.", inicio: ["A5", "N"], metas: [["C4", "Alemania"]] }
+    { titulo: "Hasta Alemania", texto: "Sube una casilla, gira y llega a Alemania.", inicio: ["A5", "N"], metas: [["C4", "Alemania"]] },
+    { titulo: "Francia e Italia", texto: "Visita Francia y después Italia. Sigue las paradas en orden.", inicio: ["A5", "E"], metas: [["B5", "Francia"], ["C5", "Italia"]] },
+    { titulo: "Dos países más", texto: "Llega a Alemania y después a Chequia.", inicio: ["B4", "E"], metas: [["C4", "Alemania"], ["D4", "Chequia"]] },
+    { titulo: "Camino al norte", texto: "Visita Dinamarca y Suecia. Recuerda girar antes de avanzar.", inicio: ["C4", "N"], metas: [["C3", "Dinamarca"], ["D2", "Suecia"]] },
+    { titulo: "Viaje mediterráneo", texto: "Pasa por Italia y termina en Grecia.", inicio: ["A6", "E"], metas: [["C5", "Italia"], ["E6", "Grecia"]] },
+    { titulo: "Hacia el este", texto: "Visita Chequia, Rumanía y Turquía por ese orden.", inicio: ["C4", "E"], metas: [["D4", "Chequia"], ["E5", "Rumanía"], ["F6", "Turquía"]] },
+    { titulo: "La gran aventura", texto: "El reto final: Reino Unido, Suecia, Finlandia y Grecia. ¡Tú puedes!", inicio: ["A5", "N"], metas: [["B3", "Reino Unido"], ["D2", "Suecia"], ["E1", "Finlandia"], ["E6", "Grecia"]] }
   ];
 
   /* ---------- Piensa: lectura corta, vídeo y juego de «bien o mal» ---------- */

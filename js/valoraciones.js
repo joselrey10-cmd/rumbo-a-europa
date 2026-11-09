@@ -126,7 +126,7 @@ window.Valoraciones = (function () {
     const a = alumno();
     const d = Object.assign({ fecha: new Date().toISOString(), nombre: a.nombre || "(sin nombre)", usuario: a.usuario || "", clase: a.clase || "",
       destino: "", ciudad: "", estrellas: "", bloques: "", intentos: "", personaje: "", programa: "", indicador: "", valoracion: "" }, datos);
-    // Notas del alumno: van con su sesión (código de acceso). Las del profe llevan su clave y no la necesitan.
+    // Notas del alumno: van con su sesión (contraseña de acceso). Las del profe llevan su clave y no la necesitan.
     if (!d.clave && window.Acceso) {
       if (window.Acceso.requiere() && !window.Acceso.token()) { window.Acceso.avisar(); return Promise.resolve(false); }
       Object.assign(d, window.Acceso.datosEnvio());
@@ -136,7 +136,7 @@ window.Valoraciones = (function () {
       return fetch(R.url, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify(d) })
         .then((r) => r.text()).then((t) => {
           t = String(t || "").trim();
-          if (t === "sesion") { if (!d.clave && window.Acceso) window.Acceso.avisar(); console.warn("La hoja no ha guardado la nota: falta el código de acceso."); return false; }
+          if (t === "sesion") { if (!d.clave && window.Acceso) window.Acceso.avisar(); console.warn("La hoja no ha guardado la nota: falta el contraseña de acceso."); return false; }
           if (t.charAt(0) === "{") { try { const j = JSON.parse(t); if (j.sesion && window.Acceso) window.Acceso.avisar(); return !!j.ok; } catch (e) {} }
           if (t !== "ok") console.warn("La hoja ha contestado:", t.slice(0, 200));
           return t === "ok";

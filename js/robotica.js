@@ -26,8 +26,12 @@
     { titulo: "Rumbo al Reino Unido", texto: "Sube desde el sur de España hasta el Reino Unido.", inicio: ["A6", "N"], metas: [["B3", "Reino Unido"]] },
     { titulo: "Alemania y Grecia", texto: "Pasa por Alemania y termina en Grecia.", inicio: ["B4", "E"], metas: [["C4", "Alemania"], ["E6", "Grecia"]] },
     { titulo: "Ruta nórdica", texto: "Visita Dinamarca, Suecia y Finlandia, por este orden.", inicio: ["C4", "N"], metas: [["C3", "Dinamarca"], ["D2", "Suecia"], ["E1", "Finlandia"]] },
-    { titulo: "Ruta del Danubio", texto: "Viaja por Chequia y Rumanía hasta Turquía.", inicio: ["C4", "E"], metas: [["D4", "Chequia"], ["E5", "Rumanía"], ["F6", "Turquía"]] },
-    { titulo: "Gran vuelta por Europa", texto: "Reino Unido, Suecia, Ucrania y Grecia. ¡Un viaje largo!", inicio: ["A5", "N"], metas: [["B3", "Reino Unido"], ["D2", "Suecia"], ["F4", "Ucrania"], ["E6", "Grecia"]] }
+    { titulo: "Ruta atlántica", texto: "Visita Francia, Italia y termina en Grecia. Planifica tres etapas y varios giros.", inicio: ["A5", "E"], metas: [["B5", "Francia"], ["C5", "Italia"], ["E6", "Grecia"]], exige: { essential: ["repetir"], prime: ["variable"] } },
+    { titulo: "Corazón de Europa", texto: "Cruza cuatro destinos: Alemania, Chequia, Polonia y Rumanía. Organiza bien la secuencia.", inicio: ["B4", "E"], metas: [["C4", "Alemania"], ["D4", "Chequia"], ["E4", "Polonia"], ["E5", "Rumanía"]], exige: { essential: ["siPais"], prime: ["siPais"] } },
+    { titulo: "Escandinavia", texto: "Viaja hacia el norte: Dinamarca, Suecia, Finlandia y Rusia. Necesitarás combinar varios tramos.", inicio: ["C4", "N"], metas: [["C3", "Dinamarca"], ["D2", "Suecia"], ["E1", "Finlandia"], ["F1", "Rusia"]], exige: { essential: ["repetir"], prime: ["repetir", "variable", "siVariable"] } },
+    { titulo: "Del Mediterráneo al este", texto: "Empieza en España, recoge Italia y Grecia y termina en Turquía. Ajusta distancias y giros.", inicio: ["A6", "E"], metas: [["C5", "Italia"], ["E6", "Grecia"], ["F6", "Turquía"]], exige: { essential: ["siPais"], prime: ["siPais", "variable"] } },
+    { titulo: "Europa oriental", texto: "Atraviesa Chequia, Rumanía, Ucrania y Turquía, sin saltarte ninguna parada.", inicio: ["C4", "E"], metas: [["D4", "Chequia"], ["E5", "Rumanía"], ["F4", "Ucrania"], ["F6", "Turquía"]], exige: { essential: ["repetir", "siPais"], prime: ["repetir", "siPais", "variable"] } },
+    { titulo: "Gran expedición europea", texto: "El gran desafío: Reino Unido, Suecia, Finlandia, Ucrania, Turquía y Grecia, en ese orden.", inicio: ["A5", "N"], metas: [["B3", "Reino Unido"], ["D2", "Suecia"], ["E1", "Finlandia"], ["F4", "Ucrania"], ["F6", "Turquía"], ["E6", "Grecia"]], exige: { essential: ["repetir", "siPais"], prime: ["repetir", "siPais", "variable", "siVariable"] } }
   ];
   const RETOS = AC && window.RETOS_ROB_AC ? window.RETOS_ROB_AC : RETOS_TODOS;
   const DIR_GRADOS = { E: 0, S: 90, O: 180, N: 270 };
@@ -40,12 +44,12 @@
     },
     essential: AC ? undefined : {
       nombre: "SPIKE Essential", sub: "Bloques de iconos",
-      texto: "Bloques con dibujos, como los de SPIKE Essential. Las distancias van en centímetros: una casilla son 15 cm.",
+      texto: "Bloques con dibujos: movimiento, repetición y sensor virtual del tapete. Las distancias van en centímetros: una casilla son 15 cm.",
       color: "#e8489b"
     },
     prime: AC ? undefined : {
       nombre: "SPIKE Prime", sub: "Bloques de palabras",
-      texto: "Bloques de palabras, como los de SPIKE Prime: centímetros, rotaciones, grados, velocidad, bucles y esperas.",
+      texto: "Bloques de palabras: movimiento, sensores virtuales, condiciones, variables, bucles, velocidad y algoritmos.",
       color: "#14225a"
     }
   };
@@ -80,7 +84,8 @@
     repetir: ico('<path d="M25 13a9 9 0 1 0 1 6"/><path d="M26 5v8h-8"/>'),
     reloj: ico('<circle cx="16" cy="17" r="11"/><path d="M16 10v7l5 3"/>'),
     luz: ico('<path d="M11 21a8 8 0 1 1 10 0v4H11z"/><path d="M12 29h8"/>'),
-    sonido: ico('<path d="M12 24V7l14-3v17"/><circle cx="9" cy="24" r="3.5" fill="#fff"/><circle cx="23" cy="21" r="3.5" fill="#fff"/>')
+    sonido: ico('<path d="M12 24V7l14-3v17"/><circle cx="9" cy="24" r="3.5" fill="#fff"/><circle cx="23" cy="21" r="3.5" fill="#fff"/>'),
+    sensor: ico('<path d="M5 16a11 11 0 0 1 22 0"/><path d="M9 16a7 7 0 0 1 14 0"/><path d="M16 16l7-7"/><circle cx="16" cy="16" r="2" fill="#fff"/>')
   };
   const img = (k) => ({ type: "field_image", src: ICONOS[k], width: 28, height: 28, alt: k });
 
@@ -131,6 +136,8 @@
   /* ---------- Definición de bloques ---------- */
   const C = { evento: "#ffbf00", mov: "#e8489b", ctrl: "#ffab19", luz: "#9966ff", son: "#cf63cf", rob: "#3a7bd5", giro: "#8a4fd8" };
   const COLORES_LUZ = [["rojo", "#ff3b3b"], ["verde", "#2fd35a"], ["azul", "#3a8bff"], ["amarillo", "#ffd400"], ["blanco", "#ffffff"], ["apagada", "#444"]];
+  const PAISES_SENSOR = ["España", "Portugal", "Francia", "Italia", "Reino Unido", "Alemania", "Chequia", "Austria", "Polonia", "Dinamarca", "Suecia", "Finlandia", "Rumanía", "Grecia", "Turquía", "Ucrania", "Rusia"].map((p) => [p, p]);
+  const OPS_VARIABLE = [["=", "="], ["≠", "!="], [">", ">"], ["<", "<"], ["≥", ">="], ["≤", "<="]];
   if (B) {
     B.defineBlocksWithJsonArray([
       // Robot de suelo
@@ -149,6 +156,7 @@
       { type: "ess_esperar", message0: "%1 %2 s", args0: [img("reloj"), { type: "field_number", name: "S", value: 1, min: 0, max: 10 }], previousStatement: null, nextStatement: null, colour: C.ctrl, tooltip: "Esperar estos segundos" },
       { type: "ess_luz", message0: "%1 %2", args0: [img("luz"), { type: "field_dropdown", name: "COLOR", options: COLORES_LUZ.map(([n, v]) => [n, v]) }], previousStatement: null, nextStatement: null, colour: C.luz, tooltip: "Encender la luz de este color" },
       { type: "ess_sonido", message0: "%1", args0: [img("sonido")], previousStatement: null, nextStatement: null, colour: C.son, tooltip: "Hacer un sonido" },
+      { type: "ess_si_pais", message0: "%1 si el sensor del tapete detecta %2", args0: [img("sensor"), { type: "field_dropdown", name: "PAIS", options: PAISES_SENSOR }], message1: "entonces %1", args1: [{ type: "input_statement", name: "HACER" }], previousStatement: null, nextStatement: null, colour: C.ctrl, tooltip: "Sensor virtual del tapete: comprueba el país de la casilla donde está el robot." },
       // Palabras (tipo SPIKE Prime)
       { type: "pri_inicio", message0: "%1 cuando se inicia el programa", args0: [img("bandera")], nextStatement: null, colour: C.evento, deletable: false },
       { type: "pri_mover", message0: "%1 mover %2 durante %3 %4", args0: [img("coche"), { type: "field_dropdown", name: "SENT", options: [["↑", "adelante"], ["↓", "atras"]] }, { type: "field_number", name: "CANT", value: 15, min: 0, max: 1000 }, { type: "field_dropdown", name: "UNI", options: UNIDADES }], previousStatement: null, nextStatement: null, colour: C.mov, tooltip: "Mueve el robot recto hacia delante o hacia atrás." },
@@ -162,6 +170,10 @@
       { type: "pri_esperar", message0: "esperar %1 segundos", args0: [{ type: "field_number", name: "S", value: 1, min: 0, max: 20 }], previousStatement: null, nextStatement: null, colour: C.ctrl },
       { type: "pri_repetir", message0: "repetir %1", args0: [{ type: "field_number", name: "N", value: 4, min: 1, max: 50 }], message1: "%1", args1: [{ type: "input_statement", name: "HACER" }], previousStatement: null, nextStatement: null, colour: C.ctrl },
       { type: "pri_siempre", message0: "por siempre", message1: "%1", args1: [{ type: "input_statement", name: "HACER" }], previousStatement: null, colour: C.ctrl },
+      { type: "pri_si_pais", message0: "%1 si el sensor del tapete detecta %2", args0: [img("sensor"), { type: "field_dropdown", name: "PAIS", options: PAISES_SENSOR }], message1: "entonces %1", args1: [{ type: "input_statement", name: "HACER" }], message2: "si no %1", args2: [{ type: "input_statement", name: "SINO" }], previousStatement: null, nextStatement: null, colour: C.ctrl, tooltip: "Condición basada en el sensor virtual de países del tapete." },
+      { type: "pri_variable", message0: "fijar variable %1 a %2", args0: [{ type: "field_input", name: "VAR", text: "pasos" }, { type: "field_number", name: "VAL", value: 0, min: -999, max: 999 }], previousStatement: null, nextStatement: null, colour: C.ctrl, tooltip: "Crea o actualiza una variable numérica." },
+      { type: "pri_sumar_variable", message0: "cambiar variable %1 en %2", args0: [{ type: "field_input", name: "VAR", text: "pasos" }, { type: "field_number", name: "VAL", value: 1, min: -999, max: 999 }], previousStatement: null, nextStatement: null, colour: C.ctrl, tooltip: "Suma o resta una cantidad a una variable." },
+      { type: "pri_si_variable", message0: "si variable %1 %2 %3", args0: [{ type: "field_input", name: "VAR", text: "pasos" }, { type: "field_dropdown", name: "OP", options: OPS_VARIABLE }, { type: "field_number", name: "VAL", value: 3, min: -999, max: 999 }], message1: "entonces %1", args1: [{ type: "input_statement", name: "HACER" }], previousStatement: null, nextStatement: null, colour: C.ctrl, tooltip: "Ejecuta los bloques solo cuando se cumple la comparación." },
       { type: "pri_escribir", message0: "escribir %1", args0: [{ type: "field_input", name: "T", text: "Hola" }], previousStatement: null, nextStatement: null, colour: C.luz, tooltip: "Muestra el texto en la matriz de luz" },
       { type: "pri_luz", message0: "fijar luz del botón a %1", args0: [{ type: "field_dropdown", name: "COLOR", options: COLORES_LUZ.map(([n, v]) => [n, v]) }], previousStatement: null, nextStatement: null, colour: C.luz },
       { type: "pri_pitido", message0: "pitar %1 durante %2 segundos", args0: [{ type: "field_number", name: "NOTA", value: 60, min: 40, max: 90 }, { type: "field_number", name: "S", value: 0.2, min: 0.05, max: 3, precision: 0.05 }], previousStatement: null, nextStatement: null, colour: C.son }
@@ -170,11 +182,11 @@
 
   const CAJAS = {
     robot: { kind: "flyoutToolbox", contents: (AC ? ["rob_avanzar", "rob_atras", "rob_der", "rob_izq"] : ["rob_avanzar", "rob_der", "rob_izq"]).map((t) => ({ kind: "block", type: t })) },
-    essential: { kind: "flyoutToolbox", contents: ["ess_adelante", "ess_atras", "ess_derecha", "ess_izquierda", "ess_repetir", "ess_esperar", "ess_luz", "ess_sonido"].map((t) => ({ kind: "block", type: t })) },
+    essential: { kind: "flyoutToolbox", contents: ["ess_adelante", "ess_atras", "ess_derecha", "ess_izquierda", "ess_repetir", "ess_esperar", "ess_luz", "ess_sonido", "ess_si_pais"].map((t) => ({ kind: "block", type: t })) },
     prime: {
       kind: "categoryToolbox", contents: [
         { kind: "category", name: "Movimiento", colour: C.mov, contents: ["pri_mover", "pri_empezar", "pri_mover_vol", "pri_empezar_vol", "pri_parar", "pri_velocidad", "pri_motores", "pri_rotacion"].map((t) => ({ kind: "block", type: t })) },
-        { kind: "category", name: "Control", colour: C.ctrl, contents: ["pri_esperar", "pri_repetir", "pri_siempre"].map((t) => ({ kind: "block", type: t })) },
+        { kind: "category", name: "Control y variables", colour: C.ctrl, contents: ["pri_esperar", "pri_repetir", "pri_siempre", "pri_si_pais", "pri_variable", "pri_sumar_variable", "pri_si_variable"].map((t) => ({ kind: "block", type: t })) },
         { kind: "category", name: "Luz", colour: C.luz, contents: ["pri_escribir", "pri_luz"].map((t) => ({ kind: "block", type: t })) },
         { kind: "category", name: "Sonido", colour: C.son, contents: [{ kind: "block", type: "pri_pitido" }] }
       ]
@@ -198,6 +210,11 @@
         case "ess_derecha": out.push({ id, t: "girar", g: +f("G") }); break;
         case "ess_izquierda": out.push({ id, t: "girar", g: -f("G") }); break;
         case "ess_repetir": case "pri_repetir": out.push({ id, t: "repetir", n: +f("N"), cuerpo: dentro("HACER") }); break;
+        case "ess_si_pais": out.push({ id, t: "siPais", pais: f("PAIS"), cuerpo: dentro("HACER"), sino: [] }); break;
+        case "pri_si_pais": out.push({ id, t: "siPais", pais: f("PAIS"), cuerpo: dentro("HACER"), sino: dentro("SINO") }); break;
+        case "pri_variable": out.push({ id, t: "variable", nombre: String(f("VAR") || "pasos").trim().slice(0, 24), valor: +f("VAL") }); break;
+        case "pri_sumar_variable": out.push({ id, t: "sumarVariable", nombre: String(f("VAR") || "pasos").trim().slice(0, 24), valor: +f("VAL") }); break;
+        case "pri_si_variable": out.push({ id, t: "siVariable", nombre: String(f("VAR") || "pasos").trim().slice(0, 24), op: f("OP"), valor: +f("VAL"), cuerpo: dentro("HACER") }); break;
         case "ess_esperar": case "pri_esperar": out.push({ id, t: "esperar", s: +f("S") }); break;
         case "ess_luz": case "pri_luz": out.push({ id, t: "luz", color: f("COLOR") }); break;
         case "ess_sonido": out.push({ id, t: "pitido", nota: 72, s: 0.25 }); break;
@@ -390,6 +407,17 @@
       const f = factor();
       switch (b.t) {
         case "repetir": for (let i = 0; i < b.n; i++) await correr(b.cuerpo, ctx); break;
+        case "siPais": {
+          const actual = casillaEn(rb.x, rb.y), detectado = !!(actual && Array.isArray(actual.paises) && actual.paises.indexOf(b.pais) >= 0);
+          await correr(detectado ? b.cuerpo : b.sino, ctx); break;
+        }
+        case "variable": ctx.variables[b.nombre] = b.valor; break;
+        case "sumarVariable": ctx.variables[b.nombre] = (Number(ctx.variables[b.nombre]) || 0) + b.valor; break;
+        case "siVariable": {
+          const actual = Number(ctx.variables[b.nombre]) || 0, v = Number(b.valor);
+          const ok = b.op === "=" ? actual === v : b.op === "!=" ? actual !== v : b.op === ">" ? actual > v : b.op === "<" ? actual < v : b.op === ">=" ? actual >= v : actual <= v;
+          if (ok) await correr(b.cuerpo, ctx); break;
+        }
         case "siempre":
           for (let i = 0; i < 200; i++) { const p = ctx.pasos; await correr(b.cuerpo, ctx); if (ctx.pasos === p) break; }
           throw new Fin("fallo", "El bucle Por siempre no termina nunca. Prueba con Repetir.");
@@ -419,9 +447,21 @@
 
   let intentos = 0;
   function textoProg(l) {
-    return l.map((b) => b.cuerpo ? `${b.t} ${b.n || ""} [${textoProg(b.cuerpo)}]` : b.t + (b.cm ? " " + Math.round(b.cm) + "cm" : b.g ? " " + b.g + "°" : b.vol !== undefined ? ` vol ${b.vol} ${b.cant || ""}${b.uni || ""}` : "")).join(", ");
+    return l.map((b) => {
+      let t = b.t + (b.cm ? " " + Math.round(b.cm) + "cm" : b.g ? " " + b.g + "°" : b.vol !== undefined ? ` vol ${b.vol} ${b.cant || ""}${b.uni || ""}` : b.pais ? " " + b.pais : b.nombre ? " " + b.nombre + (b.valor !== undefined ? "=" + b.valor : "") : "");
+      if (b.cuerpo) t += ` [${textoProg(b.cuerpo)}]`;
+      if (b.sino && b.sino.length) t += ` [si no: ${textoProg(b.sino)}]`;
+      return t;
+    }).join(", ");
   }
-  const contarB = (l) => l.reduce((n, b) => n + 1 + (b.cuerpo ? contarB(b.cuerpo) : 0), 0);
+  const contarB = (l) => l.reduce((n, b) => n + 1 + (b.cuerpo ? contarB(b.cuerpo) : 0) + (b.sino ? contarB(b.sino) : 0), 0);
+  function tieneCaracteristica(lista, tipo) {
+    return lista.some((b) => {
+      const propio = tipo === "variable" ? (b.t === "variable" || b.t === "sumarVariable") : b.t === tipo;
+      return propio || (b.cuerpo && tieneCaracteristica(b.cuerpo, tipo)) || (b.sino && tieneCaracteristica(b.sino, tipo));
+    });
+  }
+  const NOMBRES_CARACTERISTICA = { repetir: "un bucle Repetir", siPais: "una condición con el sensor del tapete", variable: "una variable", siVariable: "una condición que compare una variable" };
   const VAL = () => window.Valoraciones;
   const indicadorReto = (m, i) => (VAL() ? VAL().indicador("rob", [m, i]) : null);
   function valorar(completado, prog, notaRuta) {
@@ -456,7 +496,10 @@
     const prog = ini ? cadena(ini.getNextBlock()) : [];
     reiniciar();
     if (!prog.length) { aviso("El programa está vacío. Engancha bloques debajo del bloque de inicio.", "info"); return; }
-    const ctx = { token: ++ejecucion, pasos: 0 };
+    const exigidas = (reto.exige && reto.exige[modo]) || [];
+    const faltan = exigidas.filter((tipo) => !tieneCaracteristica(prog, tipo));
+    if (faltan.length) { aviso("Para superar este reto necesitas incluir " + faltan.map((x) => NOMBRES_CARACTERISTICA[x] || x).join(" y ") + ".", "info"); return; }
+    const ctx = { token: ++ejecucion, pasos: 0, variables: Object.create(null) };
     corriendo = true; botones();
     try {
       await correr(prog, ctx);
@@ -513,7 +556,9 @@
     $("#rb-menu").hidden = true; $("#rb-juego").hidden = false;
     $("#rb-titulo").textContent = reto.titulo;
     $("#rb-modo").textContent = `${MODOS[m].nombre} · Reto ${i + 1} de ${RETOS.length}`;
-    $("#rb-texto-reto").textContent = reto.texto + ` Sale de ${reto.inicio[0]} mirando hacia ${{ E: "la derecha", O: "la izquierda", N: "arriba", S: "abajo" }[reto.inicio[1]]}.`;
+    const exigidas = (reto.exige && reto.exige[m]) || [];
+    const ayudaModalidad = exigidas.length ? ` En esta modalidad incluye ${exigidas.map((x) => NOMBRES_CARACTERISTICA[x] || x).join(" y ")}.` : "";
+    $("#rb-texto-reto").textContent = reto.texto + ayudaModalidad + ` Sale de ${reto.inicio[0]} mirando hacia ${{ E: "la derecha", O: "la izquierda", N: "arriba", S: "abajo" }[reto.inicio[1]]}.`;
     const ind = indicadorReto(m, i), el = $("#rb-indicador");
     el.hidden = !ind; if (ind) el.innerHTML = `<b>Indicador ${ind.codigo}</b> ${ind.texto}`;
     $("#rb-ayuda").textContent = m === "robot" ? "Cada Avanzar es una casilla (15 cm)." : m === "essential" ? "Una casilla mide 15 × 15 cm. Para girar una esquina, 90 grados." : "Una casilla son 15 cm. Para girar 90° sin avanzar: mover derecha: 100 durante 180 grados. Las ruedas del coche son A y B (detrás) y C y D (delante).";

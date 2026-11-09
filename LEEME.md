@@ -49,14 +49,12 @@ En «Navegar» los botones funcionan para entrar en un destino de Programa, un r
 Cada cambio vale para esa pantalla y ese texto exacto (los textos que llevan el curso, como «Retos de 5º…», se cambian
 una vez para 5.º y otra para 6.º). Pulsa «Terminar de editar» para salir.
 
-## Entrada del alumnado con código
-Cada alumno elige su grupo y su nombre, escribe su usuario de Educacyl y pulsa **Enviarme el código**. Le llega un
-código de 3 cifras a `usuario@educa.jcyl.es` (vale 15 minutos y admite 5 intentos). Al escribirlo, ese ordenador queda
-con su sesión durante 120 días y sus datos se bloquean; con «Salir (no soy yo)» se cierra la sesión.
-Sin sesión, la hoja **no guarda** las notas del alumno. Así un compañero no puede enviar notas con el nombre de otro.
-Las notas que pone el profe desde el panel no necesitan código.
-En el script: `CODIGO_ALUMNO = false` lo desactiva; `DOMINIO_ALUMNADO` y `DIAS_SESION_ALUMNO` cambian el correo y la duración.
-El alumno tiene que estar en la pestaña Alumnado con su usuario correcto.
+## Entrada del alumnado con contraseña elegida
+Cada alumno elige una contraseña de 4 a 24 caracteres en su primer acceso, después de seleccionar grupo, nombre y usuario de Educacyl. En las siguientes visitas escribe esa misma contraseña. La sesión de ese dispositivo se mantiene durante 120 días. Puede cambiar la contraseña desde su sesión.
+
+Las contraseñas se guardan en la pestaña **Accesos alumnado** de la hoja de Google, junto al nombre, usuario y clase, para que el profesor pueda recuperarlas si alguien las olvida. **Importante:** esta pestaña contiene contraseñas legibles; comparte la hoja únicamente con personas autorizadas del profesorado. No compartas el enlace de la hoja con el alumnado.
+
+El alumnado con adaptación curricular mantiene la entrada directa mediante la selección de su nombre, como en la versión anterior. La hoja **Alumnado** debe contener el usuario Educacyl correcto.
 
 ## Adaptación curricular
 En el panel Profe, en la ficha del alumno, marca **Adaptación curricular**. Ese alumno entra solo con elegir su grupo y
@@ -64,7 +62,7 @@ su nombre (sin código) y ve los contenidos adaptados (`js/adaptacion.js`):
 - **Indicadores:** los mismos números (mismo criterio) con un logro muy básico, tomado de la programación de 1.º. Las notas van a las mismas columnas.
 - **Crea:** elige su país (Francia, Italia, Portugal o Alemania), lee o escucha 🔊 una ficha corta con la información ya buscada y responde con una o dos palabras. Las respuestas llegan a la hoja con el reto terminado.
 - **Programa:** 6 niveles cortos con botones grandes de flechas (delante, atrás, girar y saltar).
-- **Robótica:** solo el robot de flechas (con flecha atrás) y 4 retos cortos.
+- **Robótica:** solo el robot de flechas (con flecha atrás) y 10 retos graduados; mantiene la puntuación máxima de 2,5 puntos.
 - **Piensa:** cada parada abre `piensa/facil.html`: lectura de 2-3 líneas, un vídeo y un juego de «bien o mal». La llave se guarda sola.
 Puedes cambiar los textos en `js/adaptacion.js` o con «Editar textos».
 
@@ -187,8 +185,18 @@ Programa, Piensa y cada modalidad de Robótica (Robot, SPIKE Essential y SPIKE P
 Programa, Piensa y cada modalidad de Robótica (Robot, SPIKE Essential y SPIKE Prime) tienen secuencias independientes. Al superar una pantalla, el servidor genera un código individual de 8 caracteres para desbloquear la siguiente; el código no sirve para otro alumno ni para otra secuencia. Crea conserva su funcionamiento y su valoración por rúbrica; Piensa mantiene su valoración actual.
 
 La nota automática de **Programa** se calcula sobre sus 17 pantallas: `5 × pantallas superadas / 17`.
-En **Robótica**, la nota se calcula dentro de cada modalidad: Robot (máximo 2,5), SPIKE Essential (máximo 3,5) y SPIKE Prime (máximo 5), multiplicando el máximo por la proporción de pantallas superadas. En adaptación curricular, Robot tiene 4 pantallas y mantiene el máximo de 2,5.
+En **Robótica**, la nota se calcula dentro de cada modalidad: Robot (máximo 2,5), SPIKE Essential (máximo 3,5) y SPIKE Prime (máximo 5), multiplicando el máximo por la proporción de pantallas superadas. En adaptación curricular, Robot tiene 10 pantallas adaptadas y mantiene el máximo de 2,5.
 
 La hoja de Google crea/actualiza la pestaña **Progreso por rutas**, con el número de pantallas superadas, el total y la nota proporcional de cada ruta para cada alumno. La pestaña **Resultados** sigue registrando cada pantalla superada y **Valoraciones** recibe la nota de progreso correspondiente. Crea y Piensa no cambian sus criterios de valoración.
 
 **Para activar el conjunto de mejoras:** sustituye el contenido del proyecto de Apps Script por el archivo actualizado `registro-google-apps-script.gs` y publica una **nueva versión** (Gestionar implementaciones → Editar → Nueva versión), conservando la URL actual. Después publica en Vercel todos los archivos de esta versión del proyecto. Los códigos y las notas proporcionales no funcionarán correctamente si se actualiza solo la web o solo Apps Script.
+
+
+**Acceso del alumnado (versión actualizada):** cada alumno elige su contraseña en el primer acceso. El profesor puede recuperarla en la pestaña «Accesos alumnado» de la hoja de cálculo. Esta pestaña contiene contraseñas en texto legible: limita el acceso a la hoja exclusivamente al profesorado.
+
+**Robótica:** 10 pantallas por modalidad; las pantallas 5 a 10 incorporan seis nuevos retos de dificultad progresiva. Se mantienen los máximos de 2,5 (Robot), 3,5 (SPIKE Essential) y 5 (SPIKE Prime), con nota proporcional a las pantallas completadas.
+
+## Actualización de Robótica
+Cada modalidad (Robot, SPIKE Essential y SPIKE Prime) tiene 10 pantallas. Se conservan los cuatro primeros retos de la versión anterior y se incorporan seis nuevos (pantallas 5–10), con más paradas y secuencias progresivamente más complejas. SPIKE Essential incorpora un sensor virtual del tapete y condiciones; SPIKE Prime añade condiciones, variables y bucles. El sensor virtual identifica el país de la casilla en la que se encuentra el robot; no controla un sensor físico conectado al robot.
+
+La puntuación se calcula proporcionalmente al número de pantallas superadas: Robot, máximo 2,5; SPIKE Essential, máximo 3,5; SPIKE Prime, máximo 5. La adaptación curricular conserva el máximo de 2,5 puntos en sus 10 retos adaptados. El servidor conserva el progreso y migra los historiales de las versiones anteriores de 4 o 6 pantallas. Crea y Piensa no se modifican.

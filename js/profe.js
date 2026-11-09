@@ -180,9 +180,8 @@ window.Profe = (function () {
             ${RINC.map((r) => `<td>${res[r.id].media === null ? "–" : `<b>${res[r.id].media}</b>`}<small>${res[r.id].hechas}/${res[r.id].total} notas</small>${r.id === "crea" ? `<small>✓ ${res.crea.retos}/${res.crea.nRetos} retos</small>` : ""}</td>`).join("")}<td><b>${media}</b></td><td><button type="button" class="p-papelera" data-i="${i}" title="Dar de baja a ${esc(verNombre(a))}" aria-label="Dar de baja a ${esc(verNombre(a))}">🗑️</button></td></tr>`;
         }).join("")}</tbody></table></div>` : `<p class="intro">Todavía no hay notas de este grupo en la hoja.</p>`}
       ${barraCodigos(lista)}
-      <div class="p-codigos"><div><b>🔑 Códigos de entrada del alumnado</b><p class="intro">Cada alumno tiene un código fijo para entrar en los retos. Puedes verlos aquí e imprimir tarjetas para que los peguen en la agenda. Si un alumno lo cambia, aquí verás el nuevo.</p></div>
-        <div class="enviar-fila"><button type="button" class="btn sec" id="p-pin-ver">Ver los códigos de ${grupo}</button><span class="estado" id="p-pin-est" aria-live="polite"></span></div>
-        <div id="p-pin-lista"></div></div>
+      <div class="p-codigos"><div><b>🔑 Contraseñas del alumnado</b><p class="intro">Cada alumno elige su propia contraseña al entrar por primera vez. Si alguien la olvida, puedes consultarla en la pestaña «Accesos alumnado» de la hoja de Google vinculada al proyecto.</p>
+        ${(window.REGISTRO || {}).hoja ? `<p><a href="${esc((window.REGISTRO || {}).hoja)}" target="_blank" rel="noopener">Abrir hoja de cálculo y consultar contraseñas ↗</a></p>` : ""}</div></div>
       <details class="p-import"><summary>Importar alumnado desde un CSV</summary>
         <p class="intro">Columnas obligatorias: <b>nombre; apellidos; usuario</b> (de Educacyl) y <b>curso</b>. Solo se importan las filas con el curso escrito exactamente <b>P5A, P5B, P6A o P6B</b>; el resto (Infantil, otros cursos o vacío) se salta. Opcionales: hasta dos <b>correos</b> de los tutores (columnas «correo tutor 1» y «correo tutor 2») para que la familia pueda consultar los resultados. Si un alumno ya está, se actualizan sus datos.</p>
         <div class="p-barra"><input type="file" id="p-csv" accept=".csv,text/csv,text/plain"><button type="button" class="btn sec" id="p-plantilla">Descargar plantilla CSV</button></div>
@@ -203,7 +202,6 @@ window.Profe = (function () {
       extra.push(a); pintarAlumno(a);
     });
     raiz.querySelectorAll(".p-alumno").forEach((b) => b.onclick = () => pintarAlumno(lista[+b.dataset.i]));
-    const pv = $("#p-pin-ver"); if (pv) pv.onclick = () => verCodigos(pv);
     const bg = $("#p-cod-grupo"); if (bg) bg.onclick = () => mandarCodigos(lista, bg, `las familias de ${grupo}`);
     const bt = $("#p-cod-todos"); if (bt) bt.onclick = () => mandarCodigos(alumnos().filter((x) => GRUPOS.indexOf(G(x.clase)) >= 0), bt, "las familias de todos los grupos");
     raiz.querySelectorAll(".p-papelera").forEach((b) => b.onclick = () => darDeBaja(lista[+b.dataset.i], b, null));
@@ -327,7 +325,7 @@ window.Profe = (function () {
         <label>Correo tutor 2 <small>(opcional)</small><input id="p-correo-in2" type="email" maxlength="120" value="${esc(separarCorreos(a.correo)[1] || "")}" placeholder="tutor2@ejemplo.com"></label>
         <button class="btn sec" type="submit"${a.usuario ? "" : " disabled title=\"Hace falta el usuario de Educacyl\""}>Guardar correos</button>
         <button class="btn sec" type="button" id="p-cod-uno"${a.usuario && a.correo ? "" : " disabled"}>✉️ Enviar código</button>
-        <label class="p-ac"><input type="checkbox" id="p-ac"${esAdaptado(a) ? " checked" : ""}${a.usuario ? "" : " disabled"}> Adaptación curricular <small>(entra sin código y ve los contenidos adaptados)</small></label>
+        <label class="p-ac"><input type="checkbox" id="p-ac"${esAdaptado(a) ? " checked" : ""}${a.usuario ? "" : " disabled"}> Adaptación curricular <small>(entra directamente y ve los contenidos adaptados)</small></label>
         <span class="estado" id="p-correo-est">${a.usuario ? "Con cualquiera de estos correos la familia puede ver los resultados en la pestaña Familias." : "Este alumno no tiene usuario de Educacyl: impórtalo con su usuario."}</span>
       </form>
       <div class="p-resumen">${RINC.map((r) => `<div style="--rc:${r.color}"><b>${r.nombre}</b><span>${res[r.id].media === null ? "–" : res[r.id].media}</span><small>${res[r.id].hechas} de ${res[r.id].total} con nota${r.id === "crea" ? ` · ✓ ${res.crea.retos}/${res.crea.nRetos} retos terminados` : ""}</small></div>`).join("")}</div>
@@ -348,7 +346,7 @@ window.Profe = (function () {
       est.textContent = "Guardando…"; est.dataset.tipo = "";
       const j = await llamar({ accion: "adaptacion", usuario: a.usuario, valor: si }).catch(() => null);
       e.target.disabled = false;
-      if (j && j.ok) { datos.adaptados = j.adaptados; est.textContent = si ? "✓ Con adaptación: entra sin código y ve los contenidos adaptados." : "✓ Sin adaptación."; est.dataset.tipo = "ok"; }
+      if (j && j.ok) { datos.adaptados = j.adaptados; est.textContent = si ? "✓ Con adaptación: entra directamente y ve los contenidos adaptados." : "✓ Sin adaptación."; est.dataset.tipo = "ok"; }
       else { e.target.checked = !si; est.textContent = (j && j.error) || "No se ha podido guardar."; est.dataset.tipo = "error"; }
     };
     $("#p-cod-uno").onclick = () => mandarCodigos([a], $("#p-cod-uno"), `la familia de ${verNombre(a)}`, $("#p-correo-est"));
@@ -372,36 +370,6 @@ window.Profe = (function () {
       <div class="enviar-fila"><button type="button" class="btn sec" id="p-cod-grupo"${n ? "" : " disabled"}>Enviar a ${grupo} (${n})</button>
       <button type="button" class="btn sec" id="p-cod-todos"${t ? "" : " disabled"}>Enviar a todos los grupos (${t})</button>
       <span class="estado" id="p-cod-est" aria-live="polite"></span></div></div>`;
-  }
-  /* ---------- Códigos fijos del alumnado ---------- */
-  async function verCodigos(btn) {
-    const est = $("#p-pin-est"), caja = $("#p-pin-lista");
-    btn.disabled = true; est.textContent = "Cargando…"; est.dataset.tipo = "";
-    const j = await llamar({ accion: "codigosAlumnos", clase: grupo }).catch(() => ({ ok: false, error: "No se ha podido conectar con la hoja." }));
-    btn.disabled = false;
-    if (!j.ok) { est.textContent = j.error || "No se han podido leer los códigos."; est.dataset.tipo = "error"; return; }
-    est.textContent = j.alumnos.length ? "" : "No hay alumnos de este grupo en la pestaña Alumnado.";
-    if (!j.alumnos.length) { caja.innerHTML = ""; return; }
-    caja.innerHTML = `<div class="tabla-scroll"><table class="p-tabla"><thead><tr><th>Alumno</th><th>Usuario Educacyl</th><th>Código</th></tr></thead><tbody>
-      ${j.alumnos.map((a) => `<tr><td>${esc(a.nombre)}</td><td>${esc(a.usuario)}</td><td><b style="font-family:var(--f-mono);letter-spacing:.15em">${esc(a.codigo)}</b></td></tr>`).join("")}</tbody></table></div>
-      <div class="enviar-fila" style="margin-top:8px"><button type="button" class="btn sec" id="p-pin-imp">🖨️ Imprimir tarjetas para la agenda</button><button type="button" class="btn sec" id="p-pin-ocultar">Ocultar</button></div>`;
-    $("#p-pin-ocultar").onclick = () => { caja.innerHTML = ""; };
-    $("#p-pin-imp").onclick = () => imprimirCodigos(j.clase, j.alumnos);
-  }
-  function imprimirCodigos(clase, lista) {
-    const w = window.open("", "_blank");
-    if (!w) { alert("El navegador ha bloqueado la ventana. Permite las ventanas emergentes e inténtalo otra vez."); return; }
-    const web = location.origin + location.pathname.replace(/[^/]*$/, "");
-    w.document.write(`<!doctype html><html lang="es"><head><meta charset="utf-8"><title>Códigos ${esc(clase)}</title><style>
-      body { font-family: system-ui, sans-serif; margin: 10mm; color: #14225a; }
-      .t { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4mm; }
-      .c { border: 1.5px dashed #14225a; border-radius: 3mm; padding: 4mm; break-inside: avoid; font-size: 11pt; }
-      .c b { display: block; font-size: 12pt; margin-bottom: 2mm; } .k { font: 700 20pt monospace; letter-spacing: .2em; }
-      .p { font-size: 8.5pt; color: #4d5873; margin-top: 2mm; } @media print { button { display: none; } }
-      </style></head><body><button onclick="print()">Imprimir</button><h3>Rumbo a Europa · códigos de ${esc(clase)} (recortar y pegar en la agenda)</h3><div class="t">
-      ${lista.map((a) => `<div class="c"><b>${esc(a.nombre)}</b>Usuario: ${esc(a.usuario)}<br>Código: <span class="k">${esc(a.codigo)}</span><div class="p">${esc(web)} · Es siempre el mismo. No se lo digas a nadie.</div></div>`).join("")}
-      </div></body></html>`);
-    w.document.close();
   }
   async function mandarCodigos(lista, btn, quien, est) {
     est = est || $("#p-cod-est");

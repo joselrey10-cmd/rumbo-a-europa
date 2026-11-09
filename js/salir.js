@@ -1,6 +1,6 @@
 /*
   BOTÓN «SALIR» DEL ALUMNADO
-  Cuando un alumno ha entrado con su código (o por adaptación curricular), se ve arriba a la derecha
+  Cuando un alumno ha iniciado sesión con su contraseña (o por adaptación curricular), se ve arriba a la derecha
   en todas las pantallas (también en las actividades de Piensa): «👤 Nombre · P5A  [Salir]».
   Al salir se cierra su sesión y se borran de este ordenador sus datos y notas guardadas, para que
   el siguiente compañero empiece de cero. Lo que ya se envió sigue en la hoja del profe.
@@ -82,7 +82,7 @@
     else pintar();
   });
   window.addEventListener("hashchange", () => setTimeout(pintar, 0));
-  // La sesión puede cambiar en esta misma página (al entrar con el código): se comprueba cada poco.
+  // La sesión puede cambiar en esta misma página (al iniciar sesión): se comprueba cada poco.
   let ultimo = null;
   setInterval(() => { let v = null; try { v = localStorage.getItem(SESION); } catch (e) {} if (v !== ultimo) { ultimo = v; pintar(); } }, 800);
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", pintar); else pintar();

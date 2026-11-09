@@ -1,10 +1,10 @@
 /*
   CANDADO DE LOS RETOS
-  Sin haber entrado con el código (js/acceso.js), el alumno no puede abrir los retos:
+  Sin haber iniciado sesión (js/acceso.js), el alumno no puede abrir los retos:
   Crea, Programa, Robótica, Piensa y sus notas. Se le devuelve a la portada de Rincones con un aviso.
   - El alumnado con adaptación curricular entra eligiendo su nombre (también crea sesión), así que puede pasar.
-  - Si en la hoja CODIGO_ALUMNO = false, no se pide código y no hay candado.
-  - El profe (panel Profe abierto o editando textos) puede ver todo sin código.
+  - Si en la hoja CODIGO_ALUMNO = false, no se pide contraseña y no hay candado.
+  - El profe (panel Profe abierto o editando textos) puede ver todo sin contraseña.
   Se carga en index.html ANTES de js/juego.js y al final de piensa/*.html.
 */
 (function () {
@@ -24,7 +24,7 @@
   function avisar() {
     let t = document.getElementById("acceso-aviso");
     if (!t) { t = document.createElement("div"); t.id = "acceso-aviso"; t.setAttribute("role", "alert"); document.body.appendChild(t); }
-    t.innerHTML = "🔐 Para entrar en los retos, primero <b>entra con tu código</b>: elige tu curso y tu nombre, escribe tu usuario de Educacyl y pulsa «Enviarme el código».";
+    t.innerHTML = "🔐 Para entrar en los retos, primero <b>entra con tu contraseña</b>: elige tu curso y tu nombre, escribe tu usuario de Educacyl y crea tu contraseña o escribe la que elegiste.";
     t.hidden = false; clearTimeout(t._t); t._t = setTimeout(() => (t.hidden = true), 9000);
     setTimeout(() => { const f = document.querySelector("#r-form"); if (f) f.scrollIntoView({ behavior: "smooth", block: "center" }); }, 300);
   }
