@@ -1,12 +1,12 @@
 /*
   INDICADORES DE LOGRO (Programaciones didácticas de TIAC 2026-27, CEIP Tierra de Pinares)
   ----------------------------------------------------------------------------------------
-  Textos copiados de cada programación (los 56 indicadores de 5.º y los 40 de 6.º). El curso se saca de la clase
+  Textos copiados de cada programación (los 56 indicadores de 5.º y los 41 de 6.º). El curso se saca de la clase
   que escribe el alumno: si empieza por 6 se usan los de 6.º; si no, los de 5.º.
 
   - INDICADORES[curso]: número del indicador -> texto.
   - INDICADOR_PROGRAMACION[curso]: ciudad -> indicador de ese destino.
-  - INDICADOR_ROBOTICA[curso]: para cada nivel, el indicador de cada uno de sus 6 retos (en orden).
+  - INDICADOR_ROBOTICA[curso]: para cada nivel, el indicador de cada uno de sus 10 retos (en orden).
   Puedes cambiar cualquier relación aquí.
 
   Valoración automática de cada actividad (de 0 a 5):
@@ -19,7 +19,7 @@
 */
 window.INDICADORES = {
   "5º": {
-    "1.1.1": "CCL3 · CD1 · CP1: Busca con dos o más palabras clave los datos de su país (capital, población, idioma, bandera) y cómo se dice «hola» en su lengua para el Word colaborativo, y copia solo la información que pide su ruta (4 datos o 3 curiosidades).",
+    "1.1.1": "CCL3 · CD1 · CP1: Busca con dos o más palabras clave los datos de su país (capital, población, idioma, bandera) en varias fuentes y cómo se dice «hola» en su lengua para el Word colaborativo, y copia solo la información que pide su ruta (4 datos o 3 curiosidades).",
     "1.1.2": "CD1: Encuentra un dato comprobado sobre el uso de la bicicleta y el reciclaje en su país y anota en la tabla la web de la que lo obtiene.",
     "1.1.3": "CCL3 · CCL1: Comprueba ese dato en una segunda web y explica cuál de las dos es más fiable (web institucional, autor, fecha).",
     "1.1.4": "CCL3 · CD1 · CP1: Distingue en una web el contenido, la publicidad y los anuncios trampa, no pulsa los enlaces engañosos y lee los iconos y las palabras en inglés del navegador y de OneDrive (candado, pestañas, actualizar, Download, Share) y explica qué hace cada uno.",
@@ -77,22 +77,24 @@ window.INDICADORES = {
     "5.3.3": "CD2 · CD3: Explica a otra tripulación cómo resolvió un reto (micro:bit o robot) con una miniguía de pasos que les permite hacerlo."
   },
   "6º": {
-    "1.1.1": "CD1, CCL3: Busca en Internet los datos pedidos de su país (capital, habitantes, monumento y curiosidades) con palabras clave y anota la web de cada dato.",
+    "1.1.1": "CD1, CCL3, CP1: Busca en Internet los datos pedidos de su país (capital, habitantes, monumento y curiosidades) con palabras clave y anota la web de cada dato.",
     "1.1.2": "CD1, CCL3: Comprueba un dato en una segunda web fiable antes de usarlo, también cuando el dato lo ha dado una IA.",
     "1.1.3": "CCL3, CP1: Distingue una noticia fiable de un bulo (autor, fecha, fuentes, titular que asusta o mete prisa) y sabe que debe comprobarla en otro medio antes de compartirla.",
+    "1.1.4": "CD1, CCL3: Reconoce diferentes navegadores.",
     "1.2.1": "CE3: Guarda sus trabajos en la carpeta de OneDrive indicada (TIAC · curso · SA o subcarpeta) con un nombre claro.",
     "1.2.2": "CE3: Exporta su trabajo al formato pedido (Word a PDF, Audacity a MP3) y comprueba que se abre.",
     "1.2.3": "CE3: Organiza el escritorio y crea y nombra carpetas en su ordenador.",
-    "2.1.1": "CCL5, CC1: Escribe un correo con todas sus partes (Para, CC, CCO, asunto, saludo, cuerpo, despedida, firma y adjunto) y sabe cuándo usar CC y CCO.",
+    "2.1.1": "CCL5, CC1 (y CPSAA en el 2.º trimestre): Escribe un correo con todas sus partes (Para, CC, CCO, asunto, saludo, cuerpo, despedida, firma y adjunto) y sabe cuándo usar CC y CCO.",
     "2.1.2": "CP1, CCEC3: Presenta su país con respeto, sin estereotipos, e incluye palabras de su lengua bien escritas y pronunciadas.",
     "2.1.3": "CPSAA3, CC1: Aplica la netiqueta en chats, correos y videollamadas: saluda, pide por favor, no grita en mayúsculas, pide turno y pide permiso antes de compartir imágenes de otros.",
     "2.2.1": "CCL5, CE3: Comparte su trabajo por OneDrive o Teams con las personas adecuadas y comprueba que pueden abrirlo.",
     "2.2.2": "CCL5, CE3: Crea un código QR que enlaza a información útil (especie, ahorro de agua o energía) y comprueba que funciona.",
-    "2.3.1": "CD3, CPSAA5: Escribe su parte en un documento colaborativo de Word sin borrar ni cambiar la de los demás.",
+    "2.3.1": "CD3, CPSAA5: Escribe su parte en un documento colaborativo de Word o PowerPoint sin borrar ni cambiar la de los demás.",
     "2.3.2": "CCL5, CD3: Completa con su tripulación una tabla de Excel compartida aportando sus datos en el lugar acordado.",
     "3.1.1": "STEM3, CD2: Crea en Excel una tabla con los datos de los países y un gráfico con título.",
     "3.1.2": "CD2, CCEC4: Diseña en Canva un cartel legible con título, información e imagen, cuidando tipografía, colores y orden.",
     "3.1.3": "CD2, CD3: Graba y edita en Audacity su parte del pódcast con voz clara, quitando silencios y errores.",
+    "3.1.4": "CD2, CCEC4: Crea en PowerPoint una presentación colaborativa con título, información e imágenes, cuidando tipografía, colores y orden, incluyendo diseño y transiciones.",
     "3.2.1": "CD2, CD5: Anima en Scratch las letras del nombre de su país con eventos y bloques de apariencia, movimiento y sonido.",
     "3.2.2": "CD2, CD5: Programa en Scratch personajes que se desplazan o conversan por turnos siguiendo una secuencia ordenada.",
     "3.2.3": "STEM3, CD5: Utiliza bucles (repetir) para crear una sintonía o melodía en Scratch.",
@@ -136,13 +138,17 @@ window.INDICADOR_PROGRAMACION = {
 
 window.INDICADOR_ROBOTICA = {
   "5º": {
-    robot: ["3.2.3", "3.2.3", "3.2.6", "3.2.6", "3.2.6", "3.2.6"],
-    essential: ["3.2.3", "3.2.3", "3.2.9", "3.2.9", "3.2.9", "3.2.9"],
-    prime: ["3.2.9", "3.2.9", "3.2.9", "3.2.9", "3.2.9", "3.2.9"]
+    // Robot básico: secuencias y planificación de rutas (indicadores 3.2.3 y 3.2.6).
+    robot: ["3.2.3", "3.2.3", "3.2.3", "3.2.3", "3.2.6", "3.2.6", "3.2.6", "3.2.6", "3.2.6", "3.2.6"],
+    // SPIKE Essential: progresión desde programación del robot hasta el indicador específico de SPIKE.
+    essential: ["3.2.3", "3.2.3", "3.2.9", "3.2.9", "3.2.9", "3.2.9", "3.2.9", "3.2.9", "3.2.9", "3.2.9"],
+    // En 5.º, el indicador curricular específico de SPIKE disponible es 3.2.9.
+    prime: ["3.2.9", "3.2.9", "3.2.9", "3.2.9", "3.2.9", "3.2.9", "3.2.9", "3.2.9", "3.2.9", "3.2.9"]
   },
   "6º": {
-    robot: ["3.2.5", "3.2.5", "3.2.5", "3.2.5", "3.2.5", "3.2.5"],
-    essential: ["3.2.5", "3.2.5", "3.2.5", "3.2.5", "3.2.5", "3.2.5"],
-    prime: ["3.2.5", "3.2.5", "3.2.5", "3.2.5", "3.2.5", "3.2.5"]
+    robot: ["3.2.5", "3.2.5", "3.2.5", "3.2.5", "3.2.5", "3.2.5", "3.2.5", "3.2.5", "3.2.5", "3.2.5"],
+    essential: ["3.2.5", "3.2.5", "3.2.5", "3.2.5", "3.2.5", "3.2.5", "3.2.5", "3.2.5", "3.2.5", "3.2.5"],
+    // Los retos avanzados de Prime incorporan depuración explícita del programa.
+    prime: ["3.2.5", "3.2.5", "3.2.5", "3.2.5", "3.2.5", "3.2.6", "3.2.6", "3.2.6", "3.2.6", "3.2.6"]
   }
 };

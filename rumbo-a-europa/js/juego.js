@@ -12,14 +12,17 @@
   const CLAVE = "rumbo-a-europa-v1";
 
   /* ---------- Progreso guardado ---------- */
-  let progreso = { estrellas: {}, personaje: PERSONAJES[0].id, alumno: { nombre: "", clase: "" } };
+  // Con adaptación curricular los niveles son otros: sus estrellas se guardan aparte.
+  const AC = !!window.ADAPTADO, EST = AC ? "estrellasAC" : "estrellas";
+  let progreso = { estrellas: {}, estrellasAC: {}, personaje: PERSONAJES[0].id, alumno: { nombre: "", clase: "" } };
   try {
     const g = JSON.parse(localStorage.getItem(CLAVE) || "null");
     if (g && typeof g === "object") progreso = Object.assign(progreso, g);
+    progreso[EST] = progreso[EST] || {};
   } catch (e) { /* sin almacenamiento */ }
   function guardar() { try { localStorage.setItem(CLAVE, JSON.stringify(progreso)); } catch (e) {} }
-  const completados = () => Object.keys(progreso.estrellas).length;
-  const desbloqueadoNivel = (i) => NIVELES[i].pos === 0 || !!progreso.estrellas[i - 1];
+  const completados = () => Object.keys(progreso[EST]).length;
+  const desbloqueadoNivel = (i) => NIVELES[i].pos === 0 || !!progreso[EST][i - 1];
   const desbloqueadoPers = (p) => completados() >= (p.desbloquea || 0);
   function personajeActual() {
     const p = PERSONAJES.find((x) => x.id === progreso.personaje);
@@ -147,10 +150,10 @@
     });
 
     $("#lista-destinos").innerHTML = AVENTURAS.map((av, ai) => {
-      const hechas = NIVELES.filter((n, i) => n.aventura === ai && progreso.estrellas[i]).length;
+      const hechas = NIVELES.filter((n, i) => n.aventura === ai && progreso[EST][i]).length;
       const tarjetas = NIVELES.map((n, i) => {
         if (n.aventura !== ai) return "";
-        const est = progreso.estrellas[i] || 0;
+        const est = progreso[EST][i] || 0;
         const ok = desbloqueadoNivel(i);
         return `<button class="destino" data-i="${i}" ${ok ? "" : "disabled"}>
         <span class="num">Destino ${n.pos + 1} de ${av.niveles.length}</span>
@@ -178,8 +181,8 @@
   let corriendo = false;
   let intentos = 0;          // veces que se pulsa Ejecutar en este nivel
 
-  const NOMBRES = { avanzar: "Avanzar", izq: "Girar a la izquierda", der: "Girar a la derecha", saltar: "Saltar", repetir: "Repetir", si: "Si…", hasta: "Repetir hasta llegar" };
-  const SIMBOLOS = { avanzar: "↑", izq: "↺", der: "↻", saltar: "⤴", repetir: "⟳", si: "?", hasta: "⚑" };
+  const NOMBRES = { atras: "Atrás", avanzar: "Avanzar", izq: "Girar a la izquierda", der: "Girar a la derecha", saltar: "Saltar", repetir: "Repetir", si: "Si…", hasta: "Repetir hasta llegar" };
+  const SIMBOLOS = AC ? { avanzar: "⬆️", atras: "⬇️", izq: "↩️", der: "↪️", saltar: "⤴️", repetir: "🔁", si: "❓", hasta: "🚩" } : { atras: "↓", avanzar: "↑", izq: "↺", der: "↻", saltar: "⤴", repetir: "⟳", si: "?", hasta: "⚑" };
   const CONDICIONES = { salto: "hay algo que saltar delante", camino: "hay camino delante", izq: "hay camino a la izquierda", der: "hay camino a la derecha" };
   const CONTENEDORES = ["repetir", "si", "hasta"];
 
@@ -196,10 +199,11 @@
     n.focus();
   }
 
-  function irANivel(i) {
+  async function irANivel(i) {
     if (!desbloqueadoNivel(i)) return;
     if (!progreso.alumno.nombre) { if ($("#juego").hidden) pedirNombre(); else mostrarInicio(), pedirNombre(); return; }
     if (location.hash !== "#destino-" + (i + 1)) { location.hash = "destino-" + (i + 1); return; }
+    if (window.RetosCadena && !(await window.RetosCadena.entrar("programa", i, NIVELES.length))) return;
     abrirNivel(i);
   }
 
@@ -306,7 +310,7 @@
     return lista.some((b) => b.cuerpo && quitar(id, b.cuerpo));
   }
   const contar = (lista) => lista.reduce((n, b) => n + 1 + (b.cuerpo ? contar(b.cuerpo) : 0) + (b.sino ? contar(b.sino) : 0), 0);
-  const PUZLE = !!window.EditorBloques;
+  const PUZLE = !!window.EditorBloques && !AC;   // con adaptación: botones grandes de flechas (tocar para añadir)
 
   function añadir(t) {
     if (corriendo) return;
@@ -441,6 +445,10 @@
           c === "B" ? "Hay una maleta en medio. Prueba a saltar." : "¡Te sales del camino!");
       }
       pj.x += dx; pj.y += dy;
+    } else if (paso.t === "atras") {
+      const c = celda(pj.x - dx, pj.y - dy);
+      if (!pisable(c)) throw new Fin("fallo", c === "X" ? "¡Un árbol detrás! Prueba otra flecha." : "¡Te sales del camino!");
+      pj.x -= dx; pj.y -= dy;
     } else if (paso.t === "saltar") {
       const medio = celda(pj.x + dx, pj.y + dy), dest = celda(pj.x + 2 * dx, pj.y + 2 * dy);
       if (medio === "X") throw new Fin("fallo", "Ese árbol es demasiado alto para saltarlo.");
@@ -494,25 +502,28 @@
     aviso(txt);
   }
 
-  function victoria() {
+  async function victoria() {
     marcar(null); corriendo = false; botones();
     $("#sprite").classList.add("fiesta");
     const n = contar(programa);
     const est = n <= nivel.reto ? 3 : n <= nivel.reto + 2 ? 2 : 1;
-    progreso.estrellas[nivelI] = Math.max(progreso.estrellas[nivelI] || 0, est);
+    progreso[EST][nivelI] = Math.max(progreso[EST][nivelI] || 0, est);
     guardar();
-    const val = valorar(true);
+    const cadena = window.RetosCadena ? await window.RetosCadena.completar("programa", nivelI, NIVELES.length) : null;
+    const val = valorar(true, null, cadena && cadena.ok && Number.isFinite(cadena.nota) ? cadena.nota : null);
     enviarResultado(n, est, val);
     const av = AVENTURAS[nivel.aventura];
     const ultimo = nivel.pos === av.niveles.length - 1;
-    const todos = NIVELES.every((n, i) => n.aventura !== nivel.aventura || progreso.estrellas[i]);
+    const todos = NIVELES.every((n, i) => n.aventura !== nivel.aventura || progreso[EST][i]);
     const nuevo = PERSONAJES.find((p) => (p.desbloquea || 0) === completados() && p.desbloquea);
     const p = personajeActual();
     let html = `<div class="sello-grande">${SELLO_HECHO(nivel.ciudad.toUpperCase().slice(0, 9))}</div>
       <h2>¡${nivel.ciudad} conseguido!</h2>
       <div class="grandes" aria-label="${est} de 3 estrellas"><b>${"★".repeat(est)}</b>${"★".repeat(3 - est)}</div>
       <p>${est === 3 ? `Programa perfecto: ${n} bloques.` : `Lo has hecho con ${n} bloques. ¿Puedes conseguirlo con ${nivel.reto}?`}</p>
-      ${val && val.codigo ? `<p class="val-ind">Indicador ${val.codigo}: <b>${val.nota} de 5</b></p>` : ""}`;
+      ${val && val.codigo ? `<p class="val-ind">Indicador ${val.codigo}: <b>${val.nota} de 5</b></p>` : ""}
+      ${cadena && cadena.ok && Number.isFinite(cadena.nota) ? `<p class="val-ind">Valoración de Programa: <b>${cadena.completados} de ${cadena.total} pantallas · ${cadena.nota} de 5</b></p>` : ""}
+      ${cadena && cadena.ok && cadena.codigo ? `<div class="codigo-desbloqueo"><p>🔐 <b>Código para el siguiente reto</b></p><strong>${cadena.codigo}</strong><p>Guárdalo: lo necesitarás para abrir el siguiente reto.</p></div>` : cadena && !cadena.ok ? `<p class="aviso">${cadena.error || "No se ha podido generar el código. Vuelve a intentarlo."}</p>` : ""}`;
     if (nuevo) html += `<p><strong>¡Nuevo personaje desbloqueado: ${nuevo.nombre}!</strong></p>`;
     if (ultimo && todos) html += `<div class="diploma">${COLEGIO.logo ? `<img src="${COLEGIO.logo}" alt="Escudo" style="height:90px;width:auto;display:block;margin:0 auto 6px">` : ""}<span class="etiqueta">Diploma</span><strong>${progreso.alumno.nombre || p.nombre}: ${av.nombre} completada</strong><p style="margin:4px 0 0">Has recorrido ${av.niveles.length} destinos programando con ${p.nombre}. ${COLEGIO.nombre} · ${COLEGIO.lema}</p></div>`;
     if (ultimo && todos && window.XLSX) html += `<p><button class="btn sec" id="v-excel">Descargar mi valoración (Excel)</button></p>`;
@@ -529,13 +540,13 @@
 
   /* ---------- Indicadores y valoración ---------- */
   function indicadorNivel(n) { return window.Valoraciones ? window.Valoraciones.indicador("prog", n.ciudad) : null; }
-  function valorar(completado, parcialExtra) {
+  function valorar(completado, parcialExtra, notaRuta) {
     if (!window.Valoraciones) return null;
     const ind = indicadorNivel(nivel) || {};
     const n = contar(programa);
-    const nota = window.Valoraciones.nota({ completado, parcial: pj.sellos.size > 0 || !!parcialExtra, intentos, bloques: n, reto: nivel.reto });
-    const r = window.Valoraciones.registrar("prog-" + nivelI, { nota, intentos, bloques: n, codigo: ind.codigo || "", pantalla: "Programación", actividad: `${AVENTURAS[nivel.aventura].nombre} · ${nivel.ciudad}` });
-    return Object.assign({}, r, { codigo: ind.codigo, nota: Math.max(nota, r.nota) });
+    const nota = Number.isFinite(notaRuta) ? notaRuta : window.Valoraciones.nota({ completado, parcial: pj.sellos.size > 0 || !!parcialExtra, intentos, bloques: n, reto: nivel.reto });
+    const r = window.Valoraciones.registrar("prog-" + nivelI, { nota, intentos, bloques: n, codigo: ind.codigo || "", pantalla: "Programación", actividad: `${AVENTURAS[nivel.aventura].nombre} · ${nivel.ciudad}` }, Number.isFinite(notaRuta));
+    return Object.assign({}, r, { codigo: ind.codigo, nota: Number.isFinite(notaRuta) ? r.nota : Math.max(nota, r.nota) });
   }
   function descargarExcel() {
     if (!window.Valoraciones || !window.Valoraciones.excel()) aviso("No se ha podido crear el Excel en este navegador.");
@@ -566,6 +577,10 @@
       indicador: val ? val.codigo || "" : "",
       valoracion: val ? val.nota : ""
     };
+    if (window.Acceso) {
+      if (window.Acceso.requiere() && !window.Acceso.token()) { window.Acceso.avisar(); return; }
+      Object.assign(datos, window.Acceso.datosEnvio());
+    }
     try {
       fetch(REGISTRO.url, { method: "POST", mode: "no-cors", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify(datos) }).catch(() => {});
     } catch (e) { /* sin conexión: el juego sigue */ }
@@ -591,6 +606,8 @@
     n.addEventListener("input", cambiar); c.addEventListener("input", cambiar); u.addEventListener("input", cambiar);
     c.addEventListener("input", () => pintarInicio());
     $("#form-alumno").addEventListener("submit", (e) => e.preventDefault());
+    if (window.ListaAlumnos) window.ListaAlumnos.montar(n, c, u);
+    if (window.Acceso) window.Acceso.montar($("#form-alumno"), { clase: c, nombre: n, usuario: u });
     pintarOk();
   }
 
@@ -600,7 +617,7 @@
     $("#juego").hidden = true; $("#inicio").hidden = false;
     pintarInicio();
   }
-  function enrutar() {
+  async function enrutar() {
     const h = location.hash;
     const sec = /^#robotica/.test(h) ? "robotica" : /^#(destino-\d+|programa)$/.test(h) ? "programa" : /^#crea/.test(h) ? "crea" : /^#piensa/.test(h) ? "piensa" : h === "#profe" ? "profe" : h === "#familias" ? "familias" : "inicio";
     document.body.dataset.seccion = sec;
@@ -621,12 +638,15 @@
     if (window.Robotica) window.Robotica.ocultar();
     const m = /^#destino-(\d+)$/.exec(location.hash);
     const i = m ? +m[1] - 1 : -1;
-    if (i >= 0 && i < NIVELES.length && desbloqueadoNivel(i) && progreso.alumno.nombre) abrirNivel(i);
+    if (i >= 0 && i < NIVELES.length && desbloqueadoNivel(i) && progreso.alumno.nombre) {
+      if (window.RetosCadena && !(await window.RetosCadena.entrar("programa", i, NIVELES.length))) { mostrarInicio(); return; }
+      abrirNivel(i);
+    }
     else mostrarInicio();
   }
 
   $("#btn-empezar").onclick = () => {
-    let i = NIVELES.findIndex((_, k) => !progreso.estrellas[k] && desbloqueadoNivel(k));
+    let i = NIVELES.findIndex((_, k) => !progreso[EST][k] && desbloqueadoNivel(k));
     irANivel(i < 0 ? 0 : i);
   };
   $("#btn-volver").onclick = () => { location.hash = "programa"; };

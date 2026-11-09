@@ -5,10 +5,21 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Rumbo a Europa</title>
 <meta name="description" content="Rincones TIC de 5.º y 6.º: Crea, Programa, Robótica y Piensa.">
+<link rel="icon" href="favicon.ico" sizes="48x48">
+<link rel="icon" type="image/png" sizes="192x192" href="img/avatar-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="theme-color" content="#14225a">
+<meta property="og:title" content="Rumbo a Europa · Rincones TIC">
+<meta property="og:description" content="Rincones TIC de 5.º y 6.º del CEIP Tierra de Pinares: Crea, Programa, Robótica y Piensa.">
+<meta property="og:image" content="https://rumbo-a-europa.vercel.app/img/compartir.png">
+<meta property="og:url" content="https://rumbo-a-europa.vercel.app/">
+<meta property="og:type" content="website">
+<meta name="twitter:card" content="summary_large_image">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;800&family=DM+Mono&family=Nunito:wght@400;700;800&display=swap">
 <link rel="stylesheet" href="css/estilo.css">
+<link rel="stylesheet" href="css/textos.css">
 </head>
 <body>
 <nav class="nav-global" aria-label="Secciones">
@@ -52,9 +63,9 @@
       <h2>¿Quién viaja hoy?</h2>
       <p class="intro">Escribe tu nombre, tu usuario de Educacyl y tu curso para que tu profe vea tus resultados.</p>
       <form class="alumno" id="form-alumno" autocomplete="off">
-        <label for="in-nombre">Nombre<input id="in-nombre" maxlength="30" placeholder="Por ejemplo: Lucía"></label>
+        <label for="in-clase">Curso<select id="in-clase"><option value="">Elige</option><option>P5A</option><option>P5B</option><option>P6A</option><option>P6B</option></select></label>
+        <label for="in-nombre">Nombre<input id="in-nombre" maxlength="60" placeholder="Por ejemplo: Lucía"></label>
         <label for="in-usuario">Usuario Educacyl<input id="in-usuario" maxlength="60" placeholder="nombre.apellido"></label>
-        <label for="in-clase">Curso<select id="in-clase"><option value="">Elige</option><option>5ºA</option><option>5ºB</option><option>6ºA</option><option>6ºB</option></select></label>
         <span class="alumno-ok" id="alumno-ok" hidden></span>
       </form>
     </div>
@@ -171,9 +182,9 @@
     </header>
     <div class="envoltura seccion">
       <form class="alumno rb-alumno" id="rb-form-alumno" autocomplete="off">
-        <label for="rb-in-nombre">Nombre<input id="rb-in-nombre" maxlength="30" placeholder="Por ejemplo: Lucía"></label>
+        <label for="rb-in-clase">Curso<select id="rb-in-clase"><option value="">Elige</option><option>P5A</option><option>P5B</option><option>P6A</option><option>P6B</option></select></label>
+        <label for="rb-in-nombre">Nombre<input id="rb-in-nombre" maxlength="60" placeholder="Por ejemplo: Lucía"></label>
         <label for="rb-in-usuario">Usuario Educacyl<input id="rb-in-usuario" maxlength="60" placeholder="nombre.apellido"></label>
-        <label for="rb-in-clase">Curso<select id="rb-in-clase"><option value="">Elige</option><option>5ºA</option><option>5ºB</option><option>6ºA</option><option>6ºB</option></select></label>
         <a class="btn sec" href="#notas-rob" style="text-decoration:none">Mi autoevaluación</a>
         <button type="button" class="btn sec" id="rb-btn-excel">Descargar mi valoración (Excel)</button>
       </form>
@@ -249,7 +260,13 @@
 <script src="js/niveles.js"></script>
 <script src="js/indicadores.js"></script>
 <script src="js/valoraciones.js"></script>
+  <script src="js/lista-alumnos.js"></script>
+  <script src="js/acceso.js"></script>
+  <script src="js/retos-encadenados.js"></script>
+  <script src="js/candado.js"></script>
 <script src="js/rincones-datos.js"></script>
+<script src="js/adaptacion.js"></script>
+<script src="js/ficha-docx.js"></script>
 <script src="js/vendor/xlsx.mini.min.js"></script>
 <script src="js/vendor/blockly.min.js"></script>
 <script src="js/vendor/blockly-es.js"></script>
@@ -260,5 +277,7 @@
 <script src="js/familias.js"></script>
 <script src="js/rincones.js"></script>
 <script src="js/juego.js"></script>
+<script src="js/textos.js"></script>
+<script src="js/salir.js"></script>
 </body>
 </html>

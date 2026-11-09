@@ -1,0 +1,33 @@
+/* Modo editar textos (profe). Se usa en index.html y en las actividades de piensa/. */
+body.editando-textos { padding-bottom: 110px; }
+body.editando-textos main :is(h1,h2,h3,h4,p,li,span,b,strong,em,a,button,label,small,td,th):hover,
+body.editando-textos.piensa-ed :is(h1,h2,h3,h4,p,li,span,b,strong,em,a,button,label,small,td,th):hover { outline: 2px dashed #e07a1f; outline-offset: 2px; cursor: text; }
+#textos-barra, #textos-dialogo { font-family: "Nunito", "Segoe UI", system-ui, sans-serif; font-size: 15px; line-height: 1.35; }
+#textos-barra { position: fixed; left: 12px; right: 12px; bottom: 12px; z-index: 9999; display: flex; flex-wrap: wrap; gap: 8px 10px; align-items: center;
+  background: #14225a; color: #fff; padding: 10px 14px; border-radius: 14px; box-shadow: 0 6px 24px rgba(0,0,0,.3); }
+#textos-barra .tb-t { flex: 1 1 280px; }
+#textos-barra button, #textos-barra a, #textos-barra select, #textos-dialogo button { font: inherit; font-weight: 700; border-radius: 999px; padding: 7px 14px; cursor: pointer; border: 2px solid #fff; text-decoration: none; }
+#textos-barra a, #textos-barra button { background: transparent; color: #fff; }
+#textos-barra #textos-salir { background: #ffcc00; color: #14225a; border-color: #ffcc00; }
+#textos-barra .tb-modo { display: inline-flex; gap: 0; margin: 0; }
+#textos-barra .tb-modo button { border-radius: 0; padding: 6px 12px; min-height: 0; }
+#textos-barra .tb-modo button:first-child { border-radius: 999px 0 0 999px; }
+#textos-barra .tb-modo button:last-child { border-radius: 0 999px 999px 0; border-left: 0; }
+#textos-barra .tb-modo button[aria-checked="true"] { background: #fff; color: #14225a; }
+#textos-barra .tb-ir { display: inline-flex; gap: 6px; align-items: center; color: #fff; font-weight: 700; }
+#textos-barra select { background: #fff; color: #14225a; padding: 5px 10px; }
+#textos-dialogo { position: fixed; inset: 0; z-index: 10000; background: rgba(10,15,40,.55); display: flex; align-items: center; justify-content: center; padding: 16px; }
+#textos-dialogo .td-caja { background: #fff; color: #18213f; width: min(560px, 100%); border-radius: 16px; padding: 20px; box-shadow: 0 10px 40px rgba(0,0,0,.35); text-align: left; }
+#textos-dialogo h3 { margin: 0 0 6px; font-size: 1.2rem; color: #14225a; }
+#textos-dialogo .td-donde, #textos-dialogo .td-orig { font-size: .9rem; color: #4d5873; margin: 4px 0; }
+#textos-dialogo textarea { width: 100%; box-sizing: border-box; font: inherit; padding: 10px; border-radius: 10px; border: 2px solid #c7d1cc; margin: 10px 0; resize: vertical; background: #fff; color: #18213f; }
+#textos-dialogo .td-acc { display: flex; flex-wrap: wrap; gap: 8px; }
+#textos-dialogo button { background: #fff; color: #14225a; border-color: #14225a; }
+#textos-dialogo button[data-a="guardar"] { background: #14225a; color: #fff; }
+#textos-dialogo .td-estado[data-tipo="error"] { color: #c0392b; }
+@media (prefers-color-scheme: dark) {
+  #textos-dialogo .td-caja, #textos-dialogo textarea { background: #1b2340; color: #eef2f0; }
+  #textos-dialogo h3 { color: #fff; } #textos-dialogo .td-donde, #textos-dialogo .td-orig { color: #c3cbe0; }
+  #textos-dialogo button { background: transparent; color: #fff; border-color: #fff; }
+  #textos-dialogo button[data-a="guardar"] { background: #ffcc00; color: #14225a; border-color: #ffcc00; }
+}

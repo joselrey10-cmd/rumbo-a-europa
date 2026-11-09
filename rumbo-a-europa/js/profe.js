@@ -115,6 +115,22 @@ window.Profe = (function () {
     });
     return out;
   }
+  // Desglose de Robótica por modalidad para que el profesor compare Robot, Essential y Prime.
+  function resumenRobotica(a, c) {
+    const cat = catalogo(c), modos = (window.Robotica && window.Robotica.MODOS) || {};
+    return Object.keys(modos).map((k) => {
+      const nombre = modos[k].nombre;
+      const retos = cat.filter((x) => x.rincon === "rob" && x.destino.indexOf(`Robótica · ${nombre} ·`) === 0);
+      const notas = [];
+      retos.forEach((x) => indsAl(x, a).forEach((cod) => {
+        const v = a.notas[columna(x.destino, cod)];
+        if (v !== undefined) notas.push(v);
+      }));
+      return { nombre, hechas: notas.length, total: retos.reduce((n, x) => n + indsAl(x, a).length, 0),
+        media: notas.length ? Math.round(notas.reduce((s, v) => s + v, 0) / notas.length * 10) / 10 : null };
+    });
+  }
+
   function mediasInd(lista, c) {
     const cat = catalogo(c), por = {};
     lista.forEach((a) => cat.forEach((x) => indsAl(x, a).forEach((cod) => {
@@ -163,7 +179,7 @@ window.Profe = (function () {
 
   function barraGrupos() {
     return `<div class="p-barra"><div class="rutas p-grupos" role="radiogroup" aria-label="Grupo">${GRUPOS.map((g) => `<button type="button" role="radio" class="ruta p-grupo" aria-checked="${g === grupo}" data-g="${g}"><b>${g}</b></button>`).join("")}</div>
-      <button type="button" class="btn sec" id="p-textos" title="Cambia los textos que ve el alumnado en los rincones">✏️ Editar textos</button><button type="button" class="btn sec" id="p-recargar">Recargar datos</button><button type="button" class="btn sec" id="p-salir">Salir</button></div>`;
+      <button type="button" class="btn sec" id="p-textos" title="Cambia los textos que ve el alumnado en los rincones">✏️ Editar textos</button><button type="button" class="btn sec" id="p-excel" title="Prepara en la hoja una pestaña por grupo con los indicadores en el orden del Excel de evaluación">📊 Notas para el Excel</button><button type="button" class="btn sec" id="p-recargar">Recargar datos</button><span class="estado" id="p-excel-est" aria-live="polite"></span><button type="button" class="btn sec" id="p-salir">Salir</button></div>`;
   }
   function pintarGrupo() {
     alumnoSel = null;
@@ -180,6 +196,8 @@ window.Profe = (function () {
             ${RINC.map((r) => `<td>${res[r.id].media === null ? "–" : `<b>${res[r.id].media}</b>`}<small>${res[r.id].hechas}/${res[r.id].total} notas</small>${r.id === "crea" ? `<small>✓ ${res.crea.retos}/${res.crea.nRetos} retos</small>` : ""}</td>`).join("")}<td><b>${media}</b></td><td><button type="button" class="p-papelera" data-i="${i}" title="Dar de baja a ${esc(verNombre(a))}" aria-label="Dar de baja a ${esc(verNombre(a))}">🗑️</button></td></tr>`;
         }).join("")}</tbody></table></div>` : `<p class="intro">Todavía no hay notas de este grupo en la hoja.</p>`}
       ${barraCodigos(lista)}
+      <div class="p-codigos"><div><b>🔑 Contraseñas del alumnado</b><p class="intro">Cada alumno elige su propia contraseña al entrar por primera vez. Si alguien la olvida, puedes consultarla en la pestaña «Accesos alumnado» de la hoja de Google vinculada al proyecto.</p>
+        ${(window.REGISTRO || {}).hoja ? `<p><a href="${esc((window.REGISTRO || {}).hoja)}" target="_blank" rel="noopener">Abrir hoja de cálculo y consultar contraseñas ↗</a></p>` : ""}</div></div>
       <details class="p-import"><summary>Importar alumnado desde un CSV</summary>
         <p class="intro">Columnas obligatorias: <b>nombre; apellidos; usuario</b> (de Educacyl) y <b>curso</b>. Solo se importan las filas con el curso escrito exactamente <b>P5A, P5B, P6A o P6B</b>; el resto (Infantil, otros cursos o vacío) se salta. Opcionales: hasta dos <b>correos</b> de los tutores (columnas «correo tutor 1» y «correo tutor 2») para que la familia pueda consultar los resultados. Si un alumno ya está, se actualizan sus datos.</p>
         <div class="p-barra"><input type="file" id="p-csv" accept=".csv,text/csv,text/plain"><button type="button" class="btn sec" id="p-plantilla">Descargar plantilla CSV</button></div>
@@ -203,6 +221,13 @@ window.Profe = (function () {
     const bg = $("#p-cod-grupo"); if (bg) bg.onclick = () => mandarCodigos(lista, bg, `las familias de ${grupo}`);
     const bt = $("#p-cod-todos"); if (bt) bt.onclick = () => mandarCodigos(alumnos().filter((x) => GRUPOS.indexOf(G(x.clase)) >= 0), bt, "las familias de todos los grupos");
     raiz.querySelectorAll(".p-papelera").forEach((b) => b.onclick = () => darDeBaja(lista[+b.dataset.i], b, null));
+    $("#p-excel").onclick = async () => {
+      const b = $("#p-excel"), est = $("#p-excel-est"); b.disabled = true; est.textContent = "Preparando las pestañas…"; est.dataset.tipo = "";
+      const j = await llamar({ accion: "excel" }).catch(() => null);
+      b.disabled = false;
+      if (j && j.ok) { est.innerHTML = `✓ Listo: pestañas «Excel P5A», «Excel P5B», «Excel P6A» y «Excel P6B». <a href="${esc(j.url)}" target="_blank" rel="noopener">Abrir la hoja ↗</a>`; est.dataset.tipo = "ok"; }
+      else { est.textContent = (j && j.error) || "No se ha podido preparar."; est.dataset.tipo = "error"; }
+    };
     $("#p-plantilla").onclick = () => descargar("plantilla_alumnado.csv", "nombre;apellidos;usuario;curso;correo tutor 1;correo tutor 2\nLucía;Martín Pérez;lucia.martper;P5A;madre.martin@ejemplo.com;padre.martin@ejemplo.com\n");
     $("#p-csv").onchange = (e) => leerCSV(e.target.files[0]);
   }
@@ -316,10 +341,12 @@ window.Profe = (function () {
         <label>Correo tutor 2 <small>(opcional)</small><input id="p-correo-in2" type="email" maxlength="120" value="${esc(separarCorreos(a.correo)[1] || "")}" placeholder="tutor2@ejemplo.com"></label>
         <button class="btn sec" type="submit"${a.usuario ? "" : " disabled title=\"Hace falta el usuario de Educacyl\""}>Guardar correos</button>
         <button class="btn sec" type="button" id="p-cod-uno"${a.usuario && a.correo ? "" : " disabled"}>✉️ Enviar código</button>
-        <label class="p-ac"><input type="checkbox" id="p-ac"${esAdaptado(a) ? " checked" : ""}${a.usuario ? "" : " disabled"}> Adaptación curricular <small>(entra sin código y ve los contenidos adaptados)</small></label>
+        <label class="p-ac"><input type="checkbox" id="p-ac"${esAdaptado(a) ? " checked" : ""}${a.usuario ? "" : " disabled"}> Adaptación curricular <small>(entra directamente y ve los contenidos adaptados)</small></label>
         <span class="estado" id="p-correo-est">${a.usuario ? "Con cualquiera de estos correos la familia puede ver los resultados en la pestaña Familias." : "Este alumno no tiene usuario de Educacyl: impórtalo con su usuario."}</span>
       </form>
       <div class="p-resumen">${RINC.map((r) => `<div style="--rc:${r.color}"><b>${r.nombre}</b><span>${res[r.id].media === null ? "–" : res[r.id].media}</span><small>${res[r.id].hechas} de ${res[r.id].total} con nota${r.id === "crea" ? ` · ✓ ${res.crea.retos}/${res.crea.nRetos} retos terminados` : ""}</small></div>`).join("")}</div>
+      <h2 class="sa-tit">Robótica · resultados por modalidad</h2>
+      <div class="p-resumen">${resumenRobotica(a, c).map((m, i) => `<div style="--rc:${["#3a7bd5", "#e8489b", "#14225a"][i] || "#2f8f5b"}"><b>${esc(m.nombre)}</b><span>${m.media === null ? "–" : m.media}</span><small>${m.hechas} de ${m.total} indicadores con nota</small></div>`).join("")}</div>
       <p class="intro">Las casillas marcadas son las notas que ya hay en la hoja. En Crea, el alumno solo marca el reto como terminado: la nota de cada indicador la pones tú aquí. Al pulsar una nota se guarda sola en la hoja (verás «✓ Guardada»).</p>
       ${autoTabla(a, c)}
       ${RINC.map((r) => `<details class="p-rincon" ${r.id === "crea" ? "open" : ""}><summary style="color:${r.color}">${r.nombre}</summary>
@@ -337,7 +364,7 @@ window.Profe = (function () {
       est.textContent = "Guardando…"; est.dataset.tipo = "";
       const j = await llamar({ accion: "adaptacion", usuario: a.usuario, valor: si }).catch(() => null);
       e.target.disabled = false;
-      if (j && j.ok) { datos.adaptados = j.adaptados; est.textContent = si ? "✓ Con adaptación: entra sin código y ve los contenidos adaptados." : "✓ Sin adaptación."; est.dataset.tipo = "ok"; }
+      if (j && j.ok) { datos.adaptados = j.adaptados; est.textContent = si ? "✓ Con adaptación: entra directamente y ve los contenidos adaptados." : "✓ Sin adaptación."; est.dataset.tipo = "ok"; }
       else { e.target.checked = !si; est.textContent = (j && j.error) || "No se ha podido guardar."; est.dataset.tipo = "error"; }
     };
     $("#p-cod-uno").onclick = () => mandarCodigos([a], $("#p-cod-uno"), `la familia de ${verNombre(a)}`, $("#p-correo-est"));

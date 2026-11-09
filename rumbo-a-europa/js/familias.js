@@ -32,13 +32,14 @@ window.Familias = (function () {
         <form class="alumno" id="f-correo" autocomplete="on">
           <label for="f-email">Correo electrónico de la familia<input id="f-email" type="email" maxlength="120" value="${esc(correo)}" placeholder="El que diste en el colegio" autocomplete="email"></label>
           <button class="btn${paso === 2 ? " sec" : ""}" type="submit">${paso === 2 ? "Enviar otro código" : "Enviarme el código"}</button>
+          ${paso === 2 ? "" : `<button class="btn sec" type="button" id="f-tengo">Ya tengo un código</button>`}
         </form>
         ${paso === 2 ? `<form class="alumno" id="f-cod" autocomplete="off" style="margin-top:16px">
           <label for="f-codigo">Código de 6 cifras<input id="f-codigo" inputmode="numeric" maxlength="6" placeholder="123456" autocomplete="one-time-code"></label>
           <button class="btn" type="submit">Ver resultados</button>
         </form>` : ""}
         <p class="estado" id="f-estado" data-tipo="${tipo || ""}" style="margin-top:12px">${esc(aviso || "")}</p>
-        <p class="intro" style="margin-top:16px">Te mandaremos un código a tu correo. Solo verás los resultados del alumnado que el colegio tiene asociado a ese correo. El código caduca a los 15 minutos.</p>
+        <p class="intro" style="margin-top:16px">Te mandaremos un código a tu correo. Solo verás los resultados del alumnado que el colegio tiene asociado a ese correo. El código que pides aquí caduca a los 15 minutos; el que te envía el profe por correo vale unos días.</p>
       </div>`;
     $("#f-correo").addEventListener("submit", async (e) => {
       e.preventDefault();
@@ -50,6 +51,13 @@ window.Familias = (function () {
       pintarAcceso(2, j.mensaje + " Mira también la carpeta de correo no deseado.", "ok");
       const c = $("#f-codigo"); if (c) c.focus();
     });
+    const tengo = $("#f-tengo");
+    if (tengo) tengo.onclick = () => {
+      correo = $("#f-email").value.trim().toLowerCase();
+      if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(correo)) { pintarAcceso(1, "Escribe primero tu correo.", "error"); return; }
+      pintarAcceso(2, "Escribe el código que te llegó por correo.", "");
+      const c = $("#f-codigo"); if (c) c.focus();
+    };
     const fc = $("#f-cod");
     if (fc) fc.addEventListener("submit", async (e) => {
       e.preventDefault();
@@ -70,13 +78,13 @@ window.Familias = (function () {
       `<div class="envoltura seccion">
         <p class="p-barra"><button type="button" class="btn sec" id="f-salir">Salir</button></p>
         ${hijos.map((h) => {
-          const c = /^\s*6/.test(h.clase || "") ? "6º" : "5º";
+          const c = /6/.test(h.clase || "") ? "6º" : "5º";
           const a = { notas: P.notasDe(cab, h.fila), terminados: {} };
           (h.hechos || []).forEach(([destino, programa, fecha]) => { a.terminados[String(destino)] = { ruta: String(programa || "").replace(/^Terminado ·\s*/, ""), fecha }; });
           const res = P.resumen(a, c), cat = P.catalogo(c);
           const medias = P.mediasInd([a], c);
           return `<section class="f-hijo">
-            <h2 class="sa-tit">${esc(`${h.nombre || ""} ${h.apellidos || ""}`.trim())} · ${esc(h.clase)}</h2>
+            <h2 class="sa-tit">${esc(`${h.nombre || ""} ${h.apellidos || ""}`.trim())} · ${esc(window.normGrupo ? window.normGrupo(h.clase) : h.clase)}</h2>
             <div class="p-resumen">${P.RINC.map((r) => `<div style="--rc:${r.color}"><b>${r.nombre}</b><span>${res[r.id].media === null ? "–" : res[r.id].media}</span><small>${res[r.id].hechas} de ${res[r.id].total} indicadores con nota${r.id === "crea" ? ` · ✓ ${res.crea.retos}/${res.crea.nRetos} retos terminados` : ""}</small></div>`).join("")}</div>
             ${P.RINC.map((r) => {
               const acts = cat.filter((x) => x.rincon === r.id && x.inds.length);

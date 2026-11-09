@@ -174,6 +174,7 @@ footer { padding-block: 28px; color: var(--ink-soft); font-size: 14px; border-to
 }
 .bloque-btn:hover { filter: brightness(1.08); }
 .t-avanzar { background: var(--blk-mov); }
+.t-atras { background: #2a5fa8; }
 .t-izq, .t-der { background: var(--blk-giro); }
 .t-saltar { background: var(--blk-salto); }
 .t-repetir { background: var(--blk-rep); }
@@ -447,3 +448,72 @@ a.volver { text-decoration: none; }
 .escala-auto { grid-template-columns: repeat(3, minmax(0, 1fr)); font-size: 14px; margin: 0; }
 .nota-fija { font-size: 16px; color: var(--ink-soft); }
 .nota-fija b { color: var(--navy); font-size: 20px; }
+.p-barra .p-borrar { margin-left: auto; color: #b3261e; border-color: #b3261e; }
+.p-papelera { background: none; border: 1px solid transparent; border-radius: 8px; font-size: 18px; cursor: pointer; padding: 4px 8px; }
+.p-papelera:hover, .p-papelera:focus-visible { border-color: #b3261e; background: rgba(179, 38, 30, .08); }
+.vh { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.lista-nombres { display: block; width: 100%; margin-top: 6px; }
+.lista-aviso { display: block; margin-top: 4px; font-size: 13px; font-weight: 600; }
+.lista-aviso[data-tipo="ok"] { color: #2f8f5b; }
+.lista-aviso[data-tipo="error"] { color: #b3261e; }
+.p-codigos { margin: 18px 0; padding: 14px 16px; border: 1px solid var(--line, #ccd); border-radius: 12px; background: var(--paper, #fff); display: grid; gap: 8px; }
+.p-codigos .intro { margin: 4px 0 0; }
+.que-nota { margin: 16px 0 20px; padding: 14px 16px; border-left: 5px solid var(--rc, #3a7bd5); border-radius: 10px; background: var(--paper, #fff); }
+.que-nota h3 { margin: 0 0 6px; }
+.que-nota p { margin: 6px 0; }
+
+
+/* Entrada del alumnado con código */
+.acceso { margin-top: 14px; padding: 12px 16px; border-radius: 14px; border: 2px dashed var(--line); background: var(--paper-2); }
+.acceso[data-estado="dentro"] { border-style: solid; border-color: var(--green); display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; }
+.acceso-t { margin: 0 0 8px; }
+.acceso[data-estado="dentro"] .acceso-t { margin: 0; flex: 1 1 260px; }
+.acceso-fila { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.acceso-cod { width: 5.5em; font: 700 1.4rem var(--f-mono); letter-spacing: .3em; text-align: center; padding: 6px 8px; border-radius: 10px; border: 2px solid var(--line); background: #fff; color: var(--ink); }
+.acceso-msg { margin: 8px 0 0; font-weight: 700; font-size: 14px; }
+.acceso-lab { display: grid; gap: 4px; font-weight: 700; font-size: 13px; }
+.acceso[data-estado="cambiar"] { border-style: solid; border-color: var(--green); }
+.acceso-msg[data-tipo="error"] { color: #b3261e; }
+.acceso-msg[data-tipo="ok"] { color: var(--green); }
+.alumno :disabled { opacity: .75; cursor: not-allowed; }
+#acceso-aviso { position: fixed; left: 50%; transform: translateX(-50%); bottom: 16px; z-index: 9000; max-width: min(560px, calc(100% - 32px));
+  background: #b3261e; color: #fff; padding: 12px 16px; border-radius: 12px; font-weight: 700; box-shadow: 0 6px 20px rgba(0,0,0,.3); }
+#acceso-aviso a { color: #fff; }
+
+/* Adaptación curricular (html.adaptado) */
+.p-ac { display: flex; gap: 8px; align-items: center; font-weight: 700; flex-basis: 100%; }
+.p-ac input { width: 22px; height: 22px; }
+.p-ac-marca { display: inline-block; font: 800 11px var(--f-mono); background: #8a4fd8; color: #fff; border-radius: 6px; padding: 1px 5px; vertical-align: middle; }
+html.adaptado body { font-size: 19px; }
+.ac-flags { display: flex; flex-wrap: wrap; gap: 12px; }
+.ac-flag { display: flex; flex-direction: column; align-items: center; gap: 4px; font: 800 18px var(--f-body); padding: 10px 18px; border-radius: 16px; border: 3px solid var(--line); background: #fff; color: var(--ink); cursor: pointer; }
+.ac-flag span { font-size: 48px; line-height: 1; }
+.ac-flag[aria-pressed="true"] { border-color: var(--green); box-shadow: 0 0 0 3px rgba(47,143,91,.25); }
+.ac-pasos { list-style: none; padding: 0; margin: 8px 0; display: grid; gap: 6px; font-size: 20px; font-weight: 700; }
+.ac-ficha { background: #fff8d6; color: #18213f; border-radius: 14px; padding: 14px 16px; margin: 10px 0; display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.ac-ficha p { margin: 0; font-size: 24px; line-height: 1.45; font-weight: 700; flex: 1 1 260px; }
+.ac-preguntas { display: grid; gap: 12px; margin: 12px 0; }
+.ac-preg { display: grid; gap: 6px; font-size: 20px; font-weight: 800; }
+.ac-preg > span { display: flex; align-items: center; gap: 8px; }
+.ac-resp { font: 800 24px var(--f-body); padding: 10px 14px; border-radius: 12px; border: 3px solid var(--line); max-width: 320px; background: #fff; color: var(--ink); }
+.ac-ok { font-size: 26px; min-height: 1em; }
+.leer.mini { font-size: 20px; line-height: 1; padding: 6px 8px; border-radius: 999px; border: 2px solid var(--line); background: #fff; cursor: pointer; }
+html.adaptado .paleta .bloque-btn { font-size: 22px; padding: 14px 18px; min-width: 120px; flex-direction: column; gap: 4px; }
+html.adaptado .paleta .bloque-btn span { font-size: 44px; line-height: 1; }
+html.adaptado .programa .bloque span { font-size: 22px; }
+html.adaptado #texto-objetivo, html.adaptado #rb-texto-reto { font-size: 22px; }
+
+/* Código de desbloqueo de retos encadenados */
+.codigo-desbloqueo { margin: 18px auto; padding: 14px 18px; max-width: 420px; border: 2px dashed #d2a900; border-radius: 14px; background: #fff8d9; color: #18213f; text-align: center; }
+.codigo-desbloqueo strong { display: inline-block; padding: 8px 18px; border-radius: 9px; background: #14225a; color: #ffdf45; font: 800 1.8rem/1.2 "DM Mono", monospace; letter-spacing: .12em; }
+.codigo-desbloqueo p { margin: 5px 0; }
+
+/* Insignias Rumbo a Europa */
+.insignias-progreso{display:flex;align-items:center;gap:12px;margin-top:18px;padding:14px 18px;background:#ffffff20;border:1px solid #ffffff55;border-radius:14px;width:max-content;max-width:100%}
+.insignias-progreso b{font-size:1.7rem;color:#f5d58a}.insignias-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:14px;margin:16px 0 28px}
+.insignia{border:2px solid #d7dce3;border-radius:16px;padding:16px;text-align:center;background:#fff;box-shadow:0 2px 8px #0000000a}
+.insignia.ganada{border-color:#c59a42;background:#fffaf0}.insignia.pendiente{filter:grayscale(.75);opacity:.78}
+.insignia-sello{font-size:2.7rem;margin-bottom:8px}.insignia h3{font-size:1rem;margin:6px 0}.insignia p,.insignia span{font-size:.88rem;color:#526071}
+.pasaporte-final{margin:28px 0;padding:24px;border-radius:18px;text-align:center;border:2px dashed #b8c0ca;background:#f5f6f8}
+.pasaporte-final.desbloqueado{border:3px solid #c59a42;background:#fff8e8}.pasaporte-final.bloqueado{opacity:.8}
+@media(max-width:600px){.insignias-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.insignia{padding:10px}.insignia h3{font-size:.9rem}}

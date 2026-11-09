@@ -11,14 +11,23 @@ window.Valoraciones = (function () {
   function leerJSON(k, def) { try { return JSON.parse(localStorage.getItem(k) || "null") || def; } catch (e) { return def; } }
   function escribirJSON(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
 
-  function alumno() { return Object.assign({ nombre: "", usuario: "", clase: "" }, leerJSON(CLAVE_ALUMNO, {}).alumno || {}); }
+  /* Grupo como P5A, P5B, P6A, P6B (P = Primaria). Acepta también los nombres antiguos (5ºA…). */
+  function normGrupo(t) {
+    const s = String(t || "").trim();
+    const m = /^p\s*([56])\s*([ab])$/i.exec(s) || /^([56])\s*[º°o.]*\s*([ab])$/i.exec(s);   // P5A, o el nombre antiguo 5ºA
+    return m ? `P${m[1]}${m[2].toUpperCase()}` : String(t || "").trim();
+  }
+  window.normGrupo = normGrupo;
+  // Pasa los grupos guardados con el nombre antiguo (5ºA…) al nuevo (P5A…), para todas las pantallas.
+  (function () { const g = leerJSON(CLAVE_ALUMNO, null); if (g && g.alumno && g.alumno.clase && normGrupo(g.alumno.clase) !== g.alumno.clase) { g.alumno.clase = normGrupo(g.alumno.clase); escribirJSON(CLAVE_ALUMNO, g); } })();
+  function alumno() { const a = Object.assign({ nombre: "", usuario: "", clase: "" }, leerJSON(CLAVE_ALUMNO, {}).alumno || {}); a.clase = normGrupo(a.clase); return a; }
   function ponerAlumno(nombre, clase, usuario) {
     const g = leerJSON(CLAVE_ALUMNO, {}), antes = g.alumno || {};
-    g.alumno = { nombre: (nombre || "").trim(), clase: (clase || "").trim(), usuario: (usuario === undefined ? antes.usuario || "" : usuario).trim() };
+    g.alumno = { nombre: (nombre || "").trim(), clase: normGrupo(clase), usuario: (usuario === undefined ? antes.usuario || "" : usuario).trim() };
     escribirJSON(CLAVE_ALUMNO, g);
     window.dispatchEvent(new CustomEvent("alumno-cambiado", { detail: g.alumno }));
   }
-  const curso = () => (/^\s*6/.test(alumno().clase || "") ? "6º" : "5º");
+  const curso = () => (/6/.test(alumno().clase || "") ? "6º" : "5º");
 
   function indicador(tipo, ref) {
     const c = curso();
@@ -117,8 +126,21 @@ window.Valoraciones = (function () {
     const a = alumno();
     const d = Object.assign({ fecha: new Date().toISOString(), nombre: a.nombre || "(sin nombre)", usuario: a.usuario || "", clase: a.clase || "",
       destino: "", ciudad: "", estrellas: "", bloques: "", intentos: "", personaje: "", programa: "", indicador: "", valoracion: "" }, datos);
+    // Notas del alumno: van con su sesión (contraseña de acceso). Las del profe llevan su clave y no la necesitan.
+    if (!d.clave && window.Acceso) {
+      if (window.Acceso.requiere() && !window.Acceso.token()) { window.Acceso.avisar(); return Promise.resolve(false); }
+      Object.assign(d, window.Acceso.datosEnvio());
+    }
     try {
-      return fetch(R.url, { method: "POST", mode: "no-cors", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify(d) }).then(() => true, () => false);
+      // Se lee la respuesta de la hoja: solo cuenta como guardada si contesta «ok».
+      return fetch(R.url, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify(d) })
+        .then((r) => r.text()).then((t) => {
+          t = String(t || "").trim();
+          if (t === "sesion") { if (!d.clave && window.Acceso) window.Acceso.avisar(); console.warn("La hoja no ha guardado la nota: falta el contraseña de acceso."); return false; }
+          if (t.charAt(0) === "{") { try { const j = JSON.parse(t); if (j.sesion && window.Acceso) window.Acceso.avisar(); return !!j.ok; } catch (e) {} }
+          if (t !== "ok") console.warn("La hoja ha contestado:", t.slice(0, 200));
+          return t === "ok";
+        }, () => false);
     } catch (e) { return Promise.resolve(false); }
   }
   /* Varias filas, una detrás de otra (una por indicador). */

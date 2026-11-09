@@ -129,6 +129,8 @@ window.CREA = {
    "extra": "Entra en BiblioPini y deja un comentario en una entrada.",
    "ind": [
     "1.1.1",
+    "1.1.2",
+    "1.1.4",
     "2.3.1",
     "3.3.1"
    ]
@@ -147,7 +149,9 @@ window.CREA = {
    "ind": [
     "1.2.1",
     "1.2.2",
-    "2.1.1"
+    "2.1.1",
+    "2.3.1",
+    "3.1.4"
    ]
   },
   {
@@ -181,6 +185,7 @@ window.CREA = {
    "ind": [
     "2.2.2",
     "3.1.2",
+    "3.1.4",
     "3.4.1"
    ]
   },

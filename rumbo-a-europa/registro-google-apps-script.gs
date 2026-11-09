@@ -11,6 +11,7 @@
     e indicador de los cuatro rincones (Crea, Programa, Robótica, Piensa), con la última nota enviada. Las casillas vacías son 0 (no hecho).
   - "Medias por indicador": la media de cada indicador por alumno (se recalcula sola).
   - "Progreso por rutas": nota proporcional por pantallas superadas en Programa y cada modalidad de Robótica.
+  - "Accesos alumnado": contraseñas elegidas por el alumnado, para recuperación por el profesor.
 */
 // CLAVE DEL PANEL DEL PROFESOR: cámbiala por una tuya (la pedirá la página "Profe" de la web).
 // Está solo aquí, en el script, así que el alumnado no la puede ver.
@@ -31,7 +32,7 @@ const HOJA_URL = "https://docs.google.com/spreadsheets/d/1_6XcAUVOc52FE5fTFvh8pr
 const WEB_FAMILIAS = "https://rumbo-a-europa.vercel.app/#familias";
 // Días que vale el código cuando lo envía el profe desde el panel.
 const DIAS_CODIGO_PROFE = 7;
-// Entrada del alumnado con su código fijo (3 a 6 cifras; se lo envía a su correo de Educacyl o se lo da el profe).
+// Entrada del alumnado con contraseña elegida por el alumno y recuperable por el docente desde «Accesos alumnado».
 // true: las notas solo se guardan si el alumno ha entrado con su código. false: como antes (sin código).
 const CODIGO_ALUMNO = true;
 const DOMINIO_ALUMNADO = "educa.jcyl.es";    // el correo del alumno es usuario@educa.jcyl.es
@@ -52,12 +53,12 @@ function doPost(e) {
   if (pedido.accion === "comprobarAlumno") return comprobarAlumno(libro, pedido);
   if (pedido.accion === "enviarCodigos") return enviarCodigos(libro, pedido);
   if (pedido.accion === "textos") return leerTextos(libro);
-  if (pedido.accion === "alumnoCodigo") return alumnoCodigo(libro, pedido);
+  if (pedido.accion === "alumnoCodigo") return json({ ok: false, error: "El acceso del alumnado ahora se realiza con una contraseña elegida por cada alumno." });
   if (pedido.accion === "alumnoEntrar") return alumnoEntrar(libro, pedido);
   if (pedido.accion === "alumnoSesion") return alumnoSesion(libro, pedido);
   if (pedido.accion === "alumnoDirecto") return alumnoDirecto(libro, pedido);
   if (pedido.accion === "alumnoCambiarCodigo") return alumnoCambiarCodigo(libro, pedido);
-  if (pedido.accion === "codigosAlumnos") return codigosAlumnos(libro, pedido);
+  if (pedido.accion === "codigosAlumnos") return json({ ok: false, error: "Las contraseñas se consultan en la pestaña «Accesos alumnado» de la hoja." });
   if (pedido.accion === "adaptacion") return ponerAdaptacion(libro, pedido);
   if (pedido.accion === "excel") return excelProfe(libro, pedido);
   if (pedido.accion === "guardarTexto") return guardarTexto(libro, pedido);
@@ -126,7 +127,7 @@ function datosProfe(libro, d) {
 function guardarAutoevaluacion(libro, d) {
   const limpiar = (v, max) => String(v == null ? "" : v).slice(0, max);
   const ses = alumnoDeSesion(libro, d);
-  if (CODIGO_ALUMNO && !ses) return json({ ok: false, sesion: true, error: "Entra con tu código antes de enviar." });
+  if (CODIGO_ALUMNO && !ses) return json({ ok: false, sesion: true, error: "Entra con tu contraseña antes de enviar." });
   const rincon = limpiar(d.rincon, 20);
   const clase = ses ? ses.clase : normGrupo(limpiar(d.clase, 12));
   const usuario = ses ? ses.usuario : usuarioDeLista(libro, limpiar(d.nombre, 60), limpiar(d.usuario, 60), clase);
@@ -212,25 +213,41 @@ function importarAlumnado(libro, d) {
 }
 
 /* ---------- Consulta de las familias ---------- */
-// 1) La familia escribe su correo: si está en la pestaña Alumnado, se le envía un código de 6 cifras (vale 15 minutos).
+// Separa y valida los correos de la familia (admite coma, punto y coma o espacios).
+function correosFamilia(valor) {
+  return Array.from(new Set(String(valor || "").toLowerCase().split(/[;,\s]+/)
+    .map((c) => c.trim()).filter((c) => /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(c))));
+}
+
+// La familia escribe uno de sus correos: el mismo código se envía a TODOS los correos
+// asociados al alumno y queda válido si cualquiera de los dos progenitores lo introduce.
 function familiaCodigo(libro, d) {
   const correo = minus(d.correo);
-  const resp = { ok: true, mensaje: "Si ese correo está registrado en el colegio, recibirás un código en unos minutos." };
+  const resp = { ok: true, mensaje: "Si ese correo está registrado, recibiréis el código en los correos familiares asociados." };
   if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(correo)) return json({ ok: false, error: "Escribe un correo válido." });
-  const cache = CacheService.getScriptCache();
-  if (cache.get("espera_" + correo)) { console.log("Familias: " + correo + " ya pidió un código hace menos de 1 minuto."); return json(resp); }
   const h = libro.getSheetByName("Alumnado");
   const filas = h && h.getLastRow() > 1 ? h.getRange(2, 1, h.getLastRow() - 1, ALUMNADO.length).getValues() : [];
-  const hijos = filas.filter((f) => minus(f[4]).split(/[;,\s]+/).indexOf(correo) >= 0);
-  console.log("Familias: " + correo + " → " + hijos.length + " alumno(s) con ese correo en la pestaña Alumnado.");
+  const hijos = filas.filter((f) => correosFamilia(f[4]).indexOf(correo) >= 0);
   if (!hijos.length) return json(resp);
+  const destinatarios = Array.from(new Set(hijos.reduce((acc, f) => acc.concat(correosFamilia(f[4])), [])));
+  const cache = CacheService.getScriptCache();
+  if (destinatarios.some((c) => cache.get("espera_" + c))) return json(resp);
+  if (destinatarios.length > MailApp.getRemainingDailyQuota()) return json({ ok: false, error: "Hoy no quedan envíos suficientes para enviar el código a los dos correos. Prueba mañana." });
   const codigo = String(Math.floor(100000 + Math.random() * 900000));
-  cache.put("codigo_" + correo, JSON.stringify({ codigo, fallos: 0 }), 900);
-  cache.put("espera_" + correo, "1", 60);
-  const texto = "Hola:\n\nTu código para ver los resultados de " + hijos.map((f) => f[0]).join(" y ") + " en Rumbo a Europa es: " + codigo +
-    "\n\nEl código vale 15 minutos. Si no lo has pedido tú, no hagas nada.\n\nCEIP Tierra de Pinares";
-  MailApp.sendEmail(opcionesCorreo({ to: correo, subject: "Código de acceso a Rumbo a Europa", body: texto, htmlBody: htmlDe(texto) }));
-  return json(resp);
+  const texto = "Hola:\n\nTu código para ver los resultados de " + hijos.map((f) => f[0]).join(" y ") +
+    " en Rumbo a Europa es: " + codigo + "\n\nEste mismo código se ha enviado a los correos familiares registrados y vale 15 minutos. Cualquiera de los dos progenitores puede utilizarlo.\n\nCEIP Tierra de Pinares";
+  let enviados = 0; const fallos = [];
+  destinatarios.forEach((c) => {
+    try {
+      MailApp.sendEmail(opcionesCorreo({ to: c, subject: "Código de acceso a Rumbo a Europa", body: texto, htmlBody: htmlDe(texto) }));
+      cache.put("codigo_" + c, JSON.stringify({ codigo, fallos: 0 }), 900);
+      cache.put("espera_" + c, "1", 60);
+      enviados++;
+    } catch (e) { fallos.push(c); console.error("No se pudo enviar el código a " + c + ": " + e); }
+  });
+  if (!enviados) return json({ ok: false, error: "No se ha podido enviar el correo. Comprueba los permisos y la cuota de Google." });
+  console.log("Familias: código enviado a " + enviados + " de " + destinatarios.length + " correos. Fallos: " + fallos.join(", "));
+  return json({ ok: true, mensaje: fallos.length ? "El código se ha enviado, pero ha fallado uno de los correos. Revisad la dirección del segundo progenitor." : "Código enviado a los dos correos familiares. Cualquiera de los dos puede utilizarlo." });
 }
 
 // 2) Con el código correcto devuelve solo los datos de sus hijos.
@@ -255,7 +272,7 @@ function familiaDatos(libro, d) {
   }
   const h = libro.getSheetByName("Alumnado");
   const filas = h && h.getLastRow() > 1 ? h.getRange(2, 1, h.getLastRow() - 1, ALUMNADO.length).getValues() : [];
-  const hijos = filas.filter((f) => minus(f[4]).split(/[;,\s]+/).indexOf(correo) >= 0);
+  const hijos = filas.filter((f) => correosFamilia(f[4]).indexOf(correo) >= 0);
   const val = libro.getSheetByName("Valoraciones");
   const v = val && val.getLastRow() > 0 ? val.getDataRange().getValues() : [[]];
   const cab = v[0], iU = cab.indexOf("Usuario Educacyl");
@@ -713,96 +730,84 @@ function guardarTexto(libro, d) {
   return json({ ok: true });
 }
 
-/* ---------- Entrada del alumnado con código ----------
-   Cada alumno tiene un código FIJO (de 3 a 6 cifras) que no cambia: lo apunta en la agenda y lo usa siempre.
-   1) alumnoCodigo: «Enviarme mi código». Si coinciden grupo, nombre y usuario con la pestaña Alumnado, le llega
-      su código a usuario@educa.jcyl.es (si aún no tenía, se crea uno de 3 cifras).
-   2) alumnoEntrar: con su código se crea una sesión para ese ordenador (DIAS_SESION_ALUMNO días).
-      5 fallos seguidos bloquean la entrada de ese alumno 10 minutos.
-   3) alumnoCambiarCodigo: ya dentro, el alumno puede poner otro código que recuerde mejor.
-   4) codigosAlumnos (profe): ver los códigos de un grupo para dárselos en clase.
-   Cada nota que llega lleva la sesión; sin sesión válida no se guarda (si CODIGO_ALUMNO = true).
-   Los códigos se guardan en las propiedades del script (apin_usuario), no en la hoja. */
+/* ---------- Entrada del alumnado con contraseña elegida ----------
+   El primer acceso crea la contraseña que el alumno elige. Se guarda también en la pestaña
+   «Accesos alumnado» para que el docente pueda recuperarla si se olvida. El acceso queda
+   limitado a alumnos incluidos en la pestaña Alumnado y se bloquea tras 5 fallos durante 10 min.
+*/
 function filaAlumno(libro, clase, nombre, usuario) {
   clase = normGrupo(clase);
   return filasAlumnado(libro).find((x) => normGrupo(x[3]) === clase && minus(textoAlumno(x)) === minus(nombre) && minus(x[2]) === minus(usuario));
 }
-const correoAlumno = (u) => (String(u).indexOf("@") >= 0 ? minus(u) : minus(u) + "@" + DOMINIO_ALUMNADO);
-function tapar(c) { const p = c.split("@"); return p[0].slice(0, 2) + "•••@" + p[1]; }
-function leerPin(usuario) { return JSON.parse(PropertiesService.getScriptProperties().getProperty("apin_" + minus(usuario)) || "null"); }
+function hojaAccesos(libro) {
+  const h = libro.getSheetByName("Accesos alumnado") || libro.insertSheet("Accesos alumnado");
+  const cab = ["Nombre", "Usuario Educacyl", "Clase", "Contraseña elegida", "Última actualización"];
+  if (h.getLastRow() === 0) { h.appendRow(cab); h.setFrozenRows(1); h.getRange(1, 1, 1, cab.length).setFontWeight("bold"); }
+  else {
+    const actual = h.getRange(1, 1, 1, Math.max(cab.length, h.getLastColumn())).getValues()[0];
+    cab.forEach((v, i) => { if (actual[i] !== v) h.getRange(1, i + 1).setValue(v).setFontWeight("bold"); });
+  }
+  return h;
+}
+function guardarAccesoAlumno(libro, alumno, password) {
+  const h = hojaAccesos(libro), usuario = minus(alumno[2]);
+  const n = h.getLastRow() - 1;
+  const filas = n > 0 ? h.getRange(2, 1, n, 5).getValues() : [];
+  let fila = filas.findIndex((f) => minus(f[1]) === usuario) + 2;
+  if (fila < 2) fila = h.getLastRow() + 1;
+  h.getRange(fila, 4).setNumberFormat("@");
+  h.getRange(fila, 1, 1, 5).setValues([[textoAlumno(alumno), usuario, normGrupo(alumno[3]), String(password), new Date()]]);
+  h.autoResizeColumns(1, 5);
+}
+function validarPassword(p) {
+  p = String(p || "").trim();
+  if (p.length < 4 || p.length > 24) return "La contraseña debe tener entre 4 y 24 caracteres.";
+  if (/^[=+@-]/.test(p)) return "La contraseña no puede empezar por =, +, @ o - .";
+  return "";
+}
 function guardarPin(usuario, p) { PropertiesService.getScriptProperties().setProperty("apin_" + minus(usuario), JSON.stringify(p)); }
-// Devuelve el código fijo del alumno; si no tiene, crea uno de 3 cifras.
-function pinDe(usuario) {
-  let p = leerPin(usuario);
-  if (!p || !p.c) { p = { c: String(Math.floor(Math.random() * 1000)).padStart(3, "0"), f: 0, b: 0 }; guardarPin(usuario, p); }
-  return p;
-}
-function alumnoCodigo(libro, d) {
+function leerPin(usuario) { return JSON.parse(PropertiesService.getScriptProperties().getProperty("apin_" + minus(usuario)) || "null"); }
+function alumnoEntrar(libro, d) {
   const f = filaAlumno(libro, d.clase, d.nombre, d.usuario);
-  if (!f) return json({ ok: false, error: "Ese usuario no es el de " + String(d.nombre || "ese nombre") + ". Revisa tu usuario de Educacyl." });
-  const usuario = minus(f[2]), correo = correoAlumno(usuario), cache = CacheService.getScriptCache();
-  if (cache.get("aesp_" + usuario)) return json({ ok: true, correo: tapar(correo), mensaje: "Ya te hemos enviado tu código hace menos de un minuto. Mira tu correo." });
-  const codigo = pinDe(usuario).c;
-  cache.put("aesp_" + usuario, "1", 60);
-  const texto = "Hola, " + String(f[0] || "") + ":\n\nTu código para entrar en Rumbo a Europa es: " + codigo +
-    "\n\nEs siempre el mismo: apúntalo en tu agenda. Si quieres, cuando entres puedes cambiarlo por otro que recuerdes mejor (pulsa «Cambiar mi código»)." +
-    "\nNo se lo digas a nadie: es como tu contraseña.\n\nCEIP Tierra de Pinares";
-  try {
-    MailApp.sendEmail(opcionesCorreo({ to: correo, subject: "Tu código de Rumbo a Europa", body: texto, htmlBody: htmlDe(texto) }));
-  } catch (e) { console.log("No se pudo enviar el código a " + correo + ": " + e); return json({ ok: false, error: "No se ha podido enviar el correo. Pídele tu código a tu profe." }); }
-  return json({ ok: true, correo: tapar(correo) });
-}
-// Comprueba el código fijo. Devuelve "" si está bien o el texto del error.
-function comprobarPin(usuario, codigo) {
-  const p = leerPin(usuario);
-  if (!p || !p.c) return "Todavía no tienes código. Pulsa «Enviarme mi código» o pídeselo a tu profe.";
-  if (p.b && p.b > Date.now()) return "Demasiados intentos. Espera 10 minutos o pídele tu código a tu profe.";
-  if (String(codigo || "").trim() !== p.c) {
+  if (!f) return json({ ok: false, error: "Revisa tu grupo, tu nombre y tu usuario de Educacyl." });
+  const password = String(d.password || "").trim(), error = validarPassword(password);
+  if (error) return json({ ok: false, error });
+  const usuario = minus(f[2]), p = leerPin(usuario) || { f: 0, b: 0 };
+  if (p.b && p.b > Date.now()) return json({ ok: false, error: "Demasiados intentos. Espera 10 minutos o pide ayuda a tu profe." });
+  let creada = false;
+  // Si no hay contraseña nueva (incluidos códigos antiguos de versiones previas), el alumno la elige ahora.
+  if (!p.p) {
+    p.p = password; p.f = 0; p.b = 0; guardarPin(usuario, p); guardarAccesoAlumno(libro, f, password); creada = true;
+  } else if (password !== p.p) {
     p.f = (p.f || 0) + 1;
     if (p.f >= 5) { p.f = 0; p.b = Date.now() + 10 * 60000; }
     guardarPin(usuario, p);
-    return p.b > Date.now() ? "Demasiados intentos. Espera 10 minutos o pídele tu código a tu profe." : "Código incorrecto.";
-  }
-  if (p.f || p.b) { p.f = 0; p.b = 0; guardarPin(usuario, p); }
-  return "";
+    return json({ ok: false, error: p.b > Date.now() ? "Demasiados intentos. Espera 10 minutos o pide ayuda a tu profe." : "Contraseña incorrecta. Comprueba lo que has escrito." });
+  } else if (p.f || p.b) { p.f = 0; p.b = 0; guardarPin(usuario, p); }
+  // Reescribe la fila por si el docente ha creado de nuevo la pestaña de accesos.
+  guardarAccesoAlumno(libro, f, password);
+  return json(Object.assign(crearSesion(f), { creada }));
 }
-function alumnoEntrar(libro, d) {
-  const f = filaAlumno(libro, d.clase, d.nombre, d.usuario);
-  if (!f) return json({ ok: false, error: "Revisa tu grupo, tu nombre y tu usuario." });
-  const error = comprobarPin(minus(f[2]), d.codigo);
-  if (error) return json({ ok: false, error });
-  return json(crearSesion(f));
-}
-// Con la sesión abierta, el alumno cambia su código (escribe el actual y el nuevo).
 function alumnoCambiarCodigo(libro, d) {
   const s = alumnoDeSesion(libro, d);
-  if (!s) return json({ ok: false, error: "Tu sesión ha caducado. Sal y vuelve a entrar con tu código." });
-  const nuevo = String(d.nuevo || "").trim();
-  if (!/^\d{3,6}$/.test(nuevo)) return json({ ok: false, error: "El código nuevo tiene que tener de 3 a 6 números." });
-  if (/^(\d)\1+$/.test(nuevo) || "0123456789".indexOf(nuevo) >= 0 || "9876543210".indexOf(nuevo) >= 0) return json({ ok: false, error: "Ese código es muy fácil de adivinar (como 111 o 123). Elige otro." });
-  const p = leerPin(s.usuario);
-  if (p && p.c) { const error = comprobarPin(s.usuario, d.actual); if (error) return json({ ok: false, error: error === "Código incorrecto." ? "Tu código actual no es ese." : error }); }
-  guardarPin(s.usuario, { c: nuevo, f: 0, b: 0 });
+  if (!s) return json({ ok: false, error: "Tu sesión ha caducado. Sal y vuelve a entrar con tu contraseña." });
+  const nuevo = String(d.nuevo || "").trim(), error = validarPassword(nuevo);
+  if (error) return json({ ok: false, error });
+  const p = leerPin(s.usuario) || {};
+  if (p.p && String(d.actual || "") !== p.p) return json({ ok: false, error: "Tu contraseña actual no es correcta." });
+  guardarPin(s.usuario, { p: nuevo, f: 0, b: 0 });
+  const f = filasAlumnado(libro).find((x) => minus(x[2]) === minus(s.usuario));
+  if (f) guardarAccesoAlumno(libro, f, nuevo);
   return json({ ok: true });
-}
-// Panel del profe: códigos de los alumnos de un grupo (crea los que falten).
-function codigosAlumnos(libro, d) {
-  if (CLAVE_PROFE === "cambia-esta-clave" || String(d.clave || "") !== CLAVE_PROFE) return json({ ok: false, error: "Clave incorrecta." });
-  const clase = normGrupo(d.clase);
-  const lista = filasAlumnado(libro).filter((f) => normGrupo(f[3]) === clase && f[2])
-    .map((f) => ({ nombre: textoAlumno(f), usuario: minus(f[2]), codigo: pinDe(f[2]).c }))
-    .sort((a, b) => a.nombre.localeCompare(b.nombre, "es", { sensitivity: "base" }));
-  return json({ ok: true, clase, alumnos: lista });
 }
 function crearSesion(f) {
   const usuario = minus(f[2]), token = Utilities.getUuid().replace(/-/g, "");
   const props = PropertiesService.getScriptProperties();
-  const lista = JSON.parse(props.getProperty("ases_" + usuario) || "[]").filter((x) => x.hasta > Date.now()).slice(-4);   // hasta 5 ordenadores
+  const lista = JSON.parse(props.getProperty("ases_" + usuario) || "[]").filter((x) => x.hasta > Date.now()).slice(-4);
   lista.push({ t: token, hasta: Date.now() + DIAS_SESION_ALUMNO * 86400000 });
   props.setProperty("ases_" + usuario, JSON.stringify(lista));
   return { ok: true, token, usuario, nombre: textoAlumno(f), clase: normGrupo(f[3]), adaptado: leerAdaptados().indexOf(usuario) >= 0 };
 }
-// Devuelve {usuario, nombre, clase} si la sesión que manda el navegador es válida.
 function alumnoDeSesion(libro, d) {
   const usuario = minus(d.usuario), token = String(d.token || "");
   if (!usuario || !token) return null;
@@ -840,21 +845,28 @@ function alumnoDirecto(libro, d) {
 
 /* ---------- Valoración proporcional de Programa y Robótica ----------
    Una pestaña de resumen por alumno. Cada pantalla superada aporta la misma fracción
-   del máximo de su ruta: Programa 5/17; Robot 2,5/6; Essential 3,5/6; Prime 5/6.
-   En adaptación, Robot tiene cuatro pantallas y mantiene el máximo de 2,5. */
+   del máximo de su ruta: Programa 5/17; Robot 2,5/10; Essential 3,5/10; Prime 5/10.
+   La adaptación curricular mantiene el máximo de 2,5 puntos en Robot con 10 pantallas adaptadas. */
 function actualizarResumenRutas(libro, alumno) {
   const props = PropertiesService.getScriptProperties();
   const rutas = [
     { id: "programa", maximo: 5, total: 17, clave: "programa" },
-    { id: "robot-robot", maximo: 2.5, total: alumno.adaptado ? 4 : 6, clave: "robot" },
-    { id: "robot-essential", maximo: 3.5, total: 6, clave: "essential" },
-    { id: "robot-prime", maximo: 5, total: 6, clave: "prime" }
+    { id: "robot-robot", maximo: 2.5, total: 10, clave: "robot" },
+    { id: "robot-essential", maximo: 3.5, total: 10, clave: "essential" },
+    { id: "robot-prime", maximo: 5, total: 10, clave: "prime" }
   ];
   const salida = {};
   rutas.forEach((r) => {
     const clave = "cadena_" + Utilities.base64EncodeWebSafe(alumno.usuario + "|" + r.id).replace(/=+$/g, "");
     let estado = {};
     try { estado = JSON.parse(props.getProperty(clave) || "{}"); } catch (e) { estado = {}; }
+    if (r.id.indexOf("robot-") === 0 && [4, 6].includes(Number(estado.total))) {
+      const anterior = Number(estado.total);
+      if (Array.isArray(estado.completados) && estado.completados.indexOf(anterior - 1) >= 0)
+        estado.desbloqueado = Math.max(Number(estado.desbloqueado) || 0, anterior);
+      estado.total = 10;
+      props.setProperty(clave, JSON.stringify(estado));
+    }
     const total = Math.max(1, Number(estado.total) || r.total);
     const hechas = Array.isArray(estado.completados) ? estado.completados.length : 0;
     salida[r.clave] = { hechas, total, maximo: r.maximo, nota: Math.round((r.maximo * hechas / total) * 100) / 100 };
@@ -893,7 +905,7 @@ function gestionarRetoCadena(libro, d) {
   let total = Math.max(1, Math.min(100, Number(d.total) || 1));
   // Los totales evaluables se fijan en el servidor para que el navegador no pueda alterar la nota.
   if (secuencia === "programa") total = 17;
-  if (secuencia.indexOf("robot-") === 0) total = alumno.adaptado ? 4 : 6;
+  if (secuencia.indexOf("robot-") === 0) total = 10;
   const props = PropertiesService.getScriptProperties();
   const clave = "cadena_" + Utilities.base64EncodeWebSafe(alumno.usuario + "|" + secuencia).replace(/=+$/g, "");
   const lock = LockService.getScriptLock();
@@ -904,7 +916,15 @@ function gestionarRetoCadena(libro, d) {
     estado.desbloqueado = Math.max(0, Math.min(total - 1, Number(estado.desbloqueado) || 0));
     estado.completados = estado.completados || [];
     estado.codigos = estado.codigos || {};
-    if (estado.total && Number(estado.total) !== total) return json({ ok: false, error: "Ha cambiado el número de pantallas de esta ruta. Contacta con tu profesor." });
+    if (estado.total && Number(estado.total) !== total) {
+      const anterior = Number(estado.total);
+      if (secuencia.indexOf("robot-") === 0 && [4, 6].includes(anterior) && total === 10) {
+        // Migración de la versión anterior: conserva los retos superados y abre el primero nuevo
+        // si el alumno ya había terminado la última pantalla antigua.
+        if (estado.completados.indexOf(anterior - 1) >= 0) estado.desbloqueado = Math.max(estado.desbloqueado, anterior);
+        estado.total = total;
+      } else return json({ ok: false, error: "Ha cambiado el número de pantallas de esta ruta. Contacta con tu profesor." });
+    }
     estado.total = total;
     const op = String(d.op || "estado");
     if (op === "estado") return json({ ok: true, desbloqueado: estado.desbloqueado, completados: estado.completados });
