@@ -885,12 +885,12 @@ function alumnoDirecto(libro, d) {
 
 /* ---------- Valoración proporcional de Programa y Robótica ----------
    Una pestaña de resumen por alumno. Cada pantalla superada aporta la misma fracción
-   del máximo de su ruta: Programa 5/17; Robot 2,5/10; Essential 3,5/10; Prime 5/10.
+   del máximo de su ruta: Programa 5/30; Robot 2,5/10; Essential 3,5/10; Prime 5/10.
    La adaptación curricular mantiene el máximo de 2,5 puntos en Robot con 10 pantallas adaptadas. */
 function actualizarResumenRutas(libro, alumno) {
   const props = PropertiesService.getScriptProperties();
   const rutas = [
-    { id: "programa", maximo: 5, total: 17, clave: "programa" },
+    { id: "programa", maximo: 5, total: 30, clave: "programa" },
     { id: "robot-robot", maximo: 2.5, total: 10, clave: "robot" },
     { id: "robot-essential", maximo: 3.5, total: 10, clave: "essential" },
     { id: "robot-prime", maximo: 5, total: 10, clave: "prime" }
@@ -944,7 +944,7 @@ function gestionarRetoCadena(libro, d) {
   if (!["programa", "piensa", "robot-robot", "robot-essential", "robot-prime"].includes(secuencia)) return json({ ok: false, error: "Secuencia no válida." });
   let total = Math.max(1, Math.min(100, Number(d.total) || 1));
   // Los totales evaluables se fijan en el servidor para que el navegador no pueda alterar la nota.
-  if (secuencia === "programa") total = 17;
+  if (secuencia === "programa") total = 30;
   if (secuencia.indexOf("robot-") === 0) total = 10;
   const props = PropertiesService.getScriptProperties();
   const clave = "cadena_" + Utilities.base64EncodeWebSafe(alumno.usuario + "|" + secuencia).replace(/=+$/g, "");
@@ -958,9 +958,16 @@ function gestionarRetoCadena(libro, d) {
     estado.codigos = estado.codigos || {};
     if (estado.total && Number(estado.total) !== total) {
       const anterior = Number(estado.total);
-      if (secuencia.indexOf("robot-") === 0 && [4, 6].includes(anterior) && total === 10) {
-        // Migración de la versión anterior: conserva los retos superados y abre el primero nuevo
-        // si el alumno ya había terminado la última pantalla antigua.
+      if (secuencia === "programa" && anterior === 17 && total === 30) {
+        // Migración sin pérdida: Oeste conserva 0-6; Norte se desplaza +3 y Este +8.
+        const mover = (i) => i < 7 ? i : i < 12 ? i + 3 : i + 8;
+        estado.completados = (estado.completados || []).map(mover);
+        estado.desbloqueado = mover(Number(estado.desbloqueado) || 0);
+        const codigosNuevos = {};
+        Object.keys(estado.codigos || {}).forEach((k) => { codigosNuevos[mover(Number(k))] = estado.codigos[k]; });
+        estado.codigos = codigosNuevos;
+        estado.total = total;
+      } else if (secuencia.indexOf("robot-") === 0 && [4, 6].includes(anterior) && total === 10) {
         if (estado.completados.indexOf(anterior - 1) >= 0) estado.desbloqueado = Math.max(estado.desbloqueado, anterior);
         estado.total = total;
       } else return json({ ok: false, error: "Ha cambiado el número de pantallas de esta ruta. Contacta con tu profesor." });
@@ -974,9 +981,16 @@ function gestionarRetoCadena(libro, d) {
       if (indice > estado.desbloqueado) return json({ ok: false, error: "Este reto todavía está bloqueado." });
       if (estado.completados.indexOf(indice) < 0) estado.completados.push(indice);
       let codigo = "";
-      if (indice === estado.desbloqueado && indice + 1 < total) {
-        if (!estado.codigos[indice + 1]) estado.codigos[indice + 1] = Utilities.getUuid().replace(/-/g, "").slice(0, 8).toUpperCase();
-        codigo = estado.codigos[indice + 1];
+      const finAventura = secuencia === "programa" && [9, 19, 29].includes(indice);
+      if (indice === estado.desbloqueado) {
+        if (finAventura) {
+          // Se entrega código de progreso al cerrar cada aventura, incluida la última.
+          if (!estado.codigos[indice + 1]) estado.codigos[indice + 1] = Utilities.getUuid().replace(/-/g, "").slice(0, 8).toUpperCase();
+          codigo = estado.codigos[indice + 1];
+        } else if (indice + 1 < total) {
+          // Dentro de una aventura se avanza sin pedir códigos; solo se bloquea al cambiar de aventura.
+          estado.desbloqueado = indice + 1;
+        }
       }
       props.setProperty(clave, JSON.stringify(estado));
       const claveResumen = secuencia === "programa" ? "programa" : secuencia === "robot-robot" ? "robot" : secuencia === "robot-essential" ? "essential" : secuencia === "robot-prime" ? "prime" : "";

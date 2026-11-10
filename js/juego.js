@@ -19,8 +19,24 @@
     const g = JSON.parse(localStorage.getItem(CLAVE) || "null");
     if (g && typeof g === "object") progreso = Object.assign(progreso, g);
     progreso[EST] = progreso[EST] || {};
+    // Migra las estrellas locales de la versión de 17 destinos a las 30 pantallas.
+    // Oeste mantiene sus índices; Norte se desplaza +3 y Este +8.
+    if (Number(progreso.programaVersion || 17) < 30) {
+      const mover = (i) => i < 7 ? i : i < 12 ? i + 3 : i + 8;
+      ["estrellas", "estrellasAC"].forEach((campo) => {
+        const anterior = progreso[campo] || {}, nuevo = {};
+        Object.keys(anterior).forEach((k) => {
+          const i = Number(k);
+          if (Number.isInteger(i) && i >= 0 && i < 17) nuevo[mover(i)] = anterior[k];
+          else if (!Number.isInteger(i) || i < 0) nuevo[k] = anterior[k];
+        });
+        progreso[campo] = nuevo;
+      });
+      progreso.programaVersion = 30;
+    }
   } catch (e) { /* sin almacenamiento */ }
   function guardar() { try { localStorage.setItem(CLAVE, JSON.stringify(progreso)); } catch (e) {} }
+  try { guardar(); } catch (e) {}
   const completados = () => Object.keys(progreso[EST]).length;
   const desbloqueadoNivel = (i) => NIVELES[i].pos === 0 || !!progreso[EST][i - 1];
   const desbloqueadoPers = (p) => completados() >= (p.desbloquea || 0);
@@ -523,7 +539,7 @@
       <p>${est === 3 ? `Programa perfecto: ${n} bloques.` : `Lo has hecho con ${n} bloques. ¿Puedes conseguirlo con ${nivel.reto}?`}</p>
       ${val && val.codigo ? `<p class="val-ind">Indicador ${val.codigo}: <b>${val.nota} de 5</b></p>` : ""}
       ${cadena && cadena.ok && Number.isFinite(cadena.nota) ? `<p class="val-ind">Valoración de Programa: <b>${cadena.completados} de ${cadena.total} pantallas · ${cadena.nota} de 5</b></p>` : ""}
-      ${cadena && cadena.ok && cadena.codigo ? `<div class="codigo-desbloqueo"><p>🔐 <b>Código para el siguiente reto</b></p><strong>${cadena.codigo}</strong><p>Guárdalo: lo necesitarás para abrir el siguiente reto.</p></div>` : cadena && !cadena.ok ? `<p class="aviso">${cadena.error || "No se ha podido generar el código. Vuelve a intentarlo."}</p>` : ""}`;
+      ${cadena && cadena.ok && cadena.codigo ? `<div class="codigo-desbloqueo"><p>🔐 <b>${nivelI === NIVELES.length - 1 ? "Código final de progreso" : "Código para la siguiente aventura"}</b></p><strong>${cadena.codigo}</strong><p>Guárdalo: acredita que has terminado ${av.nombre}.</p></div>` : cadena && !cadena.ok ? `<p class="aviso">${cadena.error || "No se ha podido generar el código. Vuelve a intentarlo."}</p>` : ""}`;
     if (nuevo) html += `<p><strong>¡Nuevo personaje desbloqueado: ${nuevo.nombre}!</strong></p>`;
     if (ultimo && todos) html += `<div class="diploma">${COLEGIO.logo ? `<img src="${COLEGIO.logo}" alt="Escudo" style="height:90px;width:auto;display:block;margin:0 auto 6px">` : ""}<span class="etiqueta">Diploma</span><strong>${progreso.alumno.nombre || p.nombre}: ${av.nombre} completada</strong><p style="margin:4px 0 0">Has recorrido ${av.niveles.length} destinos programando con ${p.nombre}. ${COLEGIO.nombre} · ${COLEGIO.lema}</p></div>`;
     if (ultimo && todos && window.XLSX) html += `<p><button class="btn sec" id="v-excel">Descargar mi valoración (Excel)</button></p>`;
