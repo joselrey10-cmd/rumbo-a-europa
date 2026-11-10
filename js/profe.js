@@ -14,7 +14,7 @@ window.Profe = (function () {
     { id: "rob", nombre: "Robótica", color: "#2f8f5b" }, { id: "piensa", nombre: "Piensa", color: "#8a4fd8" }
   ];
   const CLAVE_SES = "rumbo-profe-clave";
-  let raiz = null, datos = null, grupo = "P5A", alumnoSel = null, extra = [], cambios = {};
+  let raiz = null, datos = null, grupo = "P5A", alumnoSel = null, extra = [], cambios = {}, avisoAlta = "";
 
   const G = (t) => (window.normGrupo ? window.normGrupo(t) : String(t || ""));
   const cursoDe = (g) => (/6/.test(g || "") ? "6º" : "5º");
@@ -212,6 +212,13 @@ window.Profe = (function () {
       <h2 class="sa-tit">Media de cada indicador en ${grupo}</h2>
       ${mediasTabla(lista, c)}
       </div>`;
+    if (avisoAlta) {
+      const aviso = document.createElement("p");
+      aviso.className = "estado"; aviso.dataset.tipo = "ok"; aviso.setAttribute("role", "status");
+      aviso.textContent = avisoAlta; avisoAlta = "";
+      const zona = raiz.querySelector(".envoltura.seccion");
+      if (zona) zona.insertBefore(aviso, zona.firstChild);
+    }
     $("#p-nuevo").addEventListener("submit", async (e) => {
       e.preventDefault();
       const nombreCompleto = $("#p-n-nombre").value.trim();
@@ -222,7 +229,7 @@ window.Profe = (function () {
         est.dataset.tipo = "error";
         return;
       }
-      const partesNombre = nombreCompleto.split(/\\s+/);
+      const partesNombre = nombreCompleto.split(/\s+/);
       const nombre = partesNombre.shift();
       const apellidos = partesNombre.join(" ");
       boton.disabled = true;
@@ -235,16 +242,15 @@ window.Profe = (function () {
         });
         if (!guardado || !guardado.ok) throw new Error((guardado && guardado.error) || "Google Sheets no ha confirmado el guardado.");
         const actualizado = await llamar({ accion: "datos" });
-        if (!actualizado || !actualizado.ok) throw new Error((actualizado && actualizado.error) || "El alumno se ha enviado, pero no se ha podido verificar la actualización de la lista.");
+        if (!actualizado || !actualizado.ok) throw new Error((actualizado && actualizado.error) || "Google Sheets no ha permitido comprobar el alta. Los datos siguen en el formulario.");
+        const confirmado = (actualizado.alumnado || []).some((f) => igual(f[2], usuario) && igual(G(f[3]), grupo));
+        if (!confirmado) throw new Error("Google Sheets respondió, pero el alumno no aparece en la pestaña «Alumnado» del registro. No se ha confirmado el alta. Comprueba que la implementación de Apps Script esté actualizada y que el grupo sea P5A, P5B, P6A o P6B.");
         datos = actualizado;
         extra = extra.filter((x) => !igual(x.usuario, usuario));
-        est.textContent = guardado.nuevos
-          ? "✓ Alumno guardado en Google Sheets."
-          : "✓ El usuario ya existía: sus datos se han actualizado en Google Sheets.";
-        est.dataset.tipo = "ok";
-        $("#p-n-nombre").value = "";
-        $("#p-n-usuario").value = "";
-        setTimeout(pintarGrupo, 1200);
+        avisoAlta = guardado.nuevos
+          ? "✓ Alumno guardado y verificado en Google Sheets."
+          : "✓ El usuario ya existía: sus datos se han actualizado y verificado en Google Sheets.";
+        pintarGrupo();
       } catch (err) {
         est.textContent = err.message === "Failed to fetch"
           ? "No se ha podido conectar con Google Sheets. El alumno no se ha confirmado como guardado."
@@ -332,6 +338,7 @@ window.Profe = (function () {
   async function llamar(cuerpo) {
     const R = window.REGISTRO || {};
     let k = ""; try { k = sessionStorage.getItem(CLAVE_SES) || ""; } catch (e) {}
+    if (!R.url) throw new Error("No está configurada la URL de Google Apps Script (REGISTRO.url).");
     const r = await fetch(R.url, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify(Object.assign({ clave: k }, cuerpo)) });
     const t = await r.text(); try { return JSON.parse(t); } catch (e) { return { ok: false, error: "La hoja no responde bien. ¿Has pegado el script nuevo y creado una nueva versión?" }; }
   }
