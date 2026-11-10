@@ -219,9 +219,9 @@ function guardarCorreosFamilia(libro, d) {
     return json({ ok: false, error: "Clave incorrecta." });
   const usuario = minus(d.usuario);
   if (!usuario) return json({ ok: false, error: "Falta el usuario de Educacyl." });
-  const correos = Array.from(new Set(String(d.correo || "").toLowerCase().split(/[;,\\s]+/)
+  const correos = Array.from(new Set(String(d.correo || "").toLowerCase().split(/[;,\s]+/)
     .map(c => c.trim()).filter(Boolean))).slice(0, 2);
-  if (correos.some(c => !/^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$/.test(c)))
+  if (correos.some(c => !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(c)))
     return json({ ok: false, error: "Revisa las direcciones de correo." });
   const h = hojaAlumnado(libro);
   if (h.getLastRow() < 2) return json({ ok: false, error: "No hay alumnado registrado." });

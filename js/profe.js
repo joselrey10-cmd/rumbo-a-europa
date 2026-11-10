@@ -207,15 +207,51 @@ window.Profe = (function () {
         <label>Añadir alumno a ${grupo}<input id="p-n-nombre" maxlength="30" placeholder="Nombre y apellido"></label>
         <label>Usuario Educacyl<input id="p-n-usuario" maxlength="60" placeholder="nombre.apellido"></label>
         <button class="btn sec" type="submit">Añadir y poner notas</button>
+        <span class="estado" id="p-n-estado" aria-live="polite"></span>
       </form>
       <h2 class="sa-tit">Media de cada indicador en ${grupo}</h2>
       ${mediasTabla(lista, c)}
       </div>`;
-    $("#p-nuevo").addEventListener("submit", (e) => {
+    $("#p-nuevo").addEventListener("submit", async (e) => {
       e.preventDefault();
-      const nombre = $("#p-n-nombre").value.trim(); if (!nombre) return;
-      const a = { nombre, usuario: $("#p-n-usuario").value.trim(), clase: grupo, notas: {} };
-      extra.push(a); pintarAlumno(a);
+      const nombreCompleto = $("#p-n-nombre").value.trim();
+      const usuario = $("#p-n-usuario").value.trim().replace(/@.*$/, "");
+      const est = $("#p-n-estado"), boton = $('#p-nuevo button[type="submit"]');
+      if (!nombreCompleto || !usuario) {
+        est.textContent = "Escribe el nombre y el usuario de Educacyl para guardar el alumno.";
+        est.dataset.tipo = "error";
+        return;
+      }
+      const partesNombre = nombreCompleto.split(/\\s+/);
+      const nombre = partesNombre.shift();
+      const apellidos = partesNombre.join(" ");
+      boton.disabled = true;
+      est.textContent = "Guardando en Google Sheets…";
+      est.dataset.tipo = "";
+      try {
+        const guardado = await llamar({
+          accion: "importar",
+          alumnos: [{ nombre, apellidos, usuario, clase: grupo, correo: "" }]
+        });
+        if (!guardado || !guardado.ok) throw new Error((guardado && guardado.error) || "Google Sheets no ha confirmado el guardado.");
+        const actualizado = await llamar({ accion: "datos" });
+        if (!actualizado || !actualizado.ok) throw new Error((actualizado && actualizado.error) || "El alumno se ha enviado, pero no se ha podido verificar la actualización de la lista.");
+        datos = actualizado;
+        extra = extra.filter((x) => !igual(x.usuario, usuario));
+        est.textContent = guardado.nuevos
+          ? "✓ Alumno guardado en Google Sheets."
+          : "✓ El usuario ya existía: sus datos se han actualizado en Google Sheets.";
+        est.dataset.tipo = "ok";
+        $("#p-n-nombre").value = "";
+        $("#p-n-usuario").value = "";
+        setTimeout(pintarGrupo, 1200);
+      } catch (err) {
+        est.textContent = err.message === "Failed to fetch"
+          ? "No se ha podido conectar con Google Sheets. El alumno no se ha confirmado como guardado."
+          : err.message;
+        est.dataset.tipo = "error";
+        boton.disabled = false;
+      }
     });
     raiz.querySelectorAll(".p-alumno").forEach((b) => b.onclick = () => pintarAlumno(lista[+b.dataset.i]));
     const bg = $("#p-cod-grupo"); if (bg) bg.onclick = () => mandarCodigos(lista, bg, `las familias de ${grupo}`);

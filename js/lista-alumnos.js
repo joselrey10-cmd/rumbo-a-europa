@@ -19,20 +19,13 @@ window.ListaAlumnos = (function () {
       return JSON.parse(await r.text());
     } catch (e) { return null; }
   }
-  function nombres(clase) {
+  async function nombres(clase) {
     clase = G(clase);
-    if (!/^P[56][AB]$/.test(clase)) return Promise.resolve([]);
-    if (!cache[clase]) {
-      let guardado = null;
-      try { guardado = JSON.parse(sessionStorage.getItem("rumbo-lista-" + clase) || "null"); } catch (e) {}
-      cache[clase] = guardado ? Promise.resolve(guardado) : llamar({ accion: "nombresGrupo", clase }).then((j) => {
-        const l = j && j.ok ? j.nombres || [] : null;
-        if (l === null) { delete cache[clase]; return []; }
-        try { sessionStorage.setItem("rumbo-lista-" + clase, JSON.stringify(l)); } catch (e) {}
-        return l;
-      });
-    }
-    return cache[clase];
+    if (!/^P[56][AB]$/.test(clase)) return [];
+    // No reutilizar sessionStorage: podía conservar una lista antigua y ocultar
+    // alumnos recién añadidos desde el panel del profesor.
+    const j = await llamar({ accion: "nombresGrupo", clase });
+    return j && j.ok && Array.isArray(j.nombres) ? j.nombres : [];
   }
 
   /* input: el campo de texto del nombre (se queda escondido y sigue siendo el que leen las pantallas).
