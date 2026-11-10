@@ -29,6 +29,6 @@ window.PERSONAJES = [
   Si la dejas vacía, el juego funciona igual pero no envía nada.
 */
 window.REGISTRO = {
-  url: "https://script.google.com/macros/s/AKfycbxCAmFy7vJKB5v-OCuqzMPWxjuqmBF8_hySZNj92eVwVmAFtKz5OmoIgrBeQpYmpl-lzg/exec",
-  hoja: "https://docs.google.com/spreadsheets/d/1_6XcAUVOc52FE5fTFvh8pritJGjrx_7n3RM0rPN1QjY/edit"
+  url: "https://script.google.com/macros/s/AKfycbzNeB-w9vtgZ0GWrxjq7dK_7Wd2FMecunyloTZ8LIiQX_D18oza35as5opLQGAvMtHp1A/exec",
+  hoja: "https://docs.google.com/spreadsheets/d/1HqK6O9-WvmemzMtRvKHzJ3NeCfkXeFlsmmJqbaMba6w/edit"
 };

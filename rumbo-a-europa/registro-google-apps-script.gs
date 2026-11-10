@@ -26,7 +26,7 @@ const htmlDe = (t) => "<div style=\"font-family:Arial,sans-serif;font-size:15px;
 
 // HOJA DE GOOGLE donde se guarda todo. Déjalo vacío ("") y el script usa (o crea) la suya.
 // Si quieres usar una hoja que ya tienes, pega aquí su enlace (docs.google.com/spreadsheets/d/...).
-const HOJA_URL = "https://docs.google.com/spreadsheets/d/1_6XcAUVOc52FE5fTFvh8pritJGjrx_7n3RM0rPN1QjY/edit";
+const HOJA_URL = "https://docs.google.com/spreadsheets/d/1HqK6O9-WvmemzMtRvKHzJ3NeCfkXeFlsmmJqbaMba6w/edit";
 
 // DIRECCIÓN DE LA WEB que se pone en los correos con el código para las familias.
 const WEB_FAMILIAS = "https://rumbo-a-europa.vercel.app/#familias";
