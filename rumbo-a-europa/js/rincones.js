@@ -107,7 +107,7 @@ window.Rincones = (function () {
       <span class="etiqueta">Paso 2</span>
       <h2>Elige un rincón</h2>
       <div class="rincones" id="r-lista"></div>
-      <div class="excel-fila"><a class="btn sec" href="#insignias">🏅 Mis insignias</a><button class="btn sec" id="r-excel">Descargar mi valoración (Excel)</button><span>Todas tus notas de los cuatro rincones y la media de cada indicador.</span></div>
+      <div class="excel-fila"><a class="btn sec" href="#insignias">🏅 Mis insignias</a><a class="btn sec" href="#mis-notas">📊 Mis notas por rincón</a><button class="btn sec" id="r-excel">Descargar mi valoración (Excel)</button><span>Todas tus notas de los cuatro rincones y la media de cada indicador.</span></div>
     </div></section>
     <section class="seccion" style="padding-top:0"><div class="envoltura">
       <h2>Escala de notas</h2>
@@ -488,16 +488,80 @@ window.Rincones = (function () {
     w.document.close();
   }
 
+
+
+  async function recuperarProgresoNube() {
+    const ses = window.Acceso && window.Acceso.sesion ? window.Acceso.sesion() : null, R = window.REGISTRO || {};
+    if (!ses || !R.url) { pintarCrea(); return; }
+    try {
+      const resp = await fetch(R.url, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify({ accion: "alumnoResultados", usuario: ses.usuario, token: ses.token }) });
+      const j = JSON.parse(await resp.text());
+      if (j && j.ok) {
+        const cab = j.cab || [], fila = j.fila || [];
+        // Rehidrata las notas que están guardadas en Google Sheets en el almacenamiento local.
+        V().filas().forEach(x => {
+          const col = String(x.destino).slice(0,60) + " · Ind. " + x.codigo, ix = cab.indexOf(col);
+          if (ix >= 0 && fila[ix] !== "" && fila[ix] != null)
+            V().registrar(x.clave, { nota: Number(fila[ix]), codigo: x.codigo, pantalla: x.pantalla, actividad: x.actividad }, true);
+        });
+        // Restaura también los retos de Crea terminados, aunque se haya cambiado de navegador o dispositivo.
+        (j.hechos || []).forEach(h => {
+          const a = crea().find(x => destinoCrea(x) === h[0]);
+          if (a) V().registrar(claveHecho(a), { nota: "✓ Terminado", hecho: true,
+            ruta: String(h[1] || "").replace(/^Terminado ·\s*/, ""), fecha: h[2] || "" }, true);
+        });
+      }
+    } catch (e) {}
+    if (location.hash === "#crea") pintarCrea();
+  }
+
+  /* ---------- Consulta de notas del propio alumno (datos protegidos por sesión) ---------- */
+  async function pintarMisNotas() {
+    const a = V().alumno(), ses = window.Acceso && window.Acceso.sesion ? window.Acceso.sesion() : null;
+    const R = window.REGISTRO || {};
+    raiz.innerHTML = `<header class="rincon-cab" style="--rc:#3a7bd5"><div class="envoltura"><a class="volver-r" href="#">← Rincones</a><div class="rincon-tit"><span class="rincon-ico">📊</span><div><h1>Mis notas</h1><p>Consulta tus indicadores en cada rincón</p></div></div></div></header><div class="envoltura seccion"><p class="estado">Cargando tus resultados…</p></div>`;
+    if (!ses || !R.url) {
+      raiz.querySelector(".estado").textContent = "Entra con tu contraseña desde la portada para consultar tus notas.";
+      return;
+    }
+    try {
+      const resp = await fetch(R.url, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify({ accion: "alumnoResultados", usuario: ses.usuario, token: ses.token }) });
+      const j = JSON.parse(await resp.text());
+      if (!j.ok) { raiz.querySelector(".estado").textContent = j.error || "No se han podido cargar tus notas."; return; }
+      const c = /6/.test(j.clase || "") ? "6º" : "5º", cab = j.cab || [], fila = j.fila || [];
+      const cat = window.Profe && window.Profe.catalogo ? window.Profe.catalogo(c) : [];
+      const rinc = [{id:"crea",nombre:"Crea",color:"#e07a1f"},{id:"prog",nombre:"Programa",color:"#3a7bd5"},{id:"rob",nombre:"Robótica",color:"#2f8f5b"},{id:"piensa",nombre:"Piensa",color:"#8a4fd8"}];
+      const contenido = rinc.map(r => {
+        const items = [];
+        cat.filter(x => x.rincon === r.id).forEach(x => (x.inds || []).forEach(cod => {
+          const pref = String(x.destino).slice(0,60) + " · Ind. " + cod;
+          const ix = cab.indexOf(pref);
+          if (ix >= 0 && fila[ix] !== "" && fila[ix] != null) {
+            const n = Number(fila[ix]), texto = ((window.INDICADORES || {})[c] || {})[String(cod)] || "";
+            items.push(`<tr><td><b>${esc(x.titulo)}</b><br><small>Indicador ${esc(cod)}: ${esc(texto)}</small></td><td class="nota-alumno">${Number.isFinite(n) ? n.toFixed(1).replace(".",",") : "–"} / 5</td></tr>`);
+          }
+        }));
+        return `<section class="f-hijo" style="--rc:${r.color}"><h2>${r.nombre}</h2>${items.length ? `<div class="tabla-scroll"><table class="p-tabla"><thead><tr><th>Actividad e indicador</th><th>Mi nota</th></tr></thead><tbody>${items.join("")}</tbody></table></div>` : `<p class="intro">Todavía no hay notas registradas en este rincón.</p>`}</section>`;
+      }).join("");
+      raiz.innerHTML = `<header class="rincon-cab" style="--rc:#3a7bd5"><div class="envoltura"><a class="volver-r" href="#">← Rincones</a><div class="rincon-tit"><span class="rincon-ico">📊</span><div><h1>Mis notas</h1><p>${esc(j.nombre)} · ${esc(j.clase)}. Estas son las notas registradas por tu profe.</p></div></div></div></header><div class="envoltura seccion">${contenido}<p class="intro">Las notas que aún no aparecen están pendientes de registrar o enviar.</p></div>`;
+    } catch (e) {
+      raiz.innerHTML = `<div class="envoltura seccion"><p class="estado" data-tipo="error">No se han podido cargar tus notas. Comprueba tu conexión e inténtalo de nuevo.</p><a class="btn sec" href="#">Volver</a></div>`;
+    }
+  }
+
   /* ---------- Rutas ---------- */
   function ruta(hash) {
     const h = hash || "";
     let hecho = true;
     if (h === "" || h === "#" || h === "#inicio") pintarPortada();
-    else if (h === "#crea") pintarCrea();
+    else if (h === "#crea") { recuperarProgresoNube(); }
     else if (h === "#piensa") pintarPiensa();
     else if (h === "#notas-prog") pintarNotas("prog");
     else if (h === "#notas-rob") pintarNotas("rob");
     else if (h === "#insignias") pintarInsignias();
+    else if (h === "#mis-notas") { pintarMisNotas(); }
     else if (h === "#profe" && window.Profe) window.Profe.pintar(raiz);
     else if (h === "#familias" && window.Familias) window.Familias.pintar(raiz);
     else hecho = false;

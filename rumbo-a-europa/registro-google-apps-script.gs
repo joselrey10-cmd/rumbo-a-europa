@@ -45,6 +45,7 @@ function doPost(e) {
   const pedido = JSON.parse(e.postData.contents);
   if (pedido.accion === "datos") return datosProfe(libro, pedido);
   if (pedido.accion === "importar") return importarAlumnado(libro, pedido);
+  if (pedido.accion === "guardarCorreosFamilia") return guardarCorreosFamilia(libro, pedido);
   if (pedido.accion === "borrar") return borrarAlumno(libro, pedido);
   if (pedido.accion === "autoevaluacion") return guardarAutoevaluacion(libro, pedido);
   if (pedido.accion === "familiaCodigo") return familiaCodigo(libro, pedido);
@@ -56,6 +57,7 @@ function doPost(e) {
   if (pedido.accion === "alumnoCodigo") return json({ ok: false, error: "El acceso del alumnado ahora se realiza con una contraseña elegida por cada alumno." });
   if (pedido.accion === "alumnoEntrar") return alumnoEntrar(libro, pedido);
   if (pedido.accion === "alumnoSesion") return alumnoSesion(libro, pedido);
+  if (pedido.accion === "alumnoResultados") return alumnoResultados(libro, pedido);
   if (pedido.accion === "alumnoDirecto") return alumnoDirecto(libro, pedido);
   if (pedido.accion === "alumnoCambiarCodigo") return alumnoCambiarCodigo(libro, pedido);
   if (pedido.accion === "codigosAlumnos") return json({ ok: false, error: "Las contraseñas se consultan en la pestaña «Accesos alumnado» de la hoja." });
@@ -210,6 +212,27 @@ function importarAlumnado(libro, d) {
     ordenarTodo(libro);
     return json({ ok: true, nuevos, cambiados, sinUsuario });
   } finally { lock.releaseLock(); }
+}
+
+/* Guarda de forma directa los dos correos familiares de un alumno ya registrado. */
+function guardarCorreosFamilia(libro, d) {
+  if (CLAVE_PROFE === "cambia-esta-clave" || String(d.clave || "") !== CLAVE_PROFE)
+    return json({ ok: false, error: "Clave incorrecta." });
+  const usuario = minus(d.usuario);
+  if (!usuario) return json({ ok: false, error: "Falta el usuario de Educacyl." });
+  const correos = Array.from(new Set(String(d.correo || "").toLowerCase().split(/[;,\s]+/)
+    .map(c => c.trim()).filter(Boolean))).slice(0, 2);
+  if (correos.some(c => !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(c)))
+    return json({ ok: false, error: "Revisa las direcciones de correo." });
+  const h = hojaAlumnado(libro);
+  if (h.getLastRow() < 2) return json({ ok: false, error: "No hay alumnado registrado." });
+  const filas = h.getRange(2, 1, h.getLastRow() - 1, ALUMNADO.length).getValues();
+  const i = filas.findIndex(f => minus(f[2]) === usuario);
+  if (i < 0) return json({ ok: false, error: "No encuentro al alumno. Comprueba su usuario." });
+  const valor = correos.join(", ");
+  h.getRange(i + 2, 5).setValue(valor);
+  SpreadsheetApp.flush();
+  return json({ ok: true, correo: valor });
 }
 
 /* ---------- Consulta de las familias ---------- */
@@ -816,6 +839,23 @@ function alumnoDeSesion(libro, d) {
   const f = filasAlumnado(libro).find((x) => minus(x[2]) === usuario);
   return f ? { usuario, nombre: textoAlumno(f), clase: normGrupo(f[3]), adaptado: leerAdaptados().indexOf(usuario) >= 0 } : null;
 }
+
+/* Resultados del alumno autenticado: solo devuelve sus propias notas e hitos. */
+function alumnoResultados(libro, d) {
+  const s = alumnoDeSesion(libro, d);
+  if (!s) return json({ ok: false, error: "Tu sesión ha caducado. Sal y vuelve a entrar." });
+  const h = libro.getSheetByName("Valoraciones");
+  const v = h && h.getLastRow() > 0 ? h.getDataRange().getValues() : [[]];
+  const cab = v[0] || [], iU = cab.indexOf("Usuario Educacyl");
+  const fila = iU >= 0 ? (v.slice(1).find(x => minus(x[iU]) === minus(s.usuario)) || null) : null;
+  const res = libro.getSheetByName("Resultados");
+  const r = res && res.getLastRow() > 1 ? res.getDataRange().getValues() : [[]];
+  const rc = r[0] || [], rU = rc.indexOf("Usuario Educacyl"), rA = rc.indexOf("Actividad"), rP = rc.indexOf("Programa"), rF = rc.indexOf("Fecha");
+  const hechos = rU >= 0 ? r.slice(1).filter(x => minus(x[rU]) === minus(s.usuario) && String(x[rP] || "").indexOf("Terminado") === 0)
+    .map(x => [x[rA], x[rP], x[rF] instanceof Date ? x[rF].toISOString() : String(x[rF])]) : [];
+  return json({ ok: true, nombre: s.nombre, clase: s.clase, cab, fila, hechos });
+}
+
 function alumnoSesion(libro, d) {
   const s = alumnoDeSesion(libro, d);
   return json({ ok: true, valida: !!s, requiere: CODIGO_ALUMNO, alumno: s });
