@@ -57,6 +57,7 @@ function doPost(e) {
   if (pedido.accion === "alumnoCodigo") return json({ ok: false, error: "El acceso del alumnado ahora se realiza con una contraseña elegida por cada alumno." });
   if (pedido.accion === "alumnoEntrar") return alumnoEntrar(libro, pedido);
   if (pedido.accion === "alumnoSesion") return alumnoSesion(libro, pedido);
+  if (pedido.accion === "alumnoResultados") return alumnoResultados(libro, pedido);
   if (pedido.accion === "alumnoDirecto") return alumnoDirecto(libro, pedido);
   if (pedido.accion === "alumnoCambiarCodigo") return alumnoCambiarCodigo(libro, pedido);
   if (pedido.accion === "codigosAlumnos") return json({ ok: false, error: "Las contraseñas se consultan en la pestaña «Accesos alumnado» de la hoja." });
@@ -838,6 +839,23 @@ function alumnoDeSesion(libro, d) {
   const f = filasAlumnado(libro).find((x) => minus(x[2]) === usuario);
   return f ? { usuario, nombre: textoAlumno(f), clase: normGrupo(f[3]), adaptado: leerAdaptados().indexOf(usuario) >= 0 } : null;
 }
+
+/* Resultados del alumno autenticado: solo devuelve sus propias notas e hitos. */
+function alumnoResultados(libro, d) {
+  const s = alumnoDeSesion(libro, d);
+  if (!s) return json({ ok: false, error: "Tu sesión ha caducado. Sal y vuelve a entrar." });
+  const h = libro.getSheetByName("Valoraciones");
+  const v = h && h.getLastRow() > 0 ? h.getDataRange().getValues() : [[]];
+  const cab = v[0] || [], iU = cab.indexOf("Usuario Educacyl");
+  const fila = iU >= 0 ? (v.slice(1).find(x => minus(x[iU]) === minus(s.usuario)) || null) : null;
+  const res = libro.getSheetByName("Resultados");
+  const r = res && res.getLastRow() > 1 ? res.getDataRange().getValues() : [[]];
+  const rc = r[0] || [], rU = rc.indexOf("Usuario Educacyl"), rA = rc.indexOf("Actividad"), rP = rc.indexOf("Programa"), rF = rc.indexOf("Fecha");
+  const hechos = rU >= 0 ? r.slice(1).filter(x => minus(x[rU]) === minus(s.usuario) && String(x[rP] || "").indexOf("Terminado") === 0)
+    .map(x => [x[rA], x[rP], x[rF] instanceof Date ? x[rF].toISOString() : String(x[rF])]) : [];
+  return json({ ok: true, nombre: s.nombre, clase: s.clase, cab, fila, hechos });
+}
+
 function alumnoSesion(libro, d) {
   const s = alumnoDeSesion(libro, d);
   return json({ ok: true, valida: !!s, requiere: CODIGO_ALUMNO, alumno: s });
