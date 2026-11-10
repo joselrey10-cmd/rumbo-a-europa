@@ -2,17 +2,17 @@
 window.RetosCadena = (function () {
   "use strict";
   const secuencias = ["programa", "piensa", "robot-robot", "robot-essential", "robot-prime"];
-  async function llamar(secuencia, op, indice, total, codigo) {
+  async function llamar(secuencia, op, indice, total, codigo, notaPantalla) {
     const R = window.REGISTRO || {}, A = window.Acceso;
     if (!R.url || !A || !A.token()) return { ok: false, error: "Inicia sesión para utilizar los retos encadenados." };
     try {
-      const r = await fetch(R.url, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify(Object.assign({ accion: "retoCadena", op, secuencia, indice, total }, A.datosEnvio(), codigo ? { codigo } : {})) });
+      const r = await fetch(R.url, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify(Object.assign({ accion: "retoCadena", op, secuencia, indice, total }, A.datosEnvio(), codigo ? { codigo } : {}, Number.isFinite(notaPantalla) ? { notaPantalla } : {})) });
       return await r.json();
     } catch (e) { return { ok: false, error: "No se ha podido conectar con el servidor. Inténtalo de nuevo." }; }
   }
-  async function completar(secuencia, indice, total) {
+  async function completar(secuencia, indice, total, notaPantalla) {
     if (!secuencias.includes(secuencia)) return { ok: false, error: "Secuencia no válida." };
-    return llamar(secuencia, "completar", indice, total);
+    return llamar(secuencia, "completar", indice, total, null, notaPantalla);
   }
   async function entrar(secuencia, indice, total) {
     if (!secuencias.includes(secuencia)) return false;

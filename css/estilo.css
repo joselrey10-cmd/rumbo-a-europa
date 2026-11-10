@@ -561,3 +561,69 @@ html.adaptado #texto-objetivo, html.adaptado #rb-texto-reto { font-size: 22px; }
   #rb-blockly { height: 580px; min-height: 520px; }
   .programa { min-height: 190px; }
 }
+
+/* ---------- Modo alumno: menos portada y más espacio para trabajar ---------- */
+/* Las cabeceras identifican el rincón sin ocupar la pantalla de actividad. */
+.rincon-cab .envoltura { padding-block: 9px 12px; gap: 5px; }
+.rincon-cab .volver-r { font-size: 13px; }
+.rincon-tit { gap: 9px; }
+.rincon-tit .rincon-ico { font-size: 30px; }
+.rincon-tit h1 { font-size: clamp(23px, 3.4vw, 32px); }
+.rincon-tit p { font-size: 13px; margin-top: 1px; }
+.rincon-quien { font-size: 11px; padding: 2px 9px; }
+
+/* En Programa, el título se convierte en una franja breve y el pasaporte
+   (donde se elige y empieza la aventura) pasa a ser el contenido principal. */
+#inicio > .portada .envoltura { padding-block: 10px 12px; }
+#inicio > .portada .marca { font-size: 10px; gap: 7px; }
+#inicio > .portada .marca img { height: 30px; }
+#inicio > .portada .portada-grid { display: flex; margin-top: 5px; gap: 10px; }
+#inicio > .portada .portada-grid > div:first-child { flex: 1; }
+#inicio > .portada .portada-grid .aro { display: none; }
+#inicio > .portada h1 { font-size: clamp(29px, 4vw, 42px); line-height: 1; }
+#inicio > .portada h1 span { display: inline; }
+#inicio > .portada p.sub { font-size: 14px; margin: 3px 0 0; max-width: 52em; }
+#inicio > .portada #btn-empezar { margin-top: 8px; padding: 8px 18px; font-size: 15px; }
+#inicio > .seccion { padding-block: 14px; }
+#inicio > .seccion .etiqueta { font-size: 10px; }
+#inicio > .seccion h2 { font-size: clamp(21px, 3vw, 27px); }
+#inicio > .seccion .intro { margin: 3px 0 10px; font-size: 14px; }
+#inicio #lista-personajes .personaje { padding: 8px; gap: 2px; }
+#inicio #lista-personajes .personaje .cara { width: 62px; height: 62px; }
+#inicio #lista-personajes .personaje strong { font-size: 16px; }
+#inicio #lista-personajes .personaje small { font-size: 11px; }
+#inicio #lista-destinos .aventura { margin-top: 10px; }
+#inicio #lista-destinos .aventura-cab { margin-bottom: 7px; }
+#inicio #lista-destinos .aventura-cab h3 { font-size: 22px; }
+#inicio #lista-destinos .destinos { grid-template-columns: repeat(auto-fill, minmax(145px, 1fr)); gap: 10px; }
+#inicio #lista-destinos .destino { min-height: 112px; padding: 10px 12px; }
+#inicio #lista-destinos .destino strong { font-size: 20px; }
+#inicio > .seccion:last-of-type { padding-top: 4px; }
+#inicio > .seccion:last-of-type .como { gap: 8px; }
+#inicio > .seccion:last-of-type .como div { padding: 8px 10px; }
+
+/* Robótica: acceso rápido a los modos y más protagonismo del tapete/editor. */
+#rb-menu > .portada-rob .envoltura { padding-block: 9px 10px; }
+#rb-menu > .portada-rob h1 { font-size: clamp(26px, 4vw, 36px); }
+#rb-menu > .portada-rob p.sub { font-size: 13px; margin-top: 4px; }
+#rb-menu > .envoltura.seccion { padding-block: 12px; }
+#rb-menu .rb-alumno { margin-bottom: 10px; }
+#rb-juego .objetivo { margin-top: 10px; padding: 8px 12px; }
+#rb-juego .juego { gap: 14px; padding-bottom: 22px; }
+#rb-juego .tablero-marco { padding: 8px; }
+#rb-juego .editor .panel { padding: 10px; }
+
+/* En los retos de Crea y Piensa, la actividad queda visualmente por delante
+   de los textos introductorios y de la cabecera. */
+#rincones .retos-r { gap: 12px; }
+#rincones .reto-r { padding: 14px; gap: 8px; }
+#rincones .reto-r-cab h3 { font-size: 20px; }
+#rincones .sa-tit { font-size: 22px; margin: 12px 0 7px; }
+#rincones .seccion { padding-block: 14px; }
+
+@media (max-width: 700px) {
+  #inicio > .portada .portada-grid { display: block; }
+  #inicio > .portada p.sub { font-size: 12px; }
+  #inicio #lista-destinos .destinos { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  #rb-juego .juego { grid-template-columns: 1fr; }
+}

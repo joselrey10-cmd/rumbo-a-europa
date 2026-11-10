@@ -956,6 +956,7 @@ function gestionarRetoCadena(libro, d) {
     estado.desbloqueado = Math.max(0, Math.min(total - 1, Number(estado.desbloqueado) || 0));
     estado.completados = estado.completados || [];
     estado.codigos = estado.codigos || {};
+    estado.notas = estado.notas || {};
     if (estado.total && Number(estado.total) !== total) {
       const anterior = Number(estado.total);
       if (secuencia === "programa" && anterior === 17 && total === 30) {
@@ -980,6 +981,16 @@ function gestionarRetoCadena(libro, d) {
     if (op === "completar") {
       if (indice > estado.desbloqueado) return json({ ok: false, error: "Este reto todavía está bloqueado." });
       if (estado.completados.indexOf(indice) < 0) estado.completados.push(indice);
+      // La nota representa el mejor resultado demostrado en esta pantalla.
+      // Repetir no suma puntos por sí mismo: solo se actualiza si la nueva
+      // ejecución obtiene una calificación estrictamente superior. Nunca baja.
+      const notaRecibida = Number(d.notaPantalla);
+      if (d.notaPantalla !== "" && d.notaPantalla != null && Number.isFinite(notaRecibida) && notaRecibida >= 0 && notaRecibida <= 5) {
+        const notaAnterior = estado.notas[indice] == null ? -1 : Number(estado.notas[indice]);
+        if (!Number.isFinite(notaAnterior) || notaRecibida > notaAnterior) {
+          estado.notas[indice] = Math.round(notaRecibida * 100) / 100;
+        }
+      }
       let codigo = "";
       const finAventura = secuencia === "programa" && [9, 19, 29].includes(indice);
       if (indice === estado.desbloqueado) {
@@ -997,7 +1008,8 @@ function gestionarRetoCadena(libro, d) {
       const resumen = claveResumen ? actualizarResumenRutas(libro, alumno) : null;
       const datoRuta = claveResumen ? resumen[claveResumen] : null;
       return json({ ok: true, codigo, siguiente: indice + 1 < total ? indice + 1 : null, completado: indice,
-        completados: estado.completados.length, total, nota: datoRuta ? datoRuta.nota : null, maximo: datoRuta ? datoRuta.maximo : null });
+        completados: estado.completados.length, total, nota: datoRuta ? datoRuta.nota : null, maximo: datoRuta ? datoRuta.maximo : null,
+        notaPantalla: estado.notas[indice] == null ? null : estado.notas[indice] });
     }
     if (op === "desbloquear") {
       if (indice <= estado.desbloqueado) return json({ ok: true, desbloqueado: estado.desbloqueado });

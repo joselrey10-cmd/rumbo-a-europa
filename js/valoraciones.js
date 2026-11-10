@@ -47,12 +47,18 @@ window.Valoraciones = (function () {
   }
 
   function leer() { return leerJSON(CLAVE, {}); }
-  // reemplazar = true: guarda la nota aunque sea más baja (nota puesta a mano).
+  // reemplazar = true: sincroniza la mejor nota confirmada por el servidor.
+  // En modo normal solo se conserva una nota superior; los intentos no suman puntos.
   function registrar(clave, datos, reemplazar) {
     const v = leer(), prev = v[clave];
     const intentos = Math.max(datos.intentos || 0, prev ? prev.intentos || 0 : 0);
-    if (!prev || reemplazar || datos.nota >= prev.nota) v[clave] = Object.assign({}, datos, { intentos, fecha: new Date().toISOString() });
-    else prev.intentos = intentos;
+    if (!prev || Number(datos.nota) > Number(prev.nota)) {
+      v[clave] = Object.assign({}, datos, { intentos, fecha: new Date().toISOString() });
+    } else {
+      // Conserva la mejor calificación; el contador puede reflejar los intentos acumulados,
+      // pero nunca interviene para aumentar la nota.
+      prev.intentos = intentos;
+    }
     escribirJSON(CLAVE, v);
     return v[clave];
   }

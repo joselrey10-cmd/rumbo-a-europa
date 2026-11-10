@@ -525,8 +525,12 @@
     const est = n <= nivel.reto ? 3 : n <= nivel.reto + 2 ? 2 : 1;
     progreso[EST][nivelI] = Math.max(progreso[EST][nivelI] || 0, est);
     guardar();
-    const cadena = window.RetosCadena ? await window.RetosCadena.completar("programa", nivelI, NIVELES.length) : null;
-    const val = valorar(true, null, cadena && cadena.ok && Number.isFinite(cadena.nota) ? cadena.nota : null);
+    // La nota de esta pantalla refleja el mejor resultado conseguido.
+    // Se puede repetir para mejorarla; repetir por sí solo nunca añade puntos.
+    const notaCalculada = window.Valoraciones ? window.Valoraciones.nota({ completado: true, parcial: false, intentos, bloques: n, reto: nivel.reto }) : null;
+    const cadena = window.RetosCadena ? await window.RetosCadena.completar("programa", nivelI, NIVELES.length, notaCalculada) : null;
+    const notaFija = cadena && cadena.ok && Number.isFinite(cadena.notaPantalla) ? cadena.notaPantalla : notaCalculada;
+    const val = valorar(true, null, Number.isFinite(notaFija) ? notaFija : null);
     enviarResultado(n, est, val);
     const av = AVENTURAS[nivel.aventura];
     const ultimo = nivel.pos === av.niveles.length - 1;

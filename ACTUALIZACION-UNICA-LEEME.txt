@@ -1,0 +1,20 @@
+ACTUALIZACION ACUMULATIVA — RUMBO A EUROPA
+
+Esta versión reúne las funciones incorporadas en la última entrega del proyecto:
+- Consulta privada «Mis notas» para que cada alumno autenticado vea sus notas por indicador y rincón.
+- Recuperación de las valoraciones del alumno desde Google Sheets mediante la acción alumnoResultados.
+- Tres aventuras de Programación (30 pantallas en total) y progreso/códigos gestionados por Apps Script.
+- Conservación de la mejor nota por pantalla: repetir sin mejorar no suma puntos; una mejora posterior puede elevarla sin superar el máximo.
+- Mejoras visuales de las pantallas de trabajo.
+- Funciones de alumnado, familias y panel docente presentes en el proyecto.
+
+INSTALACIÓN
+1. Haz una copia de seguridad de la hoja de Google Sheets. No borres ni renombres pestañas existentes.
+2. Sustituye los archivos de la web por los de esta carpeta, conservando la estructura de carpetas.
+3. En el proyecto de Google Apps Script, sustituye el contenido del archivo registro-google-apps-script.gs por la versión incluida en esta actualización (la copia de la raíz y la copia anidada son iguales).
+4. Guarda y crea una nueva implementación/versión de la aplicación web. Si cambia la URL de implementación, actualiza REGISTRO.url en la configuración de la web.
+5. Para ver «Mis notas», el alumno debe seleccionar su identidad y entrar con su contraseña. La pantalla consulta exclusivamente su usuario autenticado. Las notas aparecen cuando el docente las ha registrado en la pestaña Valoraciones.
+6. Prueba con una cuenta de alumno antes de extenderlo a toda la clase: abre «Mis notas» y verifica que aparecen sus indicadores. Comprueba también que no puede ver los de otro alumno.
+
+VALIDACIÓN
+El paquete conserva la estructura y los ficheros del ZIP de origen. La integridad del ZIP y la sintaxis JavaScript/Apps Script se han comprobado localmente. No se ha realizado una prueba conectada a la hoja real del centro; por tanto, la escritura/lectura real depende de publicar la versión correcta de Apps Script y de los permisos de Google.
