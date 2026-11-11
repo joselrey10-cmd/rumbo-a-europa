@@ -77,14 +77,14 @@ window.INDICADORES = {
     "5.3.3": "CD2 · CD3: Explica a otra tripulación cómo resolvió un reto (micro:bit o robot) con una miniguía de pasos que les permite hacerlo."
   },
   "6º": {
-    "1.1.1": "CD1, CCL3, CP1: Busca en Internet los datos pedidos de su país (capital, habitantes, monumento y curiosidades) con palabras clave y anota la web de cada dato.",
+    "1.1.1": "CD1, CCL3: Busca en Internet los datos pedidos de su país (capital, habitantes, monumento y curiosidades) con palabras clave y anota la web de cada dato.",
     "1.1.2": "CD1, CCL3: Comprueba un dato en una segunda web fiable antes de usarlo, también cuando el dato lo ha dado una IA.",
     "1.1.3": "CCL3, CP1: Distingue una noticia fiable de un bulo (autor, fecha, fuentes, titular que asusta o mete prisa) y sabe que debe comprobarla en otro medio antes de compartirla.",
     "1.1.4": "CD1, CCL3: Reconoce diferentes navegadores.",
     "1.2.1": "CE3: Guarda sus trabajos en la carpeta de OneDrive indicada (TIAC · curso · SA o subcarpeta) con un nombre claro.",
     "1.2.2": "CE3: Exporta su trabajo al formato pedido (Word a PDF, Audacity a MP3) y comprueba que se abre.",
     "1.2.3": "CE3: Organiza el escritorio y crea y nombra carpetas en su ordenador.",
-    "2.1.1": "CCL5, CC1 (y CPSAA en el 2.º trimestre): Escribe un correo con todas sus partes (Para, CC, CCO, asunto, saludo, cuerpo, despedida, firma y adjunto) y sabe cuándo usar CC y CCO.",
+    "2.1.1": "CCL5, CC1: Escribe un correo con todas sus partes (Para, CC, CCO, asunto, saludo, cuerpo, despedida, firma y adjunto) y sabe cuándo usar CC y CCO.",
     "2.1.2": "CP1, CCEC3: Presenta su país con respeto, sin estereotipos, e incluye palabras de su lengua bien escritas y pronunciadas.",
     "2.1.3": "CPSAA3, CC1: Aplica la netiqueta en chats, correos y videollamadas: saluda, pide por favor, no grita en mayúsculas, pide turno y pide permiso antes de compartir imágenes de otros.",
     "2.2.1": "CCL5, CE3: Comparte su trabajo por OneDrive o Teams con las personas adecuadas y comprueba que pueden abrirlo.",
