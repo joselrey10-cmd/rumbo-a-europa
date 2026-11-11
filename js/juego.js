@@ -66,6 +66,22 @@
       }
       return s;
     }
+    // Reino Unido, Escocia y Suiza (las cruces se dibujan sobre el rectángulo de la bandera).
+    if (b.uk || b.escocia) {
+      const L = (x1, y1, x2, y2, col, g) => `<line x1="${x1.toFixed(2)}" y1="${y1.toFixed(2)}" x2="${x2.toFixed(2)}" y2="${y2.toFixed(2)}" stroke="${col}" stroke-width="${g.toFixed(2)}"/>`;
+      let s = `<svg x="${x}" y="${y}" width="${w}" height="${h}" overflow="hidden"><rect width="${w}" height="${h}" fill="${b.uk ? "#012169" : "#0065bd"}"/>`;
+      s += L(0, 0, w, h, "#ffffff", h * 0.2) + L(0, h, w, 0, "#ffffff", h * 0.2);
+      if (b.uk) {
+        s += L(0, 0, w, h, "#c8102e", h * 0.07) + L(0, h, w, 0, "#c8102e", h * 0.07);
+        s += L(w / 2, 0, w / 2, h, "#ffffff", h * 0.33) + L(0, h / 2, w, h / 2, "#ffffff", h * 0.33);
+        s += L(w / 2, 0, w / 2, h, "#c8102e", h * 0.2) + L(0, h / 2, w, h / 2, "#c8102e", h * 0.2);
+      }
+      return s + "</svg>";
+    }
+    if (b.suiza) {
+      const cx = x + w / 2, cy = y + h / 2, l = h * 0.62, g = h * 0.19;
+      return `<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="#da291c"/><rect x="${(cx - g / 2).toFixed(2)}" y="${(cy - l / 2).toFixed(2)}" width="${g.toFixed(2)}" height="${l.toFixed(2)}" fill="#ffffff"/><rect x="${(cx - l / 2).toFixed(2)}" y="${(cy - g / 2).toFixed(2)}" width="${l.toFixed(2)}" height="${g.toFixed(2)}" fill="#ffffff"/>`;
+    }
     if (b.checa) {
       return `<rect x="${x}" y="${y}" width="${w}" height="${h / 2}" fill="#ffffff"/><rect x="${x}" y="${y + h / 2}" width="${w}" height="${h / 2}" fill="#d7141a"/><path d="M${x} ${y} L${(x + w * 0.5).toFixed(2)} ${y + h / 2} L${x} ${y + h}Z" fill="#11457e"/>`;
     }

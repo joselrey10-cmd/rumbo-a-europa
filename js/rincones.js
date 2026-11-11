@@ -499,11 +499,13 @@ window.Rincones = (function () {
       const j = JSON.parse(await resp.text());
       if (j && j.ok) {
         const cab = j.cab || [], fila = j.fila || [];
+        // Notas de la hoja por columna (las columnas con la numeración antigua de Programa se pasan a la de ahora).
+        const notasHoja = window.Profe && window.Profe.notasDe ? window.Profe.notasDe(cab, fila) : {};
         // Rehidrata las notas que están guardadas en Google Sheets en el almacenamiento local.
         V().filas().forEach(x => {
-          const col = String(x.destino).slice(0,60) + " · Ind. " + x.codigo, ix = cab.indexOf(col);
-          if (ix >= 0 && fila[ix] !== "" && fila[ix] != null)
-            V().registrar(x.clave, { nota: Number(fila[ix]), codigo: x.codigo, pantalla: x.pantalla, actividad: x.actividad }, true);
+          const col = String(x.destino).slice(0,60) + " · Ind. " + x.codigo;
+          if (col in notasHoja)
+            V().registrar(x.clave, { nota: notasHoja[col], codigo: x.codigo, pantalla: x.pantalla, actividad: x.actividad }, true);
         });
         // Restaura también los retos de Crea terminados, aunque se haya cambiado de navegador o dispositivo.
         (j.hechos || []).forEach(h => {
@@ -531,15 +533,16 @@ window.Rincones = (function () {
       const j = JSON.parse(await resp.text());
       if (!j.ok) { raiz.querySelector(".estado").textContent = j.error || "No se han podido cargar tus notas."; return; }
       const c = /6/.test(j.clase || "") ? "6º" : "5º", cab = j.cab || [], fila = j.fila || [];
+      // Notas de la hoja por columna (las columnas con la numeración antigua de Programa se pasan a la de ahora).
+      const notasHoja = window.Profe && window.Profe.notasDe ? window.Profe.notasDe(cab, fila) : {};
       const cat = window.Profe && window.Profe.catalogo ? window.Profe.catalogo(c) : [];
       const rinc = [{id:"crea",nombre:"Crea",color:"#e07a1f"},{id:"prog",nombre:"Programa",color:"#3a7bd5"},{id:"rob",nombre:"Robótica",color:"#2f8f5b"},{id:"piensa",nombre:"Piensa",color:"#8a4fd8"}];
       const contenido = rinc.map(r => {
         const items = [];
         cat.filter(x => x.rincon === r.id).forEach(x => (x.inds || []).forEach(cod => {
           const pref = String(x.destino).slice(0,60) + " · Ind. " + cod;
-          const ix = cab.indexOf(pref);
-          if (ix >= 0 && fila[ix] !== "" && fila[ix] != null) {
-            const n = Number(fila[ix]), texto = ((window.INDICADORES || {})[c] || {})[String(cod)] || "";
+          if (pref in notasHoja) {
+            const n = notasHoja[pref], texto = ((window.INDICADORES || {})[c] || {})[String(cod)] || "";
             items.push(`<tr><td><b>${esc(x.titulo)}</b><br><small>Indicador ${esc(cod)}: ${esc(texto)}</small></td><td class="nota-alumno">${Number.isFinite(n) ? n.toFixed(1).replace(".",",") : "–"} / 5</td></tr>`);
           }
         }));

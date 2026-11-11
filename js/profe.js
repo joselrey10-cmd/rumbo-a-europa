@@ -89,9 +89,24 @@ window.Profe = (function () {
   }
   const esAdaptado = (a) => !!a.usuario && (datos && datos.adaptados || []).indexOf(String(a.usuario).trim().toLowerCase()) >= 0;
   const idDe = (a) => (a.usuario ? "u:" + String(a.usuario).trim().toLowerCase() : "n:" + String(a.nombre || "").trim().toLowerCase() + "|" + G(a.clase));
+  /* Al pasar de 17 a 30 pantallas cambió el número de muchas ciudades (Dublín era la 8 y ahora es la 11).
+     Las columnas antiguas de la hoja («Programación · 8. Dublín · Ind. …») se leen con el número de ahora,
+     buscando la ciudad. Si hay nota en la antigua y en la nueva, vale la más alta. */
+  function normCol(t) {
+    t = String(t);
+    const m = /^Programación · \d+\. (.+?) · Ind\. (.+)$/.exec(t);
+    if (!m) return t;
+    const i = (window.PROG_NIVELES || []).findIndex((n) => n.ciudad === m[1]);
+    return i < 0 ? t : columna(`Programación · ${i + 1}. ${m[1]}`, m[2]);
+  }
   function notasDe(cab, f) {
     const notas = {};
-    (cab || []).forEach((t, i) => { t = String(t); if (/ · Ind\. /.test(t) && f && f[i] !== "" && f[i] != null) notas[t] = Number(f[i]); });
+    (cab || []).forEach((t, i) => {
+      t = String(t);
+      if (!/ · Ind\. /.test(t) || !f || f[i] === "" || f[i] == null) return;
+      const k = normCol(t), n = Number(f[i]);
+      if (!(k in notas) || n > notas[k]) notas[k] = n;
+    });
     return notas;
   }
   /* Orden y nombre por apellidos: "Martín Pérez, Lucía". Si no está importado, los apellidos son lo que va tras la primera palabra. */
@@ -494,5 +509,5 @@ window.Profe = (function () {
     else if (alumnoSel) pintarAlumno(alumnoSel);
     else pintarGrupo();
   }
-  return { pintar, catalogo, notasDe, resumen, columna, RINC, textoInd, mediasInd };
+  return { pintar, catalogo, notasDe, normCol, resumen, columna, RINC, textoInd, mediasInd };
 })();

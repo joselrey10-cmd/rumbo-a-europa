@@ -74,28 +74,28 @@ window.AVENTURAS = [
     bloques: ["avanzar", "saltar", "izq", "der", "repetir"], reto: 5
   },
   {
-    ciudad: "Londres", pais: "Reino Unido", suelo: "#d9d9d0",
-    bandera: { o: "v", c: ["#003399", "#ffffff", "#cc0000"], w: [1, 1, 1] },
-    dato: "Londres es una ciudad europea que forma parte de nuestro viaje.",
-    objetivo: "Cruza la ciudad y llega hasta la bandera.",
-    mapa: ["P..X", "XX.X", "XX.G"], dir: 0,
-    bloques: ['avanzar', 'izq', 'der'], reto: 3
+    ciudad: "Londres", pais: "Reino Unido", suelo: "#d6d3cb",
+    bandera: { uk: true },
+    dato: "El Big Ben es la gran campana de la torre del reloj del Parlamento, junto al río Támesis.",
+    objetivo: "Baja la escalera cruzando los puentes del Támesis. Busca los cuatro bloques que se repiten.",
+    mapa: ["PW.XXXXXX", "XXSW.XXXX", "XXXXSW.XX", "XXXXXXSWG"], dir: 0,
+    bloques: ["avanzar", "saltar", "izq", "der", "repetir"], reto: 5
   },
   {
-    ciudad: "Zúrich", pais: "Suiza", suelo: "#d9d9d0",
-    bandera: { o: "v", c: ["#003399", "#ffffff", "#cc0000"], w: [1, 1, 1] },
-    dato: "Zúrich es una ciudad europea que forma parte de nuestro viaje.",
-    objetivo: "Salta la maleta que bloquea el camino.",
-    mapa: ["XXXXXXXX", "P.B..B.G", "XXXXXXXX"], dir: 0,
-    bloques: ['avanzar', 'saltar', 'izq', 'der'], reto: 3
+    ciudad: "Zúrich", pais: "Suiza", suelo: "#dfe3d6",
+    bandera: { suiza: true },
+    dato: "Suiza tiene cuatro lenguas oficiales: alemán, francés, italiano y romanche.",
+    objetivo: "Sube por los Alpes: avanza, gira, salta la maleta y vuelve a mirar hacia arriba. ¿Cuántas veces se repite?",
+    mapa: ["XXXX.BG", "XXXXSXX", "XX.B.XX", "XXSXXXX", ".B.XXXX", "SXXXXXX", "PXXXXXX"], dir: 3,
+    bloques: ["avanzar", "saltar", "izq", "der", "repetir"], reto: 6
   },
   {
-    ciudad: "Luxemburgo", pais: "Luxemburgo", suelo: "#d9d9d0",
-    bandera: { o: "v", c: ["#003399", "#ffffff", "#cc0000"], w: [1, 1, 1] },
-    dato: "Luxemburgo es una ciudad europea que forma parte de nuestro viaje.",
-    objetivo: "Salta el canal y continúa hasta la meta.",
-    mapa: ["XXXXXXXXX", "P.W.WSW.G", "XXXXXXXXX"], dir: 0,
-    bloques: ['avanzar', 'saltar', 'izq', 'der', 'repetir'], reto: 3
+    ciudad: "Luxemburgo", pais: "Luxemburgo", suelo: "#e2d8c8",
+    bandera: { o: "h", c: ["#ed2939", "#ffffff", "#00a1de"], w: [1, 1, 1] },
+    dato: "Luxemburgo es uno de los países más pequeños de Europa y uno de los que fundaron la Unión Europea.",
+    objetivo: "Reto final de la ruta: rodea la fortaleza. Hay tres tramos distintos: usa un Repetir en cada uno.",
+    mapa: ["P.W..WS", "XXXXXX.", "XXXXXX.", "XXGB.BS"], dir: 0,
+    bloques: ["avanzar", "saltar", "izq", "der", "repetir"], reto: 9
   }
     ]
   },
@@ -144,44 +144,44 @@ window.AVENTURAS = [
     bloques: ["avanzar", "izq", "der", "saltar", "repetir"], reto: 7
   },
   {
-    ciudad: "Reikiavik", pais: "Islandia", suelo: "#d9d9d0",
-    bandera: { o: "v", c: ["#003399", "#ffffff", "#cc0000"], w: [1, 1, 1] },
-    dato: "Reikiavik es una ciudad europea que forma parte de nuestro viaje.",
-    objetivo: "Sigue el camino entre los paisajes volcánicos.",
-    mapa: [".....", ".XXX.", "PXXXG"], dir: 0,
-    bloques: ['avanzar', 'izq', 'der', 'repetir'], reto: 3
+    ciudad: "Reikiavik", pais: "Islandia", suelo: "#d3dbe0",
+    bandera: { nordica: true, fondo: "#02529c", cruz: "#ffffff", interior: "#dc1e35" },
+    dato: "En Islandia hay géiseres: fuentes de agua caliente que lanzan chorros muy altos.",
+    objetivo: "Rodea el campo de géiseres. Los lados son iguales: pon un Repetir dentro de otro Repetir.",
+    mapa: ["S..W.S", ".XXXX.", "WXXXX.", ".XXXXW", ".XXXX.", "PGW..S"], dir: 3,
+    bloques: ["avanzar", "saltar", "izq", "der", "repetir"], reto: 6
   },
   {
-    ciudad: "Tallin", pais: "Estonia", suelo: "#d9d9d0",
-    bandera: { o: "v", c: ["#003399", "#ffffff", "#cc0000"], w: [1, 1, 1] },
-    dato: "Tallin es una ciudad europea que forma parte de nuestro viaje.",
-    objetivo: "Usa un bucle para recorrer el camino y saltar la maleta.",
-    mapa: ["P.XXX", "XS.XX", "XX.SX", "XXX..", "XXXXG"], dir: 0,
-    bloques: ['avanzar', 'saltar', 'izq', 'der', 'repetir'], reto: 4
+    ciudad: "Tallin", pais: "Estonia", suelo: "#e0d6c4",
+    bandera: { o: "h", c: ["#0072ce", "#000000", "#ffffff"], w: [1, 1, 1] },
+    dato: "El casco antiguo de Tallin conserva su muralla medieval, con muchas torres de tejado rojo.",
+    objetivo: "Baja por la muralla: salta, gira, avanza dos veces y gira. Usa un Repetir dentro de otro.",
+    mapa: ["PB.XXXX", "XX.XXXX", "XXSB.XX", "XXXX.XX", "XXXXSB.", "XXXXXX.", "XXXXXXG"], dir: 0,
+    bloques: ["avanzar", "saltar", "izq", "der", "repetir"], reto: 6
   },
   {
-    ciudad: "Riga", pais: "Letonia", suelo: "#d9d9d0",
-    bandera: { o: "v", c: ["#003399", "#ffffff", "#cc0000"], w: [1, 1, 1] },
-    dato: "Riga es una ciudad europea que forma parte de nuestro viaje.",
-    objetivo: "Cruza el canal usando el salto.",
-    mapa: ["P.W.S", "GXXX.", "WXXXW", ".XXX.", "..W.S"], dir: 0,
-    bloques: ['avanzar', 'saltar', 'izq', 'der', 'repetir'], reto: 4
+    ciudad: "Riga", pais: "Letonia", suelo: "#dcd4c9",
+    bandera: { o: "h", c: ["#9e3039", "#ffffff", "#9e3039"], w: [2, 1, 2] },
+    dato: "Riga es la ciudad más grande de los países bálticos y está junto al río Daugava.",
+    objetivo: "Recorre la ciudad en zigzag, de un lado a otro, como cuando se corta el césped. ¡Hay cuatro sellos!",
+    mapa: ["P...S", "S....", "....S", "S....", "GXXXX"], dir: 0,
+    bloques: ["avanzar", "saltar", "izq", "der", "repetir"], reto: 11
   },
   {
-    ciudad: "Vilna", pais: "Lituania", suelo: "#d9d9d0",
-    bandera: { o: "v", c: ["#003399", "#ffffff", "#cc0000"], w: [1, 1, 1] },
-    dato: "Vilna es una ciudad europea que forma parte de nuestro viaje.",
-    objetivo: "Combina avances y saltos para superar los obstáculos.",
-    mapa: ["P...", "XXXS", "XXX.", "G..."], dir: 0,
-    bloques: ['avanzar', 'saltar', 'izq', 'der', 'repetir'], reto: 5
+    ciudad: "Vilna", pais: "Lituania", suelo: "#e3d9c3",
+    bandera: { o: "h", c: ["#fdb913", "#006a44", "#c1272d"], w: [1, 1, 1] },
+    dato: "En Vilna, la torre del castillo de Gediminas vigila la ciudad desde lo alto de una colina.",
+    objetivo: "Sube y baja por las almenas del castillo y salta las maletas. Encuentra el patrón con giros a los dos lados.",
+    mapa: [".SX.SX.SXX", "P.B..B..BG"], dir: 0,
+    bloques: ["avanzar", "saltar", "izq", "der", "repetir"], reto: 9
   },
   {
-    ciudad: "Edimburgo", pais: "Reino Unido", suelo: "#d9d9d0",
-    bandera: { o: "v", c: ["#003399", "#ffffff", "#cc0000"], w: [1, 1, 1] },
-    dato: "Edimburgo es una ciudad europea que forma parte de nuestro viaje.",
-    objetivo: "Recoge el sello antes de llegar a la bandera.",
-    mapa: ["PB.BS.", "G.BSB."], dir: 0,
-    bloques: ['avanzar', 'saltar', 'izq', 'der', 'repetir'], reto: 3
+    ciudad: "Edimburgo", pais: "Reino Unido (Escocia)", suelo: "#d5d9cf",
+    bandera: { escocia: true },
+    dato: "El castillo de Edimburgo está construido sobre un antiguo volcán apagado.",
+    objetivo: "Reto final de la ruta: un camino en forma de S. Necesitas un Repetir dentro de otro… ¡y dentro de otro!",
+    mapa: ["PX.S.X.SG", ".X.X.X.XX", ".S.X.S.XX"], dir: 1,
+    bloques: ["avanzar", "saltar", "izq", "der", "repetir"], reto: 9
   }
     ]
   },
@@ -230,44 +230,44 @@ window.AVENTURAS = [
     bloques: ["avanzar", "saltar", "izq", "der", "repetir", "si", "hasta"], reto: 9
   },
   {
-    ciudad: "Bratislava", pais: "Eslovaquia", suelo: "#d9d9d0",
-    bandera: { o: "v", c: ["#003399", "#ffffff", "#cc0000"], w: [1, 1, 1] },
-    dato: "Bratislava es una ciudad europea que forma parte de nuestro viaje.",
-    objetivo: "Programa una ruta que supere el obstáculo.",
-    mapa: ["XXXXXXXXXXX", "P.B..B.B..G", "XXXXXXXXXXX"], dir: 0,
-    bloques: ['avanzar', 'saltar', 'izq', 'der', 'si', 'hasta'], reto: 4
+    ciudad: "Bratislava", pais: "Eslovaquia", suelo: "#e4d6bf",
+    bandera: { o: "h", c: ["#ffffff", "#0b4ea2", "#ee1c25"], w: [1, 1, 1] },
+    dato: "Bratislava está a orillas del Danubio, muy cerca de Austria y de Hungría.",
+    objetivo: "Un camino largo con maletas, canales y curvas a los dos lados. Deja que el programa decida en cada paso.",
+    mapa: ["P.B.X.S", "XXX.X.X", "SW....X", "XXXXX.X", "XG.B..X"], dir: 0,
+    bloques: ["avanzar", "saltar", "izq", "der", "si", "hasta"], reto: 8
   },
   {
-    ciudad: "Liubliana", pais: "Eslovenia", suelo: "#d9d9d0",
-    bandera: { o: "v", c: ["#003399", "#ffffff", "#cc0000"], w: [1, 1, 1] },
-    dato: "Liubliana es una ciudad europea que forma parte de nuestro viaje.",
-    objetivo: "Usa decisiones para cruzar el canal.",
-    mapa: ["P....", "XXXX.", "..GX.", ".XXX.", "S...S"], dir: 0,
-    bloques: ['avanzar', 'saltar', 'izq', 'der', 'si', 'hasta'], reto: 4
+    ciudad: "Liubliana", pais: "Eslovenia", suelo: "#dfd8c8",
+    bandera: { o: "h", c: ["#ffffff", "#005da4", "#ed1c24"], w: [1, 1, 1] },
+    dato: "El símbolo de Liubliana es un dragón: hay cuatro en el Puente de los Dragones.",
+    objetivo: "Hay caminos sin salida con sellos. Truco: si hay camino a la derecha, gira a la derecha; si no, sigue recto.",
+    mapa: ["P.W..XS", "XXXX.X.", "S.B....", "XXXXX.X", "G..W..X"], dir: 0,
+    bloques: ["avanzar", "saltar", "izq", "der", "si", "hasta"], reto: 8
   },
   {
-    ciudad: "Zagreb", pais: "Croacia", suelo: "#d9d9d0",
-    bandera: { o: "v", c: ["#003399", "#ffffff", "#cc0000"], w: [1, 1, 1] },
-    dato: "Zagreb es una ciudad europea que forma parte de nuestro viaje.",
-    objetivo: "Combina condiciones y saltos.",
-    mapa: ["P.XS..", "X.X.X.", "X.S.XG"], dir: 0,
-    bloques: ['avanzar', 'saltar', 'izq', 'der', 'si', 'hasta'], reto: 5
+    ciudad: "Zagreb", pais: "Croacia", suelo: "#e6d3be",
+    bandera: { o: "h", c: ["#ff0000", "#ffffff", "#171796"], w: [1, 1, 1] },
+    dato: "La iglesia de San Marcos de Zagreb tiene un tejado de colores con dos escudos.",
+    objetivo: "Un laberinto con tres sellos escondidos. Sigue siempre la pared de la derecha y no te perderás.",
+    mapa: ["P..X..S", "XX.X.XX", "S....XX", "XX.X.XX", "XXBXSXX", "XX.XXXX", "XX...WG"], dir: 0,
+    bloques: ["avanzar", "saltar", "izq", "der", "si", "hasta"], reto: 8
   },
   {
-    ciudad: "Sofía", pais: "Bulgaria", suelo: "#d9d9d0",
-    bandera: { o: "v", c: ["#003399", "#ffffff", "#cc0000"], w: [1, 1, 1] },
-    dato: "Sofía es una ciudad europea que forma parte de nuestro viaje.",
-    objetivo: "Llega a la bandera con un programa que se repite.",
-    mapa: ["P.BS.", "XXXX.", "XXXXW", "GSB.."], dir: 0,
-    bloques: ['avanzar', 'saltar', 'izq', 'der', 'si', 'hasta'], reto: 5
+    ciudad: "Sofía", pais: "Bulgaria", suelo: "#e0d4c0",
+    bandera: { o: "h", c: ["#ffffff", "#00966e", "#d62612"], w: [1, 1, 1] },
+    dato: "Sofía está a los pies de la montaña Vitosha, donde se puede esquiar en invierno.",
+    objetivo: "Laberinto más grande, con maletas y canales en los desvíos. Un solo programa tiene que servir para todo.",
+    mapa: ["S.B..XG", "XXXX.X.", "..W....", ".XXXXXX", "..SX..S", "XX.X.XX", "P....XX"], dir: 0,
+    bloques: ["avanzar", "saltar", "izq", "der", "si", "hasta"], reto: 8
   },
   {
-    ciudad: "Belgrado", pais: "Serbia", suelo: "#d9d9d0",
-    bandera: { o: "v", c: ["#003399", "#ffffff", "#cc0000"], w: [1, 1, 1] },
-    dato: "Belgrado es una ciudad europea que forma parte de nuestro viaje.",
-    objetivo: "Reto final: decide cuándo avanzar y cuándo saltar.",
-    mapa: ["P..XXX", "XXSXXX", "XXWXXX", "XX..S.", "XXXXX.", "XXXXXW", "XXXXXG"], dir: 0,
-    bloques: ['avanzar', 'saltar', 'izq', 'der', 'repetir', 'si', 'hasta'], reto: 6
+    ciudad: "Belgrado", pais: "Serbia", suelo: "#ddd0bd",
+    bandera: { o: "h", c: ["#c6363c", "#0c4076", "#ffffff"], w: [1, 1, 1] },
+    dato: "En Belgrado se juntan dos ríos: el Sava y el Danubio.",
+    objetivo: "Reto final: el gran laberinto. Recoge los cuatro sellos de los callejones y llega a la bandera.",
+    mapa: ["P..B..XS", "XXXXX.X.", "S.W.....", "XXXXX.XX", "G..B..XS", "XXXXX.X.", "S..W...."], dir: 0,
+    bloques: ["avanzar", "saltar", "izq", "der", "si", "hasta"], reto: 8
   }
     ]
   }

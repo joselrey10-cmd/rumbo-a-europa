@@ -126,13 +126,21 @@ window.INDICADOR_PROGRAMACION = {
     "Madrid": "3.2.1", "Lisboa": "3.2.1", "París": "3.2.1", "Roma": "3.2.1",
     "Berlín": "3.2.2", "Ámsterdam": "3.2.2", "Bruselas": "3.2.2",
     "Dublín": "3.2.2", "Copenhague": "3.2.2", "Estocolmo": "3.2.2", "Oslo": "3.2.2", "Helsinki": "3.2.2",
-    "Praga": "3.2.2", "Viena": "3.2.2", "Varsovia": "3.2.2", "Budapest": "3.2.2", "Bucarest": "3.2.2"
+    "Praga": "3.2.2", "Viena": "3.2.2", "Varsovia": "3.2.2", "Budapest": "3.2.2", "Bucarest": "3.2.2",
+    // Pantallas añadidas al pasar a 10 por aventura (mismo indicador que el resto de su aventura).
+    "Londres": "3.2.2", "Zúrich": "3.2.2", "Luxemburgo": "3.2.2",
+    "Reikiavik": "3.2.2", "Tallin": "3.2.2", "Riga": "3.2.2", "Vilna": "3.2.2", "Edimburgo": "3.2.2",
+    "Bratislava": "3.2.2", "Liubliana": "3.2.2", "Zagreb": "3.2.2", "Sofía": "3.2.2", "Belgrado": "3.2.2"
   },
   "6º": {
     "Madrid": "3.2.2", "Lisboa": "3.2.2", "París": "3.2.2", "Roma": "3.2.2",
     "Berlín": "3.2.3", "Ámsterdam": "3.2.3", "Bruselas": "3.2.3",
     "Dublín": "3.2.3", "Copenhague": "3.2.3", "Estocolmo": "3.2.3", "Oslo": "3.2.3", "Helsinki": "3.2.3",
-    "Praga": "3.2.6", "Viena": "3.2.6", "Varsovia": "3.2.6", "Budapest": "3.2.6", "Bucarest": "3.2.6"
+    "Praga": "3.2.6", "Viena": "3.2.6", "Varsovia": "3.2.6", "Budapest": "3.2.6", "Bucarest": "3.2.6",
+    // Pantallas añadidas al pasar a 10 por aventura (mismo indicador que el resto de su aventura).
+    "Londres": "3.2.3", "Zúrich": "3.2.3", "Luxemburgo": "3.2.3",
+    "Reikiavik": "3.2.3", "Tallin": "3.2.3", "Riga": "3.2.3", "Vilna": "3.2.3", "Edimburgo": "3.2.3",
+    "Bratislava": "3.2.6", "Liubliana": "3.2.6", "Zagreb": "3.2.6", "Sofía": "3.2.6", "Belgrado": "3.2.6"
   }
 };
 

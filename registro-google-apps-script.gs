@@ -756,7 +756,7 @@ function guardarTexto(libro, d) {
 /* ---------- Entrada del alumnado con contraseña elegida ----------
    El primer acceso crea la contraseña que el alumno elige. Se guarda también en la pestaña
    «Accesos alumnado» para que el docente pueda recuperarla si se olvida. El acceso queda
-   limitado a alumnos incluidos en la pestaña Alumnado y se bloquea tras 5 fallos durante 10 min.
+   limitado a alumnos incluidos en la pestaña Alumnado (sin bloqueo por fallos).
 */
 function filaAlumno(libro, clase, nombre, usuario) {
   clase = normGrupo(clase);
@@ -795,17 +795,14 @@ function alumnoEntrar(libro, d) {
   if (!f) return json({ ok: false, error: "Revisa tu grupo, tu nombre y tu usuario de Educacyl." });
   const password = String(d.password || "").trim(), error = validarPassword(password);
   if (error) return json({ ok: false, error });
-  const usuario = minus(f[2]), p = leerPin(usuario) || { f: 0, b: 0 };
-  if (p.b && p.b > Date.now()) return json({ ok: false, error: "Demasiados intentos. Espera 10 minutos o pide ayuda a tu profe." });
+  const usuario = minus(f[2]), p = leerPin(usuario) || {};
   let creada = false;
   // Si no hay contraseña nueva (incluidos códigos antiguos de versiones previas), el alumno la elige ahora.
   if (!p.p) {
     p.p = password; p.f = 0; p.b = 0; guardarPin(usuario, p); guardarAccesoAlumno(libro, f, password); creada = true;
   } else if (password !== p.p) {
-    p.f = (p.f || 0) + 1;
-    if (p.f >= 5) { p.f = 0; p.b = Date.now() + 10 * 60000; }
-    guardarPin(usuario, p);
-    return json({ ok: false, error: p.b > Date.now() ? "Demasiados intentos. Espera 10 minutos o pide ayuda a tu profe." : "Contraseña incorrecta. Comprueba lo que has escrito." });
+    // Sin bloqueo por fallos: el alumno puede volver a intentarlo enseguida.
+    return json({ ok: false, error: "Contraseña incorrecta. Comprueba lo que has escrito (pulsa «👁 Ver» para revisarla)." });
   } else if (p.f || p.b) { p.f = 0; p.b = 0; guardarPin(usuario, p); }
   // Reescribe la fila por si el docente ha creado de nuevo la pestaña de accesos.
   guardarAccesoAlumno(libro, f, password);
