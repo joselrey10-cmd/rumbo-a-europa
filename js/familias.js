@@ -79,9 +79,9 @@ window.Familias = (function () {
         <p class="p-barra"><button type="button" class="btn sec" id="f-salir">Salir</button></p>
         ${hijos.map((h) => {
           const c = /6/.test(h.clase || "") ? "6º" : "5º";
-          const a = { notas: P.notasDe(cab, h.fila), terminados: {} };
+          const a = { notas: P.notasDe(cab, h.fila), terminados: {}, adaptado: !!h.adaptado };
           (h.hechos || []).forEach(([destino, programa, fecha]) => { a.terminados[String(destino)] = { ruta: String(programa || "").replace(/^Terminado ·\s*/, ""), fecha }; });
-          const res = P.resumen(a, c), cat = P.catalogo(c);
+          const res = P.resumen(a, c), cat = P.catalogo(c, a);
           const medias = P.mediasInd([a], c);
           return `<section class="f-hijo">
             <h2 class="sa-tit">${esc(`${h.nombre || ""} ${h.apellidos || ""}`.trim())} · ${esc(window.normGrupo ? window.normGrupo(h.clase) : h.clase)}</h2>
@@ -93,12 +93,12 @@ window.Familias = (function () {
                 ${acts.map((x) => {
                   const t = r.id === "crea" ? a.terminados[x.destino.slice(0, 60)] : null;
                   return `<tr><td><b>${esc(x.titulo)}</b>${r.id === "crea" ? `<small>${t ? "✓ Terminado" : "Sin terminar"}</small>` : ""}</td>
-                    <td>${x.inds.map((cod) => { const v = a.notas[P.columna(x.destino, cod)]; return `<span class="f-ind" title="${esc(P.textoInd(c, cod))}"><span class="cod-p">${cod}</span> <b>${v === undefined ? "–" : v}</b></span>`; }).join(" ")}</td></tr>`;
+                    <td>${x.inds.map((cod) => { const v = a.notas[P.columna(x.destino, cod)]; return `<span class="f-ind" title="${esc(P.textoInd(c, cod, a))}"><span class="cod-p">${cod}</span> <b>${v === undefined ? "–" : v}</b></span>`; }).join(" ")}</td></tr>`;
                 }).join("")}</tbody></table></div></details>`;
             }).join("")}
             <h3 class="sa-tit" style="font-size:22px">Media de cada indicador de logro</h3>
             ${medias.length ? `<div class="tabla-scroll"><table class="p-tabla p-medias"><thead><tr><th>Ind.</th><th>Indicador de logro</th><th>Media</th></tr></thead><tbody>
-              ${medias.map((m) => `<tr><td><span class="cod-p">${m.cod}</span></td><td>${esc(P.textoInd(c, m.cod))}</td><td><b>${m.media}</b></td></tr>`).join("")}</tbody></table></div>` : `<p class="intro">Todavía no hay notas.</p>`}
+              ${medias.map((m) => `<tr><td><span class="cod-p">${m.cod}</span></td><td>${esc(P.textoInd(c, m.cod, a))}</td><td><b>${m.media}</b></td></tr>`).join("")}</tbody></table></div>` : `<p class="intro">Todavía no hay notas.</p>`}
           </section>`;
         }).join("")}
         <p class="intro">Escala: 0 no hecho · 1 lo ha intentado · 2 ha conseguido una parte · 3 conseguido con ayuda · 4 casi del todo · 5 perfectamente.</p>

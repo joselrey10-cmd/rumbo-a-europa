@@ -519,7 +519,7 @@
   }
 
   async function victoria(prog) {
-    const cadena = window.RetosCadena ? await window.RetosCadena.completar(`robot-${modo}`, retoI, RETOS.length) : null;
+    const cadena = !AC && window.RetosCadena ? await window.RetosCadena.completar(`robot-${modo}`, retoI, RETOS.length) : null;
     const val = valorar(true, prog, cadena && cadena.ok && Number.isFinite(cadena.nota) ? cadena.nota : null);
     enviarResultado(prog, val);
     hechos[modo] = hechos[modo] || {}; hechos[modo][retoI] = true; guardar();
@@ -553,7 +553,7 @@
   }
 
   async function abrirReto(m, i) {
-    if (window.RetosCadena && !(await window.RetosCadena.entrar(`robot-${m}`, i, RETOS.length))) { location.hash = "robotica"; return; }
+    if (!AC && window.RetosCadena && !(await window.RetosCadena.entrar(`robot-${m}`, i, RETOS.length))) { location.hash = "robotica"; return; }
     modo = m; retoI = i; reto = RETOS[i]; intentos = 0;
     $("#rb-menu").hidden = true; $("#rb-juego").hidden = false;
     $("#rb-titulo").textContent = reto.titulo;

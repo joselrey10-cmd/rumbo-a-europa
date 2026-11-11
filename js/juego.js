@@ -239,7 +239,7 @@
     if (!desbloqueadoNivel(i)) return;
     if (!progreso.alumno.nombre) { if ($("#juego").hidden) pedirNombre(); else mostrarInicio(), pedirNombre(); return; }
     if (location.hash !== "#destino-" + (i + 1)) { location.hash = "destino-" + (i + 1); return; }
-    if (window.RetosCadena && !(await window.RetosCadena.entrar("programa", i, NIVELES.length))) return;
+    if (!AC && window.RetosCadena && !(await window.RetosCadena.entrar("programa", i, NIVELES.length))) return;
     abrirNivel(i);
   }
 
@@ -548,7 +548,7 @@
     // La nota de esta pantalla refleja el mejor resultado conseguido.
     // Se puede repetir para mejorarla; repetir por sí solo nunca añade puntos.
     const notaCalculada = window.Valoraciones ? window.Valoraciones.nota({ completado: true, parcial: false, intentos, bloques: n, reto: nivel.reto }) : null;
-    const cadena = window.RetosCadena ? await window.RetosCadena.completar("programa", nivelI, NIVELES.length, notaCalculada) : null;
+    const cadena = !AC && window.RetosCadena ? await window.RetosCadena.completar("programa", nivelI, NIVELES.length, notaCalculada) : null;
     const notaFija = cadena && cadena.ok && Number.isFinite(cadena.notaPantalla) ? cadena.notaPantalla : notaCalculada;
     const val = valorar(true, null, Number.isFinite(notaFija) ? notaFija : null);
     enviarResultado(n, est, val);
@@ -679,7 +679,7 @@
     const m = /^#destino-(\d+)$/.exec(location.hash);
     const i = m ? +m[1] - 1 : -1;
     if (i >= 0 && i < NIVELES.length && desbloqueadoNivel(i) && progreso.alumno.nombre) {
-      if (window.RetosCadena && !(await window.RetosCadena.entrar("programa", i, NIVELES.length))) { mostrarInicio(); return; }
+      if (!AC && window.RetosCadena && !(await window.RetosCadena.entrar("programa", i, NIVELES.length))) { mostrarInicio(); return; }
       abrirNivel(i);
     }
     else mostrarInicio();

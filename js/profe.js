@@ -19,7 +19,10 @@ window.Profe = (function () {
   const G = (t) => (window.normGrupo ? window.normGrupo(t) : String(t || ""));
   const cursoDe = (g) => (/6/.test(g || "") ? "6º" : "5º");
   const igual = (a, b) => String(a || "").trim().toLowerCase() === String(b || "").trim().toLowerCase();
-  const textoInd = (c, cod) => ((window.INDICADORES || {})[c] || {})[cod] || "";
+  // Con adaptación curricular (a = alumno marcado) se enseña el texto del indicador adaptado (mismo número).
+  const textoInd = (c, cod, a) => (a && esAC(a) && ((window.INDICADORES_AC || {})[c] || {})[cod]) || ((window.INDICADORES || {})[c] || {})[cod] || "";
+  // a.adaptado lo trae el script en la vista de familias y en «Mis notas»; en el panel se mira la lista de adaptados.
+  const esAC = (a) => !!a && (a.adaptado === true || (typeof esAdaptado === "function" && esAdaptado(a)));
   const columna = (destino, cod) => String(destino).slice(0, 60) + " · Ind. " + cod;
   /* Indicadores de una actividad para un alumno: los de ahora y, si en la hoja tiene notas con códigos
      antiguos (p. ej. tras cambiar los indicadores de 6º en SA1), también esos, para que no se pierdan. */
@@ -30,15 +33,18 @@ window.Profe = (function () {
   }
 
   /* Todas las actividades de un curso, con su texto de "Actividad" tal como llega a la hoja. */
-  function catalogo(c) {
-    const L = [];
+  // a (opcional): con adaptación curricular, Programa son las 10 pantallas de la aventura 1 (las que juega con flechas)
+  // y Robótica solo el robot de flechas con sus 10 retos adaptados. Las columnas de la hoja son las mismas.
+  function catalogo(c, a) {
+    const L = [], ac = !!(a && esAC(a));
     ((window.CREA || {})[c] || []).forEach((a) => L.push({ rincon: "crea", titulo: `${a.sa} ${a.s} · ${a.titulo}`, destino: `Crea · ${a.sa} ${a.s} · ${a.titulo}`, ciudad: a.titulo, inds: a.ind }));
     (window.PROG_NIVELES || []).forEach((n, i) => {
+      if (ac && n.aventura !== 0) return;
       const cod = ((window.INDICADOR_PROGRAMACION || {})[c] || {})[n.ciudad];
       L.push({ rincon: "prog", titulo: `${i + 1}. ${n.ciudad}`, destino: `Programación · ${i + 1}. ${n.ciudad}`, ciudad: n.ciudad, inds: cod ? [cod] : [] });
     });
     const R = window.Robotica || {};
-    Object.keys(R.MODOS || {}).forEach((k) => (R.RETOS || []).forEach((r, i) => {
+    Object.keys(R.MODOS || {}).filter((k) => !ac || k === "robot").forEach((k) => ((ac && window.RETOS_ROB_AC) || R.RETOS || []).forEach((r, i) => {
       const cod = (((window.INDICADOR_ROBOTICA || {})[c] || {})[k] || [])[i];
       L.push({ rincon: "rob", titulo: `${R.MODOS[k].nombre} · ${r.titulo}`, destino: `Robótica · ${R.MODOS[k].nombre} · reto ${i + 1}`, ciudad: r.titulo, inds: cod ? [cod] : [] });
     }));
@@ -122,7 +128,7 @@ window.Profe = (function () {
   });
 
   function resumen(a, c) {
-    const cat = catalogo(c), out = {};
+    const cat = catalogo(c, a), out = {};
     RINC.forEach((r) => {
       const notas = [], total = cat.filter((x) => x.rincon === r.id).reduce((n, x) => n + indsAl(x, a).length, 0);
       cat.filter((x) => x.rincon === r.id).forEach((x) => indsAl(x, a).forEach((cod) => { const v = a.notas[columna(x.destino, cod)]; if (v !== undefined) notas.push(v); }));
@@ -132,8 +138,8 @@ window.Profe = (function () {
   }
   // Desglose de Robótica por modalidad para que el profesor compare Robot, Essential y Prime.
   function resumenRobotica(a, c) {
-    const cat = catalogo(c), modos = (window.Robotica && window.Robotica.MODOS) || {};
-    return Object.keys(modos).map((k) => {
+    const cat = catalogo(c, a), modos = (window.Robotica && window.Robotica.MODOS) || {};
+    return Object.keys(modos).filter((k) => !esAC(a) || k === "robot").map((k) => {
       const nombre = modos[k].nombre;
       const retos = cat.filter((x) => x.rincon === "rob" && x.destino.indexOf(`Robótica · ${nombre} ·`) === 0);
       const notas = [];
@@ -147,8 +153,8 @@ window.Profe = (function () {
   }
 
   function mediasInd(lista, c) {
-    const cat = catalogo(c), por = {};
-    lista.forEach((a) => cat.forEach((x) => indsAl(x, a).forEach((cod) => {
+    const por = {};
+    lista.forEach((a) => catalogo(c, a).forEach((x) => indsAl(x, a).forEach((cod) => {
       const v = a.notas[columna(x.destino, cod)];
       if (v !== undefined) (por[cod] = por[cod] || []).push(v);
     })));
@@ -375,12 +381,12 @@ window.Profe = (function () {
 
   function autoTabla(a, c) {
     const k = Object.keys(a.auto || {});
-    const frases = (window.AUTOEVAL || {})[c] || {}, ESC = window.ESCALA_AUTO || [];
+    const frases = Object.assign({}, (window.AUTOEVAL || {})[c] || {}, esAC(a) ? (window.AUTOEVAL_AC || {})[c] || {} : {}), ESC = window.ESCALA_AUTO || [];
     if (!k.length) return `<details class="p-rincon"><summary style="color:#14225a">Autoevaluación</summary><p class="intro">Todavía no ha hecho la autoevaluación de Programa y Robótica.</p></details>`;
     const fecha = a.autoFecha && !isNaN(new Date(a.autoFecha)) ? ` · ${new Date(a.autoFecha).toLocaleDateString("es-ES")}` : "";
     return `<details class="p-rincon" open><summary style="color:#14225a">Autoevaluación del alumno${fecha}</summary>
       <div class="tabla-scroll"><table class="p-tabla"><thead><tr><th>Rincón</th><th>Lo que dice que sabe hacer</th><th>0-5</th></tr></thead><tbody>
-      ${k.sort().map((t) => { const m = /^(.*) · Ind\. (.*)$/.exec(t) || ["", t, ""]; return `<tr><td>${esc(m[1])}</td><td><span class="cod-p">${esc(m[2])}</span> ${esc(frases[m[2]] || textoInd(c, m[2]))}</td><td><b>${a.auto[t]}</b><small>${esc(ESC[a.auto[t]] || "")}</small></td></tr>`; }).join("")}
+      ${k.sort().map((t) => { const m = /^(.*) · Ind\. (.*)$/.exec(t) || ["", t, ""]; return `<tr><td>${esc(m[1])}</td><td><span class="cod-p">${esc(m[2])}</span> ${esc(frases[m[2]] || textoInd(c, m[2], a))}</td><td><b>${a.auto[t]}</b><small>${esc(ESC[a.auto[t]] || "")}</small></td></tr>`; }).join("")}
       </tbody></table></div></details>`;
   }
   function chips(col, valor) {
@@ -389,7 +395,7 @@ window.Profe = (function () {
   }
   function pintarAlumno(a) {
     alumnoSel = a;
-    const c = cursoDe(a.clase), cat = catalogo(c), res = resumen(a, c);
+    const c = cursoDe(a.clase), cat = catalogo(c, a), res = resumen(a, c);
     raiz.innerHTML = cab(`${esc(verNombre(a))} · ${esc(a.clase)}${a.usuario ? " · " + esc(a.usuario) : ""} · indicadores de ${c}`) +
       `<div class="envoltura seccion">
       <p class="p-barra"><button type="button" class="btn sec" id="p-volver">← Volver a ${esc(a.clase)}</button>
@@ -411,7 +417,7 @@ window.Profe = (function () {
         <div class="retos-r">${cat.map((x, k) => ({ x, k })).filter(({ x }) => x.rincon === r.id && x.inds.length).map(({ x, k }) => `
           <article class="reto-r" data-k="${k}">
             <div class="reto-r-cab"><h3>${esc(x.titulo)}</h3>${x.rincon === "crea" ? (() => { const t = (a.terminados || {})[x.destino.slice(0, 60)]; return t ? `<span class="p-hecho">✓ Terminado${t.ruta && t.ruta !== "Todos" ? " · " + esc(t.ruta) : ""}${t.fecha && !isNaN(new Date(t.fecha)) ? " · " + new Date(t.fecha).toLocaleDateString("es-ES") : ""}</span>` : `<span class="p-hecho no">Sin terminar</span>`; })() : ""}</div>
-            <div class="inds">${indsAl(x, a).map((cod) => { const col = columna(x.destino, cod), viejo = x.inds.indexOf(cod) < 0; return `<div class="fila-ind"><div class="fila-ind-t"><span class="cod">Ind. ${cod}</span> ${esc(textoInd(c, cod))}${viejo ? " <small>(indicador anterior: nota ya puesta)</small>" : ""}</div>${chips(col, a.notas[col])}</div>`; }).join("")}</div>
+            <div class="inds">${indsAl(x, a).map((cod) => { const col = columna(x.destino, cod), viejo = x.inds.indexOf(cod) < 0; return `<div class="fila-ind"><div class="fila-ind-t"><span class="cod">Ind. ${cod}</span> ${esc(textoInd(c, cod, a))}${viejo ? " <small>(indicador anterior: nota ya puesta)</small>" : ""}</div>${chips(col, a.notas[col])}</div>`; }).join("")}</div>
             <div class="enviar-fila"><button type="button" class="btn sec enviar-p">Volver a enviar</button><span class="estado" aria-live="polite"></span></div>
           </article>`).join("")}</div></details>`).join("")}
       </div>`;
@@ -473,7 +479,7 @@ window.Profe = (function () {
 
   function claveGuardada() { try { return sessionStorage.getItem(CLAVE_SES) || ""; } catch (e) { return ""; } }
   async function enviarProfe(caja, todas) {
-    const a = alumnoSel, x = catalogo(cursoDe(a.clase))[+caja.dataset.k], est = $(".estado", caja), filas = [];
+    const a = alumnoSel, x = catalogo(cursoDe(a.clase), a)[+caja.dataset.k], est = $(".estado", caja), filas = [];
     caja.querySelectorAll(".chips").forEach((g, i) => {
       const b = g.querySelector('[aria-checked="true"]');
       if (!b) return;

@@ -81,6 +81,17 @@
     }
   };
 
+  // Autoevaluación de Programa y Robótica con frases sencillas (las ve la alumna y el profe en su ficha).
+  window.AUTOEVAL_AC = {
+    "5º": {
+      "3.2.1": "Sé poner flechas para que el personaje llegue a la bandera.",
+      "3.2.2": "Sé ordenar las flechas y probar mi programa.",
+      "3.2.3": "Sé programar el robot con flechas para llegar a un país.",
+      "3.2.6": "Si el robot se equivoca, cambio la flecha y lo pruebo otra vez.",
+      "3.2.9": "Sé hacer que el robot vaya adelante y atrás."
+    }
+  };
+
   /* ---------- Fichas de países para Crea (información ya buscada) ---------- */
   const PAISES = {
     Francia: { flag: "🇫🇷", capital: "París", idioma: "francés", hola: "Bonjour", monumento: "la Torre Eiffel", colores: "azul, blanco y rojo", bici: "Mucha gente va en bici al trabajo.", recicla: "Separan la basura en contenedores de colores." },
@@ -128,9 +139,10 @@
   };
 
   /* ---------- Programa: niveles cortos solo con flechas ---------- */
-  // Mismas ciudades que la aventura 1 (así cada nivel lleva el mismo indicador). Bloques: avanzar, atras, izq, der, saltar.
+  // Las 10 ciudades de la aventura 1, en el mismo orden (así cada pantalla va a la misma columna de la hoja y lleva
+  // el mismo indicador). Bloques: avanzar, atras, izq, der, saltar. Cada reto está comprobado: se puede hacer con esos bloques.
   window.AVENTURAS_AC = [{
-    nombre: "Mi viaje con flechas", resumen: "Flechas para llegar a la bandera.",
+    nombre: "Mi viaje con flechas", resumen: "Diez pantallas con flechas para llegar a la bandera.",
     niveles: [
       { ciudad: "Madrid", pais: "España", suelo: "#e3c99a", bandera: { o: "h", c: ["#c60b1e", "#ffc400", "#c60b1e"], w: [1, 2, 1] },
         dato: "Madrid es la capital de España.", objetivo: "Pulsa la flecha ⬆️ tres veces y luego ▶ Ejecutar.", mapa: ["XXXX", "P..G", "XXXX"], dir: 0, bloques: ["avanzar"], reto: 3 },
@@ -142,8 +154,16 @@
         dato: "En Roma está el Coliseo.", objetivo: "¡Una maleta! Usa ⤴️ saltar.", mapa: ["XXXXX", "P.B.G", "XXXXX"], dir: 0, bloques: ["avanzar", "atras", "saltar"], reto: 3 },
       { ciudad: "Berlín", pais: "Alemania", suelo: "#d4d4cc", bandera: { o: "h", c: ["#000000", "#dd0000", "#ffce00"], w: [1, 1, 1] },
         dato: "En Berlín está la Puerta de Brandeburgo.", objetivo: "Avanza y gira ↩️ a la izquierda.", mapa: ["XXG", "XX.", "P.."], dir: 0, bloques: ["avanzar", "atras", "izq", "der"], reto: 5 },
+      { ciudad: "Ámsterdam", pais: "Países Bajos", suelo: "#d9c3a5", bandera: { o: "h", c: ["#ae1c28", "#ffffff", "#21468b"], w: [1, 1, 1] },
+        dato: "Ámsterdam tiene muchos canales.", objetivo: "Salta ⤴️ el canal y después gira ↪️.", mapa: ["P.W.", "XXX.", "XXXG"], dir: 0, bloques: ["avanzar", "atras", "izq", "der", "saltar"], reto: 5 },
       { ciudad: "Bruselas", pais: "Bélgica", suelo: "#ddd6c8", bandera: { o: "v", c: ["#000000", "#fdda24", "#ef3340"], w: [1, 1, 1] },
-        dato: "En Bruselas hay mucho chocolate.", objetivo: "Recoge el sello ⭐ y llega a la bandera.", mapa: ["P.S.", "XXX.", "XXXG"], dir: 0, bloques: ["avanzar", "atras", "izq", "der", "saltar"], reto: 6 }
+        dato: "En Bruselas hay mucho chocolate.", objetivo: "Recoge el sello ⭐ y llega a la bandera.", mapa: ["P.S.", "XXX.", "XXXG"], dir: 0, bloques: ["avanzar", "atras", "izq", "der", "saltar"], reto: 6 },
+      { ciudad: "Londres", pais: "Reino Unido", suelo: "#d6d3cb", bandera: { uk: true },
+        dato: "En Londres está el Big Ben, un reloj muy grande.", objetivo: "Gira ↪️ para bajar y gira ↩️ para recoger el sello ⭐.", mapa: ["P.XX", "X.XX", "X.SG"], dir: 0, bloques: ["avanzar", "atras", "izq", "der", "saltar"], reto: 7 },
+      { ciudad: "Zúrich", pais: "Suiza", suelo: "#dfe3d6", bandera: { suiza: true },
+        dato: "En Suiza hay montañas muy altas con nieve.", objetivo: "Salta ⤴️ la maleta, gira ↩️ y sube a por el sello ⭐.", mapa: ["XXXG", "XXXS", "P.B.", "XXXX"], dir: 0, bloques: ["avanzar", "atras", "izq", "der", "saltar"], reto: 5 },
+      { ciudad: "Luxemburgo", pais: "Luxemburgo", suelo: "#e2d8c8", bandera: { o: "h", c: ["#ed2939", "#ffffff", "#00a1de"], w: [1, 1, 1] },
+        dato: "Luxemburgo es un país pequeño con un castillo.", objetivo: "El reto final: recoge los dos sellos ⭐, gira dos veces ↪️ y salta ⤴️ el canal.", mapa: ["P.S.", "XXX.", "XGWS"], dir: 0, bloques: ["avanzar", "atras", "izq", "der", "saltar"], reto: 8 }
     ]
   }];
   if (ADAPTADO && window.AVENTURAS) window.AVENTURAS = window.AVENTURAS_AC;
@@ -206,6 +226,7 @@
   const AC = window.INDICADORES_AC["5º"];
   // Las pantallas leen INDICADORES: se cambian por los básicos (mismo número de indicador).
   if (window.INDICADORES) { window.INDICADORES["5º"] = Object.assign({}, window.INDICADORES["5º"], AC); }
+  if (window.AUTOEVAL) window.AUTOEVAL["5º"] = Object.assign({}, window.AUTOEVAL["5º"], window.AUTOEVAL_AC["5º"]);
   (window.PIENSA || []).forEach((p) => { p.i5 = p.i5.map(([cod]) => [cod, AC[cod] || ""]); });
   // Crea: se marca cada reto como adaptado (rincones.js pinta la versión fácil).
   ((window.CREA || {})["5º"] || []).forEach((a) => { const x = window.CREA_AC["5º"][a.sa + "-" + a.s]; if (x) a.ac = x; });

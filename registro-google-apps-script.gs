@@ -302,8 +302,9 @@ function familiaDatos(libro, d) {
   const res = libro.getSheetByName("Resultados");
   const r = res && res.getLastRow() > 1 ? res.getDataRange().getValues() : [[]];
   const rc = r[0], rU = rc.indexOf("Usuario Educacyl"), rA = rc.indexOf("Actividad"), rP = rc.indexOf("Programa"), rF = rc.indexOf("Fecha");
+  const adaptados = leerAdaptados();
   return json({ ok: true, cab, hijos: hijos.map((f) => ({
-    nombre: f[0], apellidos: f[1], usuario: f[2], clase: f[3],
+    nombre: f[0], apellidos: f[1], usuario: f[2], clase: f[3], adaptado: adaptados.indexOf(minus(f[2])) >= 0,
     fila: iU >= 0 ? (v.slice(1).find((x) => minus(x[iU]) === minus(f[2])) || null) : null,
     hechos: rU >= 0 ? r.slice(1).filter((x) => minus(x[rU]) === minus(f[2]) && String(x[rP]).indexOf("Terminado") === 0)
       .map((x) => [x[rA], x[rP], x[rF] instanceof Date ? x[rF].toISOString() : String(x[rF])]) : []
@@ -850,7 +851,7 @@ function alumnoResultados(libro, d) {
   const rc = r[0] || [], rU = rc.indexOf("Usuario Educacyl"), rA = rc.indexOf("Actividad"), rP = rc.indexOf("Programa"), rF = rc.indexOf("Fecha");
   const hechos = rU >= 0 ? r.slice(1).filter(x => minus(x[rU]) === minus(s.usuario) && String(x[rP] || "").indexOf("Terminado") === 0)
     .map(x => [x[rA], x[rP], x[rF] instanceof Date ? x[rF].toISOString() : String(x[rF])]) : [];
-  return json({ ok: true, nombre: s.nombre, clase: s.clase, cab, fila, hechos });
+  return json({ ok: true, nombre: s.nombre, clase: s.clase, cab, fila, hechos, adaptado: leerAdaptados().indexOf(minus(s.usuario)) >= 0 });
 }
 
 function alumnoSesion(libro, d) {
