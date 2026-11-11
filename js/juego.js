@@ -40,9 +40,12 @@
   // Progreso guardado en la hoja (js/retos-encadenados.js): se suma al de este ordenador.
   const RC = () => (!AC && window.RetosCadena && window.RetosCadena.hecho ? window.RetosCadena : null);
   const hechoEnHoja = (i) => !!(RC() && RC().hecho("programa", i));
-  const hecho = (i) => !!progreso[EST][i] || hechoEnHoja(i);
+  // Adaptación curricular: no usa códigos de retos, así que su avance se recupera de sus notas en la hoja
+  // (window.HOJA_AC: { prog: { índice: true }, rob: { "robot-índice": true } }). Así no se pierde al salir o al cambiar de ordenador.
+  const hechoAC = (i) => !!(AC && window.HOJA_AC && window.HOJA_AC.prog[i]);
+  const hecho = (i) => !!progreso[EST][i] || hechoEnHoja(i) || hechoAC(i);
   const completados = () => NIVELES.filter((_, i) => hecho(i)).length;
-  const desbloqueadoNivel = (i) => NIVELES[i].pos === 0 || hecho(i - 1) || !!(RC() && RC().abierto("programa", i));
+  const desbloqueadoNivel = (i) => NIVELES[i].pos === 0 || hecho(i) || hecho(i - 1) || !!(RC() && RC().abierto("programa", i));
   const desbloqueadoPers = (p) => completados() >= (p.desbloquea || 0);
   function personajeActual() {
     const p = PERSONAJES.find((x) => x.id === progreso.personaje);
@@ -196,7 +199,7 @@
         ${miniBandera(n.bandera)}
         <strong>${n.ciudad}</strong><span class="pais">${n.pais}</span>
         ${indicadorNivel(n) ? `<span class="ind-mini">Ind. ${indicadorNivel(n).codigo}</span>` : ""}
-        <span class="estrellas">${!ok ? "Bloqueado" : est ? "<b>" + "★".repeat(est) + "</b>" + "★".repeat(3 - est) : hechoEnHoja(i) ? "<b>✓ Hecha</b>" : "★★★"}</span>
+        <span class="estrellas">${!ok ? "Bloqueado" : est ? "<b>" + "★".repeat(est) + "</b>" + "★".repeat(3 - est) : (hechoEnHoja(i) || hechoAC(i)) ? "<b>✓ Hecha</b>" : "★★★"}</span>
         ${hecho(i) ? `<span class="sello-hecho">${SELLO_HECHO(n.ciudad.toUpperCase().slice(0, 9))}</span>` : ""}
       </button>`;
       }).join("");
@@ -698,6 +701,31 @@
   window.addEventListener("hashchange", enrutar);
   // Cuando llega el progreso guardado en la hoja, se vuelve a pintar la lista de pantallas.
   window.addEventListener("progreso-remoto", () => { if (!$("#inicio").hidden) pintarInicio(); });
+  async function recuperarHojaAC() {
+    const R = window.REGISTRO || {}, s = window.Acceso && window.Acceso.sesion ? window.Acceso.sesion() : null;
+    if (!AC || !R.url || !s || !s.token || !window.Profe || !window.Profe.notasDe) return;
+    try {
+      const r = await fetch(R.url, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify({ accion: "alumnoResultados", usuario: s.usuario, token: s.token }) });
+      const j = JSON.parse(await r.text());
+      if (!j || !j.ok) return;
+      const notas = window.Profe.notasDe(j.cab || [], j.fila || []), cols = Object.keys(notas).filter((k) => Number.isFinite(notas[k]));
+      const tiene = (pref) => cols.some((k) => k.indexOf(pref) === 0);
+      const H = { prog: {}, rob: {} };
+      NIVELES.forEach((n, i) => { if (tiene(`Programación · ${i + 1}. ${n.ciudad} · Ind. `)) H.prog[i] = true; });
+      for (let i = 0; i < 10; i++) if (tiene(`Robótica · Robot · reto ${i + 1} · Ind. `)) H.rob["robot-" + i] = true;
+      window.HOJA_AC = H;
+      // Las notas de la hoja también vuelven a «Mis notas» de este ordenador.
+      if (window.Valoraciones) window.Valoraciones.filas().filter((x) => x.grupo === "prog" || x.grupo === "rob").forEach((x) => {
+        const col = String(x.destino).slice(0, 60) + " · Ind. " + x.codigo;
+        if (Number.isFinite(notas[col])) window.Valoraciones.registrar(x.clave, { nota: notas[col], codigo: x.codigo, pantalla: x.pantalla, actividad: x.actividad }, true);
+      });
+      window.dispatchEvent(new Event("progreso-remoto"));
+    } catch (e) { /* sin conexión: se usa lo de este ordenador */ }
+  }
+  if (AC) {
+    recuperarHojaAC();
+    window.addEventListener("hashchange", () => { if (/^#(programa|robotica)$/.test(location.hash)) recuperarHojaAC(); });
+  }
 
   window.PiniEspalda = espaldaSVG;
   window.PROG_NIVELES = NIVELES;
