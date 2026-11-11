@@ -3,8 +3,8 @@
   -----------------------------------------------------------------------
   Si el alumno que ha entrado tiene adaptación (lo marca el profe en su ficha), esta hoja cambia los contenidos
   ANTES de que se pinten las pantallas:
-  - Indicadores: los mismos números (mismo criterio de evaluación) con un logro muy básico, tomado de la
-    programación de TIAC de 1.º de Primaria. Así las notas van a las mismas columnas de la hoja.
+  - Indicadores: los mismos números (mismo criterio de evaluación) adaptado a lo que hace en la app, con el nivel
+    de logro de la programación de TIAC de 1.º de Primaria. Así las notas van a las mismas columnas de la hoja.
   - Crea: un texto corto con la información ya buscada y preguntas que se responden con una o dos palabras.
   - Programa: niveles cortos solo con flechas (delante, atrás, girar y saltar), con botones grandes.
   - Robótica: solo el robot de flechas y diez retos progresivos adaptados.
@@ -19,75 +19,78 @@
   const ADAPTADO = !!(s && s.adaptado);
   window.ADAPTADO = ADAPTADO;
 
-  /* ---------- Indicadores básicos (mismo número = mismo criterio) ---------- */
+  /* ---------- Indicadores adaptados (mismo número = mismo criterio) ----------
+     Cada texto dice lo que hace en la app el alumnado con adaptación (Crea con ficha, Programa y Robótica con
+     flechas, Piensa fácil), con el nivel de logro de la programación de TIAC de 1.º (entre paréntesis, el
+     indicador de 1.º en que se basa). Los que no tienen actividad en la app se evalúan en clase. */
   window.INDICADORES_AC = {
     "5º": {
-      "1.1.1": "Busca con ayuda la información de su país: lee o escucha la ficha y encuentra la capital.",
-      "1.1.2": "Encuentra con ayuda un dato sencillo (bici o reciclaje) en la ficha que le da el docente.",
-      "1.1.3": "Dice, con ayuda, si un dato viene de una web del cole o del docente.",
-      "1.1.4": "Reconoce un anuncio en una pantalla y no lo pulsa.",
-      "1.1.5": "Escucha cómo se dice «hola» en la lengua de su país y lo repite.",
-      "1.2.1": "Guarda su trabajo en la carpeta indicada, con ayuda.",
-      "1.2.2": "Abre una carpeta del ordenador y encuentra su archivo, con ayuda.",
-      "1.2.3": "Guarda y vuelve a abrir su archivo en OneDrive, con ayuda.",
-      "2.1.1": "Envía, con ayuda, un correo sencillo (saludo y una frase) a su docente.",
-      "2.1.2": "Escribe, con ayuda, una palabra amable en un comentario del blog.",
-      "2.1.3": "Dice si un mensaje le parece de verdad o de mentira, con ayuda.",
-      "2.1.4": "Entra en Teams con ayuda y saluda con respeto.",
-      "2.2.1": "Adjunta, con ayuda, su trabajo a un correo electrónico.",
-      "2.2.2": "Escanea con ayuda un código QR y mira lo que aparece.",
-      "2.2.3": "Comparte su archivo con el docente o su equipo, con ayuda.",
-      "2.3.1": "Escribe su nombre o una palabra en el documento del equipo sin borrar lo de los demás.",
-      "2.3.2": "Dice al equipo una palabra o un dato de su país para el guion.",
-      "3.1.1": "Escribe palabras cortas en un documento siguiendo un modelo.",
-      "3.1.2": "Escribe un número o una palabra en una casilla de una tabla, con ayuda.",
-      "3.1.3": "Hace un cartel sencillo con una palabra y un dibujo, siguiendo un modelo.",
-      "3.1.4": "Graba con ayuda una frase corta con su voz.",
-      "3.2.1": "Programa con flechas el camino del personaje hasta la bandera.",
-      "3.2.2": "Ordena flechas para llegar a la meta y prueba su programa.",
-      "3.2.3": "Programa el robot con flechas (adelante, atrás y girar) para llegar a un país del tapete.",
-      "3.2.4": "Pulsa una tecla o un botón y mira qué pasa en el programa.",
-      "3.2.5": "Repite un camino corto con flechas hasta conseguirlo.",
-      "3.2.6": "Elige la flecha correcta cuando el robot se equivoca y lo vuelve a probar.",
-      "3.2.7": "Ve su nombre en la micro:bit con ayuda.",
-      "3.2.8": "Agita la micro:bit y mira qué pasa, con ayuda.",
-      "3.2.9": "Hace que el robot vaya adelante y atrás en el tapete.",
-      "3.3.1": "Utiliza imágenes con licencia Creative Commons que le da el docente.",
-      "3.3.2": "Usa en su cartel una imagen de las que le da el docente.",
-      "3.3.3": "Usa en su grabación una música que le da el docente.",
-      "3.4.1": "Reconoce, con ayuda, si una imagen se puede usar libremente (símbolo CC).",
-      "3.4.2": "Reconoce el símbolo CC en un trabajo, con ayuda.",
-      "4.1.1": "Sabe que su contraseña es secreta y no la dice a nadie.",
-      "4.1.2": "Cierra sesión adecuadamente al dejar el dispositivo.",
-      "4.1.3": "Busca el candado en la barra del navegador, con ayuda.",
-      "4.1.4": "Dice si un correo es del cole o de alguien que no conoce, con ayuda.",
-      "4.2.1": "Pide ayuda a un adulto cuando sale un aviso en la pantalla.",
-      "4.2.2": "Sabe que no debe decir su nombre, su casa ni su teléfono en internet.",
-      "4.2.3": "Si algo de internet le hace sentir mal, se lo cuenta a un adulto.",
-      "4.3.1": "Usa los dispositivos de forma segura: sube o baja el sonido y el brillo con ayuda.",
-      "4.3.2": "Nombra la pantalla, el teclado y el ratón.",
-      "4.3.3": "No abre correos ni archivos de personas que no conoce.",
-      "4.3.4": "Usa los dispositivos de forma responsable: se sienta bien y cuida el material.",
-      "5.1.1": "Abre la aplicación que indica el docente desde su icono.",
-      "5.1.2": "Elige, con ayuda, la aplicación correcta entre dos iconos.",
-      "5.1.3": "Elige con ayuda un botón o sensor de la micro:bit.",
-      "5.2.1": "Cuando el personaje no llega, cambia una flecha y lo vuelve a probar.",
-      "5.2.2": "Si el ordenador no funciona, pide ayuda y dice qué pasa (no hay sonido, no hay internet).",
-      "5.2.3": "Cuando sale un error, lo vuelve a intentar con ayuda.",
-      "5.2.4": "Prueba otra vez su programa cuando no sale.",
-      "5.3.1": "Espera su turno con el robot y deja trabajar al compañero.",
-      "5.3.2": "Mira en su pasaporte las caras sonrientes que ha conseguido.",
-      "5.3.3": "Enseña a un compañero lo que ha hecho."
+      "1.1.1": "Busca, con ayuda, la capital, el idioma y cómo se dice «hola» en la ficha de su país (la lee o la escucha con 🔊) y lo escribe en Crea.", // 1.º 1.1.1
+      "1.1.2": "Encuentra en la ficha de su país un dato sobre la bici o el reciclaje y lo escribe con una o dos palabras.", // 1.º 1.1.1-1.1.2
+      "1.1.3": "Dice, con ayuda, si algo de internet es verdad o mentira y pregunta a un adulto cuando no lo sabe.", // 1.º 1.1.1
+      "1.1.4": "Reconoce el icono del navegador y lo abre, y no pulsa anuncios ni premios trampa.", // 1.º 1.1.3
+      "1.1.5": "Escucha con 🔊 cómo se dice «hola» en la lengua de su país, lo repite y lo escribe.", // 1.º 1.1.1
+      "1.2.1": "Guarda su ficha o su trabajo en la carpeta indicada, con ayuda.", // 1.º 1.2.1
+      "1.2.2": "Abre una carpeta del ordenador y encuentra su archivo, con ayuda.", // 1.º 1.2.1
+      "1.2.3": "Guarda y vuelve a abrir su archivo en OneDrive, con ayuda.", // 1.º 1.2.2
+      "2.1.1": "Envía, con ayuda, un correo sencillo que empieza con «Hola» y termina con «Adiós».", // 1.º 2.1.2
+      "2.1.2": "Escribe con respeto (saluda, dice «por favor» y «gracias», no grita en mayúsculas) y deja, con ayuda, una palabra amable en el blog.", // 1.º 2.1.1
+      "2.1.3": "Ante un mensaje de internet dice si parece verdad o mentira y no lo reenvía sin preguntar a un adulto.", // 1.º 2.1.1
+      "2.1.4": "Se comunica en Teams con ayuda, saludando y escribiendo con respeto.", // 1.º 2.1.1
+      "2.2.1": "Adjunta, con ayuda, su ficha o su trabajo a un correo electrónico.", // 1.º 2.1.4
+      "2.2.2": "Escanea con ayuda el código QR del cartel y mira lo que aparece.", // 1.º 5.1.2
+      "2.2.3": "Comparte su frase o su grabación con el docente o su equipo en Teams, con ayuda.", // 1.º 2.1.3
+      "2.3.1": "Escribe su nombre y un dato de su país en el documento del equipo sin borrar lo de los demás.", // 1.º 3.1.1
+      "2.3.2": "Dice o escribe su frase (capital y «hola») para el guion del pódcast del equipo.", // 1.º 3.1.1
+      "3.1.1": "Escribe palabras o frases cortas en su ficha o en un correo siguiendo un modelo.", // 1.º 3.1.1
+      "3.1.2": "Escribe, con ayuda, una palabra o un número de su país en una casilla de la tabla.", // 1.º 3.1.1
+      "3.1.3": "Hace un cartel sencillo («Europa cuida») con una palabra y un dibujo, siguiendo un modelo.", // 1.º 3.1.2
+      "3.1.4": "Graba con ayuda su frase con su voz (botón rojo ⏺️ y parar ⏹️) y la escucha.", // 1.º 3.1.1
+      "3.2.1": "Pone flechas en orden para que Pini llegue a la bandera en las primeras pantallas de Programa (Madrid, Lisboa, París y Roma).", // 1.º 3.2.1
+      "3.2.2": "Ordena flechas, giros y saltos para llegar a la bandera y recoger los sellos ⭐ (pantallas 5 a 10 de Programa) y prueba su programa.", // 1.º 3.2.1
+      "3.2.3": "Programa el robot con flechas (adelante, atrás y girar) para ir de un país a otro del tapete (retos 1 a 4 de Robótica).", // 1.º 3.2.2
+      "3.2.4": "Pulsa una tecla o un botón y mira qué pasa en el programa (code.org, con ayuda).", // 1.º 3.2.1
+      "3.2.5": "Repite un camino corto con flechas en code.org hasta conseguirlo.", // 1.º 3.2.1
+      "3.2.6": "Programa con flechas un viaje del robot por varios países en orden (retos 5 a 10 de Robótica) y lo vuelve a probar si se equivoca.", // 1.º 3.2.2
+      "3.2.7": "Ve su nombre en la micro:bit con ayuda.", // 1.º 3.2.1
+      "3.2.8": "Agita la micro:bit y mira qué pasa, con ayuda.", // 1.º 3.2.1
+      "3.2.9": "Hace que el robot SPIKE Essential vaya adelante y atrás en el tapete, con ayuda.", // 1.º 3.2.2
+      "3.3.1": "Utiliza en su ficha o su correo imágenes con licencia Creative Commons que le da el docente.", // 1.º 3.3.1
+      "3.3.2": "Usa en su cartel un dibujo o una imagen de las que le da el docente.", // 1.º 3.3.1
+      "3.3.3": "Usa en su grabación una música que le da el docente.", // 1.º 3.3.1
+      "3.4.1": "Reconoce, con ayuda, si una imagen se puede usar libremente (símbolo CC).", // 1.º 3.3.2
+      "3.4.2": "Reconoce el símbolo CC en su grabación o en un trabajo, con ayuda.", // 1.º 3.3.2
+      "4.1.1": "Memoriza su contraseña, sabe que es secreta y no la dice a nadie.", // 1.º 4.1.1-4.1.2
+      "4.1.2": "Cierra sesión al terminar (botón «Salir» de la app) y al dejar el dispositivo.", // 1.º 4.1.3
+      "4.1.3": "Busca el candado 🔒 en la web y no pulsa «¡Has ganado un premio!», con ayuda.", // 1.º 4.2.1
+      "4.1.4": "Abre solo los correos de personas que conoce (su profe) y avisa a un adulto si uno es raro.", // 1.º 4.2.1
+      "4.2.1": "Pide ayuda a un adulto cuando sale un aviso en la pantalla.", // 1.º 4.2.1
+      "4.2.2": "Sabe que no debe dar su nombre, dónde vive ni su teléfono en internet, y usa un apodo o un dibujo.", // 1.º 4.2.1
+      "4.2.3": "Si algo de internet le hace sentir mal, no contesta y se lo cuenta a un adulto.", // 1.º 4.2.2
+      "4.3.1": "Usa los dispositivos de forma segura: sube o baja el sonido y el brillo y pide ayuda si algo falla.", // 1.º 4.2.1
+      "4.3.2": "Nombra la pantalla, el teclado y el ratón.", // 1.º 4.2.1
+      "4.3.3": "No abre correos ni archivos de personas que no conoce y nunca da su contraseña por correo.", // 1.º 4.1.2
+      "4.3.4": "Usa los dispositivos de forma responsable: se sienta bien, descansa de la pantalla y cuida el material.", // 1.º 4.2.2
+      "5.1.1": "Abre la aplicación que indica el docente desde su icono.", // 1.º 5.1.3
+      "5.1.2": "Elige, con ayuda, la aplicación correcta entre dos iconos (tabla o cartel).", // 1.º 5.1.3
+      "5.1.3": "Elige con ayuda un botón o sensor de la micro:bit.", // 1.º 5.1.2
+      "5.2.1": "Cuando Pini o el robot no llegan a la bandera, cambia una flecha y lo vuelve a probar hasta conseguirlo.", // 1.º 5.1.2
+      "5.2.2": "Si el ordenador no funciona, avisa al docente o prueba a cerrar y volver a abrir la aplicación.", // 1.º 5.1.1
+      "5.2.3": "Cuando sale un error, lo vuelve a intentar con ayuda.", // 1.º 5.1.1
+      "5.2.4": "Prueba otra vez su programa cuando no sale.", // 1.º 5.1.2
+      "5.3.1": "Espera su turno con el robot y deja trabajar al compañero.", // 1.º 4.2.2
+      "5.3.2": "Mira en su pasaporte las caras sonrientes que ha conseguido.", // 1.º 5.1.2
+      "5.3.3": "Enseña a un compañero lo que ha hecho." // 1.º 2.1.1
     }
   };
 
   // Autoevaluación de Programa y Robótica con frases sencillas (las ve la alumna y el profe en su ficha).
   window.AUTOEVAL_AC = {
     "5º": {
-      "3.2.1": "Sé poner flechas para que el personaje llegue a la bandera.",
-      "3.2.2": "Sé ordenar las flechas y probar mi programa.",
+      "3.2.1": "Sé poner flechas en orden para que Pini llegue a la bandera.",
+      "3.2.2": "Sé usar flechas, giros y saltos y probar mi programa.",
       "3.2.3": "Sé programar el robot con flechas para llegar a un país.",
-      "3.2.6": "Si el robot se equivoca, cambio la flecha y lo pruebo otra vez.",
+      "3.2.6": "Sé llevar el robot por varios países y, si se equivoca, cambio la flecha y lo pruebo otra vez.",
       "3.2.9": "Sé hacer que el robot vaya adelante y atrás."
     }
   };
