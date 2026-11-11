@@ -469,7 +469,11 @@ a.volver { text-decoration: none; }
 .acceso-t { margin: 0 0 8px; }
 .acceso[data-estado="dentro"] .acceso-t { margin: 0; flex: 1 1 260px; }
 .acceso-fila { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
-.acceso-cod { width: 5.5em; font: 700 1.4rem var(--f-mono); letter-spacing: .3em; text-align: center; padding: 6px 8px; border-radius: 10px; border: 2px solid var(--line); background: #fff; color: var(--ink); }
+.acceso-cod { width: min(100%, 22ch); min-height: 52px; font: 700 1.35rem var(--f-mono); letter-spacing: .06em; text-align: left; padding: 10px 14px; border-radius: 12px; border: 2px solid var(--line); background: #fff; color: var(--ink); box-sizing: border-box; }
+.acceso-cod:focus { border-color: var(--navy); outline: 3px solid var(--gold); outline-offset: 1px; }
+.acceso-cod::placeholder { font: 400 1rem var(--f-body, inherit); letter-spacing: 0; }
+.acceso-pass { flex: 1 1 22ch; max-width: 26ch; }
+.acceso-ver { white-space: nowrap; }
 .acceso-msg { margin: 8px 0 0; font-weight: 700; font-size: 14px; }
 .acceso-lab { display: grid; gap: 4px; font-weight: 700; font-size: 13px; }
 .acceso[data-estado="cambiar"] { border-style: solid; border-color: var(--green); }

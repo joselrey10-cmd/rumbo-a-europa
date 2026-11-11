@@ -60,7 +60,9 @@
   let hechos = {};
   try { hechos = JSON.parse(localStorage.getItem(CLAVE) || "{}") || {}; } catch (e) { hechos = {}; }
   const guardar = () => { try { localStorage.setItem(CLAVE, JSON.stringify(hechos)); } catch (e) {} };
-  const hecho = (m, i) => !!(hechos[m] && hechos[m][i]);
+  // Se suma el progreso guardado en la hoja (js/retos-encadenados.js), para no perderlo al cambiar de ordenador.
+  const hecho = (m, i) => !!(hechos[m] && hechos[m][i]) || !!(!AC && window.RetosCadena && window.RetosCadena.hecho && window.RetosCadena.hecho(`robot-${m}`, i));
+  window.addEventListener("progreso-remoto", () => { const r = document.getElementById("rb-menu"); if (r && !r.hidden && !document.getElementById("robotica").hidden) pintarMenu(); });
 
   /* ---------- Utilidades del tapete ---------- */
   function centroDe(cas) {

@@ -26,5 +26,37 @@ window.RetosCadena = (function () {
     if (!r.ok) { alert(r.error || "Código incorrecto."); return false; }
     return true;
   }
-  return { completar, entrar };
+  /* Progreso guardado en la hoja: así se conserva aunque el alumno cambie de ordenador o pulse «Salir».
+     remoto[secuencia] = { desbloqueado, completados: [índices] }. Al llegar, avisa con el evento «progreso-remoto». */
+  const remoto = {};
+  const TOTALES = { "programa": 30, "robot-robot": 10, "robot-essential": 10, "robot-prime": 10 };
+  let ultimoToken = "", ultimaVez = 0;
+  async function sincronizar(forzar) {
+    const A = window.Acceso, tk = A && A.token ? A.token() : "";
+    if (!tk) { Object.keys(remoto).forEach((k) => delete remoto[k]); ultimoToken = ""; return; }
+    if (!forzar && tk === ultimoToken && Date.now() - ultimaVez < 20000) return;
+    ultimoToken = tk; ultimaVez = Date.now();
+    await Promise.all(Object.keys(TOTALES).map(async (sec) => {
+      const r = await llamar(sec, "estado", 0, TOTALES[sec]);
+      if (r && r.ok) remoto[sec] = { desbloqueado: Number(r.desbloqueado) || 0, completados: (r.completados || []).map(Number) };
+    }));
+    window.dispatchEvent(new CustomEvent("progreso-remoto"));
+  }
+  // Al entrar (o al cambiar de alumno) y al volver a Programa o Robótica.
+  setInterval(() => { const A = window.Acceso, tk = A && A.token ? A.token() : ""; if (tk !== ultimoToken) sincronizar(true); }, 1500);
+  window.addEventListener("hashchange", () => { if (/^#(programa|robotica)$/.test(location.hash)) sincronizar(); });
+  // Tras completar una pantalla se actualiza la copia local del progreso de la hoja.
+  const completarOriginal = completar;
+  async function completarYGuardar(secuencia, indice, total, notaPantalla) {
+    const r = await completarOriginal(secuencia, indice, total, notaPantalla);
+    if (r && r.ok) {
+      const g = remoto[secuencia] || (remoto[secuencia] = { desbloqueado: 0, completados: [] });
+      if (g.completados.indexOf(indice) < 0) g.completados.push(indice);
+      if (!r.codigo && r.siguiente != null) g.desbloqueado = Math.max(g.desbloqueado, r.siguiente);
+    }
+    return r;
+  }
+  const hecho = (sec, i) => !!(remoto[sec] && remoto[sec].completados.indexOf(i) >= 0);
+  const abierto = (sec, i) => !!(remoto[sec] && i <= remoto[sec].desbloqueado);
+  return { completar: completarYGuardar, entrar, sincronizar, remoto, hecho, abierto };
 })();

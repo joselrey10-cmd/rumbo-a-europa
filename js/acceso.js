@@ -39,6 +39,7 @@ window.Acceso = (function () {
     caja.addEventListener("click", (e) => {
       const b = e.target.closest("[data-acc]"); if (!b) return;
       if (b.dataset.acc === "entrar") entrar(c);
+      else if (b.dataset.acc === "ver") verPass(c);
       else if (b.dataset.acc === "salir") { if (window.SalirAlumno) { window.SalirAlumno.salir(); return; } ponerSesion(null); c.paso = "inicio"; c.msg = ""; pintar(c); }
       else if (b.dataset.acc === "cambiar") { c.paso = "cambiar"; c.msg = ""; pintar(c); const i = c.caja.querySelector(".acceso-act"); if (i) i.focus(); }
       else if (b.dataset.acc === "cancelar") { c.paso = "inicio"; c.msg = ""; pintar(c); }
@@ -105,9 +106,9 @@ window.Acceso = (function () {
         const v = val || {}, dis = ocupado ? " disabled" : ""; c.caja.dataset.estado = "cambiar";
         c.caja.innerHTML = `<p class="acceso-t">🔑 <b>Cambiar mi contraseña.</b> Usa entre 4 y 24 caracteres y elige una que puedas recordar.</p>
           <div class="acceso-fila">
-          <label class="acceso-lab">Contraseña actual<input class="acceso-cod acceso-act" type="password" autocomplete="current-password" value="${esc(v.actual || "")}"></label>
-          <label class="acceso-lab">Nueva contraseña<input class="acceso-cod acceso-nuevo" type="password" autocomplete="new-password" value="${esc(v.nuevo || "")}"></label>
-          <label class="acceso-lab">Repite la nueva<input class="acceso-cod acceso-rep" type="password" autocomplete="new-password" value="${esc(v.rep || "")}"></label></div>
+          <label class="acceso-lab">Contraseña actual<input class="acceso-cod acceso-act" type="${tipoPass(c)}" autocomplete="current-password" value="${esc(v.actual || "")}"></label>
+          <label class="acceso-lab">Nueva contraseña<input class="acceso-cod acceso-nuevo" type="${tipoPass(c)}" autocomplete="new-password" value="${esc(v.nuevo || "")}"></label>
+          <label class="acceso-lab">Repite la nueva<input class="acceso-cod acceso-rep" type="${tipoPass(c)}" autocomplete="new-password" value="${esc(v.rep || "")}"></label>${botonVer(c)}</div>
           <div class="acceso-fila" style="margin-top:8px"><button type="button" class="btn" data-acc="guardar"${dis}>Guardar</button>
           <button type="button" class="btn sec" data-acc="cancelar"${dis}>Cancelar</button></div>${msg}`;
         return;
@@ -121,9 +122,18 @@ window.Acceso = (function () {
     const dis = ocupado ? " disabled" : "";
     const viejo = c.caja.querySelector(".acceso-pass"), escrito = viejo ? viejo.value : "";
     c.caja.innerHTML = `<p class="acceso-t">🔐 <b>Elige tu contraseña</b> si entras por primera vez. En las próximas visitas, escribe la misma. Tu profe podrá recuperarla desde la hoja «Accesos alumnado».</p>
-      <div class="acceso-fila"><input class="acceso-cod acceso-pass" type="password" autocomplete="current-password" maxlength="24" placeholder="Tu contraseña (4–24 caracteres)" aria-label="Tu contraseña" value="${esc(escrito)}">
+      <div class="acceso-fila"><input class="acceso-cod acceso-pass" type="${tipoPass(c)}" autocomplete="current-password" maxlength="24" placeholder="Tu contraseña (4–24 caracteres)" aria-label="Tu contraseña" value="${esc(escrito)}" spellcheck="false" autocapitalize="off">${botonVer(c)}
       <button type="button" class="btn" data-acc="entrar"${dis}>Entrar / Crear contraseña</button></div>
       <p class="acceso-t">¿La has olvidado? Pide ayuda a tu profe para consultarla en la hoja de cálculo.</p>${msg}`;
+  }
+  // Botón «Ver»: enseña u oculta lo escrito para que el alumno pueda revisarlo.
+  const tipoPass = (c) => (c.ver ? "text" : "password");
+  const botonVer = (c) => `<button type="button" class="btn sec acceso-ver" data-acc="ver" aria-pressed="${!!c.ver}">${c.ver ? "🙈 Ocultar" : "👁 Ver"}</button>`;
+  function verPass(c) {
+    c.ver = !c.ver;
+    c.caja.querySelectorAll(".acceso-cod").forEach((i) => { i.type = tipoPass(c); });
+    c.caja.querySelectorAll(".acceso-ver").forEach((b) => { b.outerHTML = botonVer(c); });
+    const i = c.caja.querySelector(".acceso-pass, .acceso-act"); if (i) i.focus();
   }
   function pintarTodas() { cajas.forEach((c) => pintar(c)); }
   async function comprobar() {

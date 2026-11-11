@@ -37,8 +37,12 @@
   } catch (e) { /* sin almacenamiento */ }
   function guardar() { try { localStorage.setItem(CLAVE, JSON.stringify(progreso)); } catch (e) {} }
   try { guardar(); } catch (e) {}
-  const completados = () => Object.keys(progreso[EST]).length;
-  const desbloqueadoNivel = (i) => NIVELES[i].pos === 0 || !!progreso[EST][i - 1];
+  // Progreso guardado en la hoja (js/retos-encadenados.js): se suma al de este ordenador.
+  const RC = () => (!AC && window.RetosCadena && window.RetosCadena.hecho ? window.RetosCadena : null);
+  const hechoEnHoja = (i) => !!(RC() && RC().hecho("programa", i));
+  const hecho = (i) => !!progreso[EST][i] || hechoEnHoja(i);
+  const completados = () => NIVELES.filter((_, i) => hecho(i)).length;
+  const desbloqueadoNivel = (i) => NIVELES[i].pos === 0 || hecho(i - 1) || !!(RC() && RC().abierto("programa", i));
   const desbloqueadoPers = (p) => completados() >= (p.desbloquea || 0);
   function personajeActual() {
     const p = PERSONAJES.find((x) => x.id === progreso.personaje);
@@ -166,7 +170,7 @@
     });
 
     $("#lista-destinos").innerHTML = AVENTURAS.map((av, ai) => {
-      const hechas = NIVELES.filter((n, i) => n.aventura === ai && progreso[EST][i]).length;
+      const hechas = NIVELES.filter((n, i) => n.aventura === ai && hecho(i)).length;
       const tarjetas = NIVELES.map((n, i) => {
         if (n.aventura !== ai) return "";
         const est = progreso[EST][i] || 0;
@@ -176,8 +180,8 @@
         ${miniBandera(n.bandera)}
         <strong>${n.ciudad}</strong><span class="pais">${n.pais}</span>
         ${indicadorNivel(n) ? `<span class="ind-mini">Ind. ${indicadorNivel(n).codigo}</span>` : ""}
-        <span class="estrellas">${ok ? "<b>" + "★".repeat(est) + "</b>" + "★".repeat(3 - est) : "Bloqueado"}</span>
-        ${est ? `<span class="sello-hecho">${SELLO_HECHO(n.ciudad.toUpperCase().slice(0, 9))}</span>` : ""}
+        <span class="estrellas">${!ok ? "Bloqueado" : est ? "<b>" + "★".repeat(est) + "</b>" + "★".repeat(3 - est) : hechoEnHoja(i) ? "<b>✓ Hecha</b>" : "★★★"}</span>
+        ${hecho(i) ? `<span class="sello-hecho">${SELLO_HECHO(n.ciudad.toUpperCase().slice(0, 9))}</span>` : ""}
       </button>`;
       }).join("");
       return `<div class="aventura"><div class="aventura-cab"><span class="etiqueta">Aventura ${ai + 1}</span><h3>${av.nombre}</h3><p>${av.resumen}</p><span class="aventura-cuenta">${hechas} / ${av.niveles.length}</span></div><div class="destinos">${tarjetas}</div></div>`;
@@ -534,7 +538,7 @@
     enviarResultado(n, est, val);
     const av = AVENTURAS[nivel.aventura];
     const ultimo = nivel.pos === av.niveles.length - 1;
-    const todos = NIVELES.every((n, i) => n.aventura !== nivel.aventura || progreso[EST][i]);
+    const todos = NIVELES.every((n, i) => n.aventura !== nivel.aventura || hecho(i));
     const nuevo = PERSONAJES.find((p) => (p.desbloquea || 0) === completados() && p.desbloquea);
     const p = personajeActual();
     let html = `<div class="sello-grande">${SELLO_HECHO(nivel.ciudad.toUpperCase().slice(0, 9))}</div>
@@ -666,7 +670,7 @@
   }
 
   $("#btn-empezar").onclick = () => {
-    let i = NIVELES.findIndex((_, k) => !progreso[EST][k] && desbloqueadoNivel(k));
+    let i = NIVELES.findIndex((_, k) => !hecho(k) && desbloqueadoNivel(k));
     irANivel(i < 0 ? 0 : i);
   };
   $("#btn-volver").onclick = () => { location.hash = "programa"; };
@@ -676,6 +680,8 @@
   $("#velo").addEventListener("click", (e) => { if (e.target.id === "velo") $("#velo").hidden = true; });
   document.addEventListener("keydown", (e) => { if (e.key === "Escape") $("#velo").hidden = true; });
   window.addEventListener("hashchange", enrutar);
+  // Cuando llega el progreso guardado en la hoja, se vuelve a pintar la lista de pantallas.
+  window.addEventListener("progreso-remoto", () => { if (!$("#inicio").hidden) pintarInicio(); });
 
   window.PiniEspalda = espaldaSVG;
   window.PROG_NIVELES = NIVELES;
