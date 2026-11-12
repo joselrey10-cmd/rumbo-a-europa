@@ -79,7 +79,7 @@ window.Familias = (function () {
         <p class="p-barra"><button type="button" class="btn sec" id="f-salir">Salir</button></p>
         ${hijos.map((h) => {
           const c = /6/.test(h.clase || "") ? "6º" : "5º";
-          const a = { notas: P.notasDe(cab, h.fila, c), terminados: {}, adaptado: !!h.adaptado };
+          const a = { notas: P.notasDe(cab, h.fila, c), terminados: {}, adaptado: !!h.adaptado }, com = h.comentarios || {};
           (h.hechos || []).forEach(([destino, programa, fecha]) => { a.terminados[String(destino)] = { ruta: String(programa || "").replace(/^Terminado ·\s*/, ""), fecha }; });
           const res = P.resumen(a, c), cat = P.catalogo(c, a);
           const medias = P.mediasInd([a], c);
@@ -92,8 +92,10 @@ window.Familias = (function () {
                 <div class="tabla-scroll"><table class="p-tabla"><thead><tr><th>Actividad</th><th>Indicadores (nota 0-5)</th></tr></thead><tbody>
                 ${acts.map((x) => {
                   const t = r.id === "crea" ? a.terminados[x.destino.slice(0, 60)] : null;
+                  const coms = x.inds.map((cod) => [cod, com[P.columna(x.destino, cod)]]).filter((p) => p[1]);
                   return `<tr><td><b>${esc(x.titulo)}</b>${r.id === "crea" ? `<small>${t ? "✓ Terminado" : "Sin terminar"}</small>` : ""}</td>
-                    <td>${x.inds.map((cod) => { const v = a.notas[P.columna(x.destino, cod)]; return `<span class="f-ind" title="${esc(P.textoInd(c, cod, a))}"><span class="cod-p">${cod}</span> <b>${v === undefined ? "–" : v}</b></span>`; }).join(" ")}</td></tr>`;
+                    <td>${x.inds.map((cod) => { const v = a.notas[P.columna(x.destino, cod)]; return `<span class="f-ind" title="${esc(P.textoInd(c, cod, a))}"><span class="cod-p">${cod}</span> <b>${v === undefined ? "–" : v}</b></span>`; }).join(" ")}
+                    ${coms.length ? `<ul class="p-com-lista">${coms.map((p) => `<li><span class="cod-p">${esc(p[0])}</span> 💬 ${esc(p[1])}</li>`).join("")}</ul>` : ""}</td></tr>`;
                 }).join("")}</tbody></table></div></details>`;
             }).join("")}
             <h3 class="sa-tit" style="font-size:22px">Media de cada indicador de logro</h3>

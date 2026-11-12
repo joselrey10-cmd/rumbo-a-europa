@@ -14,7 +14,7 @@ window.Profe = (function () {
     { id: "rob", nombre: "Robótica", color: "#2f8f5b" }, { id: "piensa", nombre: "Piensa", color: "#8a4fd8" }
   ];
   const CLAVE_SES = "rumbo-profe-clave";
-  let raiz = null, datos = null, grupo = "P5A", alumnoSel = null, extra = [], cambios = {}, avisoAlta = "", vista = "trabajo";
+  let raiz = null, datos = null, grupo = "P5A", alumnoSel = null, extra = [], cambios = {}, cambiosCom = {}, avisoAlta = "", vista = "trabajo";
   const trabajos = {};   // id del alumno -> filas de «Resultados» ya cargadas en esta sesión
 
   const G = (t) => (window.normGrupo ? window.normGrupo(t) : String(t || ""));
@@ -98,8 +98,13 @@ window.Profe = (function () {
       // Filas guardadas cuando Programa tenía 17 pantallas (6.º B, 10-nov): ahora son 30 y la nota se reparte entre 30.
       if (a && a.rutas.prog.total && a.rutas.prog.total !== 30) { a.rutas.prog.total = 30; a.rutas.prog.nota = Math.round(5 * a.rutas.prog.hechas / 30 * 100) / 100; }
     });
-    // Notas puestas en esta sesión (aún no recargadas de la hoja)
-    lista.forEach((a) => Object.assign(a.notas, cambios[idDe(a)] || {}));
+    // Comentarios del profe por indicador (pestaña «Comentarios»): [usuario, columna, texto]
+    (datos.comentarios || []).forEach(([u, colC, t]) => {
+      const a = lista.find((x) => igual(x.usuario, u));
+      if (a) (a.comentarios = a.comentarios || {})[String(colC)] = String(t);
+    });
+    // Notas y comentarios puestos en esta sesión (aún no recargados de la hoja)
+    lista.forEach((a) => { Object.assign(a.notas, cambios[idDe(a)] || {}); if (cambiosCom[idDe(a)]) a.comentarios = Object.assign(a.comentarios || {}, cambiosCom[idDe(a)]); });
     extra.forEach((x) => { x.terminados = x.terminados || {}; if (!lista.some((a) => igual(a.nombre, x.nombre) && igual(a.clase, x.clase))) lista.push(x); });
     return lista;
   }
@@ -256,6 +261,11 @@ window.Profe = (function () {
         <div class="p-barra"><input type="file" id="p-csv" accept=".csv,text/csv,text/plain"><button type="button" class="btn sec" id="p-plantilla">Descargar plantilla CSV</button></div>
         <div id="p-csv-vista"></div>
       </details>
+      <details class="p-import"><summary>Importar notas y comentarios de Crea desde un CSV</summary>
+        <p class="intro">Para subir de una vez las correcciones (por ejemplo, las de los correos). Columnas: <b>clase; usuario; nombre; actividad; indicador; nota; comentario</b>. La actividad puede ser «SA1 S2» o su título. Si falta el usuario, se busca el alumno por su nombre dentro de la clase. Verás una vista previa antes de guardar.</p>
+        <div class="p-barra"><input type="file" id="p-notas-csv" accept=".csv,text/csv,text/plain"></div>
+        <div id="p-notas-vista"></div>
+      </details>
       <form class="alumno p-nuevo" id="p-nuevo" autocomplete="off">
         <label>Añadir alumno a ${grupo}<input id="p-n-nombre" maxlength="30" placeholder="Nombre y apellido"></label>
         <label>Usuario Educacyl<input id="p-n-usuario" maxlength="60" placeholder="nombre.apellido"></label>
@@ -325,6 +335,59 @@ window.Profe = (function () {
     };
     $("#p-plantilla").onclick = () => descargar("plantilla_alumnado.csv", "nombre;apellidos;usuario;curso;correo tutor 1;correo tutor 2\nLucía;Martín Pérez;lucia.martper;P5A;madre.martin@ejemplo.com;padre.martin@ejemplo.com\n");
     $("#p-csv").onchange = (e) => leerCSV(e.target.files[0]);
+    $("#p-notas-csv").onchange = (e) => leerNotasCSV(e.target.files[0]);
+  }
+
+  /* ---------- Importar notas y comentarios del profe (CSV de correcciones) ---------- */
+  function buscarAlumno(todos, clase, usuario, nombre) {
+    const u = String(usuario || "").trim().toLowerCase().replace(/@.*$/, "");
+    if (u) { const a = todos.find((x) => igual(x.usuario, u)); if (a) return a; }
+    const n = normal(nombre).trim(); if (!n) return null;
+    const del = todos.filter((x) => !clase || G(x.clase) === clase);
+    const completo = (x) => normal(`${x.nom || ""} ${x.apellidos || ""}`.trim() || x.nombre);
+    let c = del.filter((x) => completo(x) === n || normal(x.nombre) === n);
+    if (c.length === 1) return c[0];
+    const pal = n.split(/\s+/);   // «Javier» o «Javier M.»: por nombre de pila (y la inicial del apellido si la hay)
+    c = del.filter((x) => { const p = completo(x).split(/\s+/); return p[0] === pal[0] && (!pal[1] || String(p[1] || "").indexOf(pal[1].replace(/\.$/, "")) === 0); });
+    return c.length === 1 ? c[0] : null;
+  }
+  async function leerNotasCSV(archivo) {
+    const vista = $("#p-notas-vista"); if (!archivo) return;
+    const buf = await archivo.arrayBuffer();
+    let texto = new TextDecoder("utf-8").decode(buf);
+    if (texto.includes("\ufffd")) texto = new TextDecoder("windows-1252").decode(buf);
+    const filas = partirCSV(texto.replace(/^\ufeff/, ""));
+    if (filas.length < 2) { vista.innerHTML = `<p class="estado" data-tipo="error">El archivo no tiene filas.</p>`; return; }
+    const cabC = filas[0].map(normal), col = (...p) => cabC.findIndex((c) => p.some((x) => c.includes(x)));
+    const iC = col("clase", "grupo", "curso"), iU = col("usuario", "educacyl"), iN = col("nombre", "alumn"), iA = col("actividad", "reto", "sesion"), iI = col("indicador"), iV = col("nota", "valoracion"), iK = col("comentario", "mejorar");
+    if (iA < 0 || iI < 0 || (iU < 0 && iN < 0)) { vista.innerHTML = `<p class="estado" data-tipo="error">Faltan columnas: hacen falta al menos usuario o nombre, actividad e indicador.</p>`; return; }
+    const todos = alumnos();
+    const lista = filas.slice(1).map((f) => {
+      const clase = iC >= 0 ? G(f[iC]) : "", a = buscarAlumno(todos, clase, iU >= 0 ? f[iU] : "", iN >= 0 ? f[iN] : "");
+      const c = cursoDe(a ? a.clase : clase), act = normal(f[iA]).replace(/\s+/g, " ").trim();
+      const x = catalogo(c, a).filter((y) => y.rincon === "crea").find((y) => normal(y.titulo).indexOf(act) === 0 || normal(y.destino) === act || normal(y.ciudad) === act);
+      const cod = String(f[iI] || "").trim().replace(/^ind\.?\s*/i, "");
+      const vtxt = iV >= 0 ? String(f[iV] || "").trim().replace(",", ".") : "", nota = vtxt === "" ? "" : Number(vtxt);
+      const err = !a ? "alumno no encontrado" : !x ? "actividad no encontrada" : (nota !== "" && !(nota >= 0 && nota <= 5)) ? "nota fuera de 0-5" : "";
+      return { a, x, cod, nota, comentario: iK >= 0 ? String(f[iK] || "") : undefined, err, txt: `${f[iN] || f[iU] || ""}`.trim() };
+    });
+    const buenas = lista.filter((r) => !r.err);
+    vista.innerHTML = `<p><b>${buenas.length}</b> filas listas${lista.length - buenas.length ? ` · <b>${lista.length - buenas.length}</b> con problemas (no se guardan)` : ""}.</p>
+      <div class="tabla-scroll"><table class="p-tabla"><thead><tr><th>Alumno</th><th>Actividad</th><th>Ind.</th><th>Nota</th><th>Comentario</th></tr></thead><tbody>
+      ${lista.map((r) => `<tr${r.err ? ' style="background:#fde8e8"' : ""}><td>${r.a ? esc(verNombre(r.a)) + " · " + esc(r.a.clase) : esc(r.txt) + ` <small>(${esc(r.err)})</small>`}</td><td>${r.x ? esc(r.x.titulo) : `<small>${esc(r.err)}</small>`}</td><td>${esc(r.cod)}</td><td><b>${r.nota === "" ? "–" : r.nota}</b>${r.a && r.err ? "" : ""}</td><td><small>${esc(r.comentario || "")}</small></td></tr>`).join("")}
+      </tbody></table></div>
+      <div class="enviar-fila" style="margin-top:10px"><button type="button" class="btn" id="p-notas-guardar"${buenas.length ? "" : " disabled"}>Guardar ${buenas.length} notas y comentarios</button><span class="estado" id="p-notas-est" aria-live="polite"></span></div>`;
+    const b = $("#p-notas-guardar");
+    if (b) b.onclick = async () => {
+      const est = $("#p-notas-est"); b.disabled = true; est.textContent = "Guardando en la hoja… (puede tardar un poco)"; est.dataset.tipo = "";
+      const notas = buenas.map((r) => ({ nombre: r.a.nombre, usuario: r.a.usuario, clase: r.a.clase, destino: r.x.destino, ciudad: r.x.ciudad, indicador: r.cod, valoracion: r.nota, comentario: r.comentario }));
+      const j = await llamar({ accion: "notasLote", notas }).catch(() => ({ ok: false, error: "No se ha podido conectar con la hoja." }));
+      if (!j.ok) { est.textContent = j.error || "No se ha podido guardar."; est.dataset.tipo = "error"; b.disabled = false; return; }
+      est.textContent = `✓ Guardadas ${j.notas} notas y ${j.comentarios} comentarios. Recargando…`; est.dataset.tipo = "ok";
+      const d = await llamar({ accion: "datos" }).catch(() => null);
+      if (d && d.ok) { datos = d; cambios = {}; cambiosCom = {}; }
+      est.textContent = `✓ Guardadas ${j.notas} notas y ${j.comentarios} comentarios en la hoja.`;
+    };
   }
 
   /* ---------- Importar CSV ---------- */
@@ -425,6 +488,22 @@ window.Profe = (function () {
     return `<div class="chips" role="radiogroup" aria-label="Nota de 0 a 5" data-col="${esc(col)}">${[0, 1, 2, 3, 4, 5].map((n) =>
       `<button type="button" role="radio" aria-checked="${valor === n}" data-n="${n}">${n}</button>`).join("")}</div>`;
   }
+  // Comentario del profe para el alumno y su familia (solo Crea). Se guarda al salir de la casilla.
+  function cajaComentario(col, texto) {
+    return `<label class="p-com"><span>💬 Comentario para el alumno y su familia <small>(qué ha hecho bien y qué debe mejorar)</small></span>
+      <textarea rows="2" maxlength="1500" data-col="${esc(col)}" placeholder="Escribe aquí lo que debe mejorar…">${esc(texto || "")}</textarea><span class="estado p-com-est" aria-live="polite"></span></label>`;
+  }
+  async function guardarComentario(ta) {
+    const a = alumnoSel; if (!a) return;
+    const col = ta.dataset.col, t = ta.value.trim(), est = ta.parentElement.querySelector(".p-com-est");
+    if (((a.comentarios || {})[col] || "") === t) return;
+    if (!a.usuario) { est.textContent = "Este alumno no tiene usuario de Educacyl: no se puede guardar el comentario."; est.dataset.tipo = "error"; return; }
+    est.textContent = "Guardando…"; est.dataset.tipo = "";
+    const j = await llamar({ accion: "comentario", usuario: a.usuario, nombre: a.nombre, clase: a.clase, columna: col, comentario: t }).catch(() => ({ ok: false, error: "No se ha podido conectar con la hoja." }));
+    if (!j.ok) { est.textContent = j.error || "No se ha podido guardar."; est.dataset.tipo = "error"; return; }
+    (a.comentarios = a.comentarios || {})[col] = t; (cambiosCom[idDe(a)] = cambiosCom[idDe(a)] || {})[col] = t;
+    est.textContent = t ? "✓ Comentario guardado" : "✓ Comentario borrado"; est.dataset.tipo = "ok";
+  }
   function pintarAlumno(a) {
     alumnoSel = a;
     const c = cursoDe(a.clase), cat = catalogo(c, a), res = resumen(a, c);
@@ -455,11 +534,12 @@ window.Profe = (function () {
         <div class="retos-r">${cat.map((x, k) => ({ x, k })).filter(({ x }) => x.rincon === r.id && x.inds.length).map(({ x, k }) => `
           <article class="reto-r" data-k="${k}">
             <div class="reto-r-cab"><h3>${esc(x.titulo)}</h3>${x.rincon === "crea" ? (() => { const t = (a.terminados || {})[x.destino.slice(0, 60)]; return t ? `<span class="p-hecho">✓ Terminado${t.ruta && t.ruta !== "Todos" ? " · " + esc(t.ruta) : ""}${t.fecha && !isNaN(new Date(t.fecha)) ? " · " + new Date(t.fecha).toLocaleDateString("es-ES") : ""}</span>` : `<span class="p-hecho no">Sin terminar</span>`; })() : ""}</div>
-            <div class="inds">${indsAl(x, a).map((cod) => { const col = columna(x.destino, cod), viejo = x.inds.indexOf(cod) < 0; return `<div class="fila-ind"><div class="fila-ind-t"><span class="cod">Ind. ${cod}</span> ${esc(textoInd(c, cod, a))}${viejo ? " <small>(indicador anterior: nota ya puesta)</small>" : ""}</div>${chips(col, a.notas[col])}</div>`; }).join("")}</div>
+            <div class="inds">${indsAl(x, a).map((cod) => { const col = columna(x.destino, cod), viejo = x.inds.indexOf(cod) < 0; return `<div class="fila-ind"><div class="fila-ind-t"><span class="cod">Ind. ${cod}</span> ${esc(textoInd(c, cod, a))}${viejo ? " <small>(indicador anterior: nota ya puesta)</small>" : ""}</div>${chips(col, a.notas[col])}${x.rincon === "crea" ? cajaComentario(col, (a.comentarios || {})[col]) : ""}</div>`; }).join("")}</div>
             <div class="enviar-fila"><button type="button" class="btn sec enviar-p">Volver a enviar</button><span class="estado" aria-live="polite"></span></div>
           </article>`).join("")}</div></details>`).join("")}
       </div></div>`;
     $("#p-volver").onclick = pintarGrupo;
+    raiz.querySelectorAll(".p-com textarea").forEach((ta) => ta.addEventListener("change", () => guardarComentario(ta)));
     raiz.querySelectorAll(".p-vista").forEach((b) => b.onclick = () => {
       vista = b.dataset.v;
       raiz.querySelectorAll(".p-vista").forEach((x) => x.setAttribute("aria-selected", String(x === b)));
@@ -656,9 +736,11 @@ window.Profe = (function () {
       const fin = filas.filter((r) => r.act === x.destino.slice(0, 60) && /^Terminado/.test(r.prog)).pop();
       const t = fin ? { ruta: fin.prog.replace(/^Terminado ·\s*/, ""), fecha: fin.fecha } : (a.terminados || {})[x.destino.slice(0, 60)];
       const notas = x.inds.map((cod) => [cod, a.notas[columna(x.destino, cod)]]).filter((p) => p[1] !== undefined);
+      const coms = x.inds.map((cod) => [cod, (a.comentarios || {})[columna(x.destino, cod)]]).filter((p) => p[1]);
       return `<div class="p-trab ${t ? "si" : "sin"} p-trab-fija"><div class="p-trab-fila"><span class="p-trab-tit">${esc(x.titulo)}</span>
         <span class="p-trab-est">${t ? `✓ Terminado${t.ruta && t.ruta !== "Todos" ? " · ruta " + esc(t.ruta) : ""}${t.fecha ? " · " + fechaCorta(t.fecha) : ""}` : "Sin terminar"}</span>
-        <span class="p-trab-dat">${notas.length ? notas.map((p) => `<span class="cod-p">${esc(p[0])}</span> ${p[1]}`).join(" · ") : "Sin notas tuyas todavía"}</span></div></div>`;
+        <span class="p-trab-dat">${notas.length ? notas.map((p) => `<span class="cod-p">${esc(p[0])}</span> ${p[1]}`).join(" · ") : "Sin notas tuyas todavía"}</span></div>
+        ${coms.length ? `<ul class="p-com-lista">${coms.map((p) => `<li><span class="cod-p">${esc(p[0])}</span> ${esc(p[1])}</li>`).join("")}</ul>` : ""}</div>`;
     }).join("");
     // Piensa: la llave enviada y la nota de cada indicador.
     const piensaHTML = (window.PIENSA || []).map((p) => {

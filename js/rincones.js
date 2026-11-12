@@ -541,7 +541,7 @@ window.Rincones = (function () {
       const c = /6/.test(j.clase || "") ? "6º" : "5º", cab = j.cab || [], fila = j.fila || [];
       // Notas de la hoja por columna (las columnas con la numeración antigua de Programa se pasan a la de ahora).
       const notasHoja = window.Profe && window.Profe.notasDe ? window.Profe.notasDe(cab, fila, c) : {};
-      const yo = { adaptado: !!j.adaptado || !!window.ADAPTADO };
+      const yo = { adaptado: !!j.adaptado || !!window.ADAPTADO }, com = j.comentarios || {};
       const cat = window.Profe && window.Profe.catalogo ? window.Profe.catalogo(c, yo) : [];
       const rinc = [{id:"crea",nombre:"Crea",color:"#e07a1f"},{id:"prog",nombre:"Programa",color:"#3a7bd5"},{id:"rob",nombre:"Robótica",color:"#2f8f5b"},{id:"piensa",nombre:"Piensa",color:"#8a4fd8"}];
       const contenido = rinc.map(r => {
@@ -550,7 +550,7 @@ window.Rincones = (function () {
           const pref = String(x.destino).slice(0,60) + " · Ind. " + cod;
           if (pref in notasHoja) {
             const n = notasHoja[pref], texto = window.Profe.textoInd(c, String(cod), yo);
-            items.push(`<tr><td><b>${esc(x.titulo)}</b><br><small>Indicador ${esc(cod)}: ${esc(texto)}</small></td><td class="nota-alumno">${Number.isFinite(n) ? n.toFixed(1).replace(".",",") : "–"} / 5</td></tr>`);
+            items.push(`<tr><td><b>${esc(x.titulo)}</b><br><small>Indicador ${esc(cod)}: ${esc(texto)}</small>${com[pref] ? `<p class="p-com-alumno">💬 <b>Tu profe dice:</b> ${esc(com[pref])}</p>` : ""}</td><td class="nota-alumno">${Number.isFinite(n) ? n.toFixed(1).replace(".",",") : "–"} / 5</td></tr>`);
           }
         }));
         return `<section class="f-hijo" style="--rc:${r.color}"><h2>${r.nombre}</h2>${items.length ? `<div class="tabla-scroll"><table class="p-tabla"><thead><tr><th>Actividad e indicador</th><th>Mi nota</th></tr></thead><tbody>${items.join("")}</tbody></table></div>` : `<p class="intro">Todavía no hay notas registradas en este rincón.</p>`}</section>`;
