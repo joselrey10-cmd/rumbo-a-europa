@@ -672,3 +672,13 @@ html.adaptado #texto-objetivo, html.adaptado #rb-texto-reto { font-size: 22px; }
 .p-vista[aria-selected="true"] b { color: #fff; }
 .p-rincon .p-trab > summary, .p-rincon .p-trab-hist summary { font-family: var(--f-body); font-size: 16px; font-weight: 400; margin: 0; }
 .p-rincon .p-trab-hist summary { font-weight: 700; font-size: 14px; }
+
+/* Comentarios del profe por indicador (Crea) */
+.p-com { display: block; margin-top: 8px; }
+.p-com > span:first-child { display: block; font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+.p-com textarea { width: 100%; box-sizing: border-box; font: inherit; font-size: 15px; padding: 8px 10px; border: 2px solid #d9d2c3; border-radius: 10px; resize: vertical; background: #fff; color: #1d2433; }
+.p-com textarea:focus { outline: none; border-color: #e07a1f; }
+.p-com .estado { display: block; min-height: 1em; font-size: 13px; }
+.p-com-lista { margin: 6px 0 0; padding-left: 0; list-style: none; font-size: 14px; }
+.p-com-lista li { margin: 3px 0; }
+.p-com-alumno { margin: 6px 0 0; padding: 6px 10px; border-left: 4px solid #e07a1f; background: #fff6ec; border-radius: 6px; font-size: 14px; color: #1d2433; }
