@@ -79,7 +79,7 @@ window.Familias = (function () {
         <p class="p-barra"><button type="button" class="btn sec" id="f-salir">Salir</button></p>
         ${hijos.map((h) => {
           const c = /6/.test(h.clase || "") ? "6º" : "5º";
-          const a = { notas: P.notasDe(cab, h.fila), terminados: {}, adaptado: !!h.adaptado };
+          const a = { notas: P.notasDe(cab, h.fila, c), terminados: {}, adaptado: !!h.adaptado };
           (h.hechos || []).forEach(([destino, programa, fecha]) => { a.terminados[String(destino)] = { ruta: String(programa || "").replace(/^Terminado ·\s*/, ""), fecha }; });
           const res = P.resumen(a, c), cat = P.catalogo(c, a);
           const medias = P.mediasInd([a], c);

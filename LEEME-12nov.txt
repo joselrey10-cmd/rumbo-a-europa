@@ -1,0 +1,20 @@
+Paquete del 12 de noviembre (sustituye a indicadores-por-SA-11nov.zip, que ya va dentro)
+
+1) Sube a GitHub (raíz del repo, sobrescribiendo) todas las carpetas y archivos de este zip:
+   js/profe.js, js/rincones.js, js/familias.js, js/rincones-datos.js, css/estilo.css,
+   piensa/*.html y registro-google-apps-script.gs.
+
+2) Script de la hoja (imprescindible para ver el trabajo del alumno):
+   - En Apps Script, copia antes tu línea  const CLAVE_PROFE = "..."; (tu clave real).
+   - Borra todo y pega registro-google-apps-script.gs.
+   - Vuelve a poner tu clave en CLAVE_PROFE.
+   - Guarda → Implementar → Gestionar implementaciones → lápiz → Versión: Nueva versión → Implementar.
+
+Qué trae:
+- Panel del profe: al pulsar el nombre de un alumno se abre «Su trabajo»: pantallas de Programa
+  (superadas, estrellas, nota, su programa dibujado con bloques y todos sus envíos), retos de Robótica,
+  retos de Crea terminados (con la ruta) y llaves de Piensa, y cuántas insignias tiene. La pestaña
+  «Notas y datos» es la de siempre.
+- Las pantallas nuevas jugadas antes del arreglo de indicadores ya cuentan en las notas.
+- Programa muestra las pantallas superadas (pestaña «Progreso por rutas»).
+- Insignias de Crea: se ganan al terminar el reto.

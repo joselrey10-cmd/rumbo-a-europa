@@ -2,7 +2,9 @@
   DATOS DE LOS RINCONES
   - CREA: retos de las tareas de 5.º y 6.º (sesiones 1 y 2 de cada situación de aprendizaje), con sus rutas e indicadores.
   - PIENSA: las 10 paradas del Pasaporte TIC (actividades en la carpeta piensa/). Cada parada tiene los indicadores
-    de 5.º (i5) y de 6.º (i6) en el mismo orden que las cifras de su llave.
+    de 5.º (i5) y de 6.º (i6) en el mismo orden que las cifras de su llave, y su sesión en la programación
+    (sa5/sa6; «ExtraTIC» si esa actividad no está en la programación de ese curso). antes5/antes6: indicadores
+    que tenía antes (para leer las llaves viejas).
   Puedes cambiar textos, rutas o indicadores aquí.
 */
 window.CREA = {
@@ -229,20 +231,8 @@ window.PIENSA = [
   "titulo": "ITV de mi PC",
   "i5": [
    [
-    "1.2.1",
-    "Guarda el PDF del dossier con un nombre reconocible (país_nombre) en la carpeta de TIAC y lo vuelve a localizar cuando se le pide."
-   ],
-   [
     "1.2.2",
     "Durante la ITV crea, mueve y elimina carpetas y archivos en el ordenador sin perder información y vacía la papelera de reciclaje."
-   ],
-   [
-    "2.2.1",
-    "Envía el PDF del dossier como adjunto del correo o, en la ruta avanzada, como enlace de OneDrive, y comprueba que se abre."
-   ],
-   [
-    "3.1.1",
-    "Da formato al dossier de su país en Word (título, viñetas, imagen y márgenes) y lo exporta a PDF comprobando que se ve completo y legible."
    ],
    [
     "4.3.1",
@@ -255,20 +245,8 @@ window.PIENSA = [
   ],
   "i6": [
    [
-    "1.2.1",
-    "Guarda sus trabajos en la carpeta de OneDrive indicada (TIAC · curso · SA o subcarpeta) con un nombre claro."
-   ],
-   [
-    "1.2.2",
-    "Exporta su trabajo al formato pedido (Word a PDF, Audacity a MP3) y comprueba que se abre."
-   ],
-   [
     "1.2.3",
     "Organiza el escritorio y crea y nombra carpetas en su ordenador."
-   ],
-   [
-    "2.2.1",
-    "Comparte su trabajo por OneDrive o Teams con las personas adecuadas y comprueba que pueden abrirlo."
    ],
    [
     "4.3.1",
@@ -278,7 +256,25 @@ window.PIENSA = [
     "5.2.1",
     "Resuelve problemas habituales del ordenador (sonido, wifi, pantalla o aplicación) siguiendo una lista de pasos."
    ]
-  ]
+  ],
+  "antes5": [
+   "1.2.1",
+   "1.2.2",
+   "2.2.1",
+   "3.1.1",
+   "4.3.1",
+   "5.2.2"
+  ],
+  "antes6": [
+   "1.2.1",
+   "1.2.2",
+   "1.2.3",
+   "2.2.1",
+   "4.3.1",
+   "5.2.1"
+  ],
+  "sa5": "SA1 · S8",
+  "sa6": "SA1 · S8"
  },
  {
   "pre": "CON",
@@ -303,7 +299,9 @@ window.PIENSA = [
     "4.1.2",
     "Inicia y cierra sesión correctamente (Educacyl, Microsoft, MakeCode) y no deja la sesión abierta."
    ]
-  ]
+  ],
+  "sa5": "SA1 · S7",
+  "sa6": "SA1 · S7"
  },
  {
   "pre": "CAR",
@@ -333,14 +331,17 @@ window.PIENSA = [
     "Escribe un correo con todas sus partes (Para, CC, CCO, asunto, saludo, cuerpo, despedida, firma y adjunto) y sabe cuándo usar CC y CCO."
    ],
    [
-    "3.3.1",
-    "Usa imágenes con licencia Creative Commons y escribe su autor o la web de origen."
-   ],
-   [
     "3.4.1",
     "Reconoce las licencias Creative Commons (BY, NC, ND, SA, CC0) y el ©, y cita una imagen con título, autor, fuente y licencia."
    ]
-  ]
+  ],
+  "antes6": [
+   "2.1.1",
+   "3.3.1",
+   "3.4.1"
+  ],
+  "sa5": "ExtraTIC",
+  "sa6": "SA2 · S8"
  },
  {
   "pre": "NET",
@@ -361,17 +362,15 @@ window.PIENSA = [
     "2.1.3",
     "Aplica la netiqueta en chats, correos y videollamadas: saluda, pide por favor, no grita en mayúsculas, pide turno y pide permiso antes de compartir imágenes de otros."
    ]
-  ]
+  ],
+  "sa5": "ExtraTIC",
+  "sa6": "SA3 · S7"
  },
  {
   "pre": "DET",
   "slug": "detectives",
   "titulo": "Detectives de la Red",
   "i5": [
-   [
-    "1.1.3",
-    "Comprueba ese dato en una segunda web y explica cuál de las dos es más fiable (web institucional, autor, fecha)."
-   ],
    [
     "1.1.4",
     "Distingue en una web el contenido, la publicidad y los anuncios trampa, no pulsa los enlaces engañosos y lee los iconos y las palabras en inglés del navegador y de OneDrive (candado, pestañas, actualizar, Download, Share) y explica qué hace cada uno."
@@ -383,10 +382,6 @@ window.PIENSA = [
    [
     "4.1.3",
     "Comprueba el candado y el «https» de una web antes de escribir datos y explica si es segura."
-   ],
-   [
-    "4.2.2",
-    "Identifica qué datos personales no debe dar en un anuncio, juego o formulario y explica qué huella digital deja al hacerlo."
    ]
   ],
   "i6": [
@@ -398,21 +393,22 @@ window.PIENSA = [
     "4.1.3",
     "Reconoce webs y mensajes trampa (sin https, nombre raro, prisa, premios, piden datos o códigos) y no da sus datos: cierra y avisa a un adulto."
    ]
-  ]
+  ],
+  "antes5": [
+   "1.1.3",
+   "1.1.4",
+   "2.1.3",
+   "4.1.3",
+   "4.2.2"
+  ],
+  "sa5": "SA2 · S7",
+  "sa6": "SA2 · S7"
  },
  {
   "pre": "BAN",
   "slug": "bandeja",
   "titulo": "La Bandeja Trampa",
   "i5": [
-   [
-    "1.1.3",
-    "Comprueba ese dato en una segunda web y explica cuál de las dos es más fiable (web institucional, autor, fecha)."
-   ],
-   [
-    "2.1.3",
-    "Reconoce una noticia falsa por sus pistas (titular exagerado, sin fuente, sin fecha) y decide no reenviarla."
-   ],
    [
     "4.1.4",
     "Clasifica en la «bandeja trampa» del Cartero digital los correos legítimos, el spam y el phishing, y señala las pistas (remitente, enlace, urgencia, adjunto)."
@@ -435,17 +431,21 @@ window.PIENSA = [
     "4.1.3",
     "Reconoce webs y mensajes trampa (sin https, nombre raro, prisa, premios, piden datos o códigos) y no da sus datos: cierra y avisa a un adulto."
    ]
-  ]
+  ],
+  "antes5": [
+   "1.1.3",
+   "2.1.3",
+   "4.1.4",
+   "4.3.3"
+  ],
+  "sa5": "SA3 · S7",
+  "sa6": "ExtraTIC"
  },
  {
   "pre": "ESC",
   "slug": "escudo",
   "titulo": "Escudo Digital",
   "i5": [
-   [
-    "4.2.2",
-    "Identifica qué datos personales no debe dar en un anuncio, juego o formulario y explica qué huella digital deja al hacerlo."
-   ],
    [
     "4.2.3",
     "Ante un caso de suplantación aplica el protocolo parar, comprobar y pedir ayuda, y pide permiso antes de publicar fotos o datos de otra persona."
@@ -464,7 +464,13 @@ window.PIENSA = [
     "4.2.2",
     "Sabe cómo actuar ante el ciberacoso y la suplantación: no contesta, guarda pruebas, bloquea, denuncia y pide ayuda a un adulto; si lo ve, no lo difunde."
    ]
-  ]
+  ],
+  "antes5": [
+   "4.2.2",
+   "4.2.3"
+  ],
+  "sa5": "SA3 · S8",
+  "sa6": "SA3 · S8"
  },
  {
   "pre": "RED",
@@ -489,21 +495,15 @@ window.PIENSA = [
     "4.2.2",
     "Sabe cómo actuar ante el ciberacoso y la suplantación: no contesta, guarda pruebas, bloquea, denuncia y pide ayuda a un adulto; si lo ve, no lo difunde."
    ]
-  ]
+  ],
+  "sa5": "ExtraTIC",
+  "sa6": "ExtraTIC"
  },
  {
   "pre": "INF",
   "slug": "influencers",
   "titulo": "Influencers",
   "i5": [
-   [
-    "1.1.4",
-    "Distingue en una web el contenido, la publicidad y los anuncios trampa, no pulsa los enlaces engañosos y lee los iconos y las palabras en inglés del navegador y de OneDrive (candado, pestañas, actualizar, Download, Share) y explica qué hace cada uno."
-   ],
-   [
-    "2.1.3",
-    "Reconoce una noticia falsa por sus pistas (titular exagerado, sin fuente, sin fecha) y decide no reenviarla."
-   ],
    [
     "4.2.2",
     "Identifica qué datos personales no debe dar en un anuncio, juego o formulario y explica qué huella digital deja al hacerlo."
@@ -518,7 +518,14 @@ window.PIENSA = [
     "4.2.1",
     "Configura un perfil seguro (cuenta privada, avatar, apodo, sin ubicación ni datos personales) y decide qué se puede publicar y qué no."
    ]
-  ]
+  ],
+  "antes5": [
+   "1.1.4",
+   "2.1.3",
+   "4.2.2"
+  ],
+  "sa5": "SA2 · S8",
+  "sa6": "ExtraTIC"
  },
  {
   "pre": "TIC",
@@ -547,7 +554,9 @@ window.PIENSA = [
     "5.1.2",
     "Escribe a una IA una instrucción (prompt) clara con todo lo que necesita y revisa y corrige lo que propone antes de usarlo."
    ]
-  ]
+  ],
+  "sa5": "ExtraTIC",
+  "sa6": "ExtraTIC"
  }
 ];
 

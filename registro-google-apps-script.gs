@@ -65,6 +65,7 @@ function doPost(e) {
   if (pedido.accion === "excel") return excelProfe(libro, pedido);
   if (pedido.accion === "guardarTexto") return guardarTexto(libro, pedido);
   if (pedido.accion === "retoCadena") return gestionarRetoCadena(libro, pedido);
+  if (pedido.accion === "trabajoAlumno") return trabajoAlumno(libro, pedido);
   const hoja = libro.getSheetByName("Resultados") || libro.insertSheet("Resultados");
   if (hoja.getLastRow() === 0) {
     hoja.appendRow(COLUMNAS);
@@ -117,10 +118,28 @@ function datosProfe(libro, d) {
   const autoeval = au && au.getLastRow() > 0 ? au.getDataRange().getValues() : [];
   const al = libro.getSheetByName("Alumnado");
   const alumnado = al && al.getLastRow() > 1 ? al.getRange(2, 1, al.getLastRow() - 1, ALUMNADO.length).getValues() : [];
+  // Nota de Programa y Robótica por pantallas superadas (pestaña «Progreso por rutas»).
+  const pr = libro.getSheetByName("Progreso por rutas");
+  const rutas = pr && pr.getLastRow() > 1 ? pr.getRange(2, 1, pr.getLastRow() - 1, 16).getValues().map((f) => f.slice(1)) : [];
   const hoja = libro.getSheetByName("Valoraciones");
-  if (!hoja || hoja.getLastRow() < 1) return salida({ ok: true, cab: [], filas: [], hechos, alumnado, autoeval, adaptados: leerAdaptados() });
+  if (!hoja || hoja.getLastRow() < 1) return salida({ ok: true, cab: [], filas: [], hechos, alumnado, autoeval, rutas, adaptados: leerAdaptados() });
   const v = hoja.getDataRange().getValues();
-  return salida({ ok: true, cab: v[0], filas: v.slice(1), hechos, alumnado, autoeval, adaptados: leerAdaptados() });
+  return salida({ ok: true, cab: v[0], filas: v.slice(1), hechos, alumnado, autoeval, rutas, adaptados: leerAdaptados() });
+}
+
+// Panel del profesor: todo lo que ha hecho un alumno (filas de «Resultados»: pantallas, programas, retos, llaves).
+function trabajoAlumno(libro, d) {
+  if (CLAVE_PROFE === "cambia-esta-clave" || String(d.clave || "") !== CLAVE_PROFE) return json({ ok: false, error: "Clave incorrecta." });
+  const res = libro.getSheetByName("Resultados");
+  if (!res || res.getLastRow() < 2) return json({ ok: true, filas: [] });
+  const r = res.getDataRange().getValues(), c = r[0].map(String), i = (t) => c.indexOf(t);
+  const iF = i("Fecha"), iN = i("Nombre"), iU = i("Usuario Educacyl"), iC = i("Clase"), iA = i("Actividad"), iR = i("Ciudad / reto"),
+    iE = i("Estrellas"), iB = i("Bloques"), iI = i("Intentos"), iP = i("Personaje / robot"), iG = i("Programa"), iX = i("Nº indicador"), iV = i("Valoración (0-5)");
+  const u = minus(d.usuario), n = minus(d.nombre), cl = normGrupo(d.clase);
+  const filas = r.slice(1).filter((f) => u ? minus(f[iU]) === u : (minus(f[iN]) === n && normGrupo(f[iC]) === cl)).map((f) => [
+    f[iF] instanceof Date ? f[iF].toISOString() : String(f[iF]), String(f[iA]), String(f[iR]), f[iE], f[iB], f[iI], String(f[iP]), String(f[iG]), codigoDe(f[iX]), f[iV]
+  ]);
+  return json({ ok: true, filas: filas.slice(-3000) });
 }
 
 /* ---------- Autoevaluación (Programa y Robótica) ---------- */
@@ -475,6 +494,18 @@ function trimestreDe(actividad, fecha) {
   const mes = d.getMonth() + 1;
   return mes >= 9 ? 0 : mes <= 3 ? 1 : 2;
 }
+/* Indicador de las pantallas nuevas de Programa que llegaron a la hoja sin código
+   (mismo reparto que window.INDICADOR_PROGRAMACION de js/indicadores.js). */
+const IND_PROG_NUEVAS = {
+  "5º": { "Londres": "3.2.2", "Zúrich": "3.2.2", "Luxemburgo": "3.2.2", "Reikiavik": "3.2.2", "Tallin": "3.2.2", "Riga": "3.2.2", "Vilna": "3.2.2", "Edimburgo": "3.2.2",
+    "Bratislava": "3.2.2", "Liubliana": "3.2.2", "Zagreb": "3.2.2", "Sofía": "3.2.2", "Belgrado": "3.2.2" },
+  "6º": { "Londres": "3.2.3", "Zúrich": "3.2.3", "Luxemburgo": "3.2.3", "Reikiavik": "3.2.3", "Tallin": "3.2.3", "Riga": "3.2.3", "Vilna": "3.2.3", "Edimburgo": "3.2.3",
+    "Bratislava": "3.2.6", "Liubliana": "3.2.6", "Zagreb": "3.2.6", "Sofía": "3.2.6", "Belgrado": "3.2.6" }
+};
+function indicadorProgSinCodigo(actividad, clase) {
+  const m = /^Programación · \d+\. (.+)$/.exec(String(actividad || ""));
+  return m ? (IND_PROG_NUEVAS[/6/.test(normGrupo(clase)) ? "6º" : "5º"] || {})[m[1].trim()] || "" : "";
+}
 function prepararExcel(libro) {
   libro = libro || abrirLibro();
   const res = libro.getSheetByName("Resultados");
@@ -495,6 +526,8 @@ function prepararExcel(libro) {
   // 1) Última nota de cada alumno en cada actividad e indicador.
   const ultima = {};
   r.slice(1).forEach((f) => {
+    // Pantallas de Programa guardadas sin «Nº indicador» (el 11-nov, antes de actualizar indicadores.js).
+    if (!f[iI] && f[iV] !== "" && f[iV] != null) { const cod = indicadorProgSinCodigo(f[iA], f[iC]); if (cod) { f = f.slice(); f[iI] = cod; } }
     if (f[iV] === "" || f[iV] == null || !f[iI]) return;
     const k = idDe(f[iU], f[iN], f[iC]) + "#" + f[iA] + "#" + codigoDe(f[iI]), t = new Date(f[iF]).getTime() || 0;
     if (!ultima[k] || ultima[k].t <= t) ultima[k] = { t, f };

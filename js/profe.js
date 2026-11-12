@@ -14,7 +14,8 @@ window.Profe = (function () {
     { id: "rob", nombre: "Robótica", color: "#2f8f5b" }, { id: "piensa", nombre: "Piensa", color: "#8a4fd8" }
   ];
   const CLAVE_SES = "rumbo-profe-clave";
-  let raiz = null, datos = null, grupo = "P5A", alumnoSel = null, extra = [], cambios = {}, avisoAlta = "";
+  let raiz = null, datos = null, grupo = "P5A", alumnoSel = null, extra = [], cambios = {}, avisoAlta = "", vista = "trabajo";
+  const trabajos = {};   // id del alumno -> filas de «Resultados» ya cargadas en esta sesión
 
   const G = (t) => (window.normGrupo ? window.normGrupo(t) : String(t || ""));
   const cursoDe = (g) => (/6/.test(g || "") ? "6º" : "5º");
@@ -63,8 +64,8 @@ window.Profe = (function () {
     }));
     // 2) Notas de la pestaña Valoraciones
     datos.filas.forEach((f) => {
-      const notas = notasDe(cab, f);
       const u = iU >= 0 ? String(f[iU] || "") : "", n = String(f[iN] || ""), c = G(f[iC]);
+      const notas = notasDe(cab, f, cursoDe(c));
       let a = lista.find((x) => u ? igual(x.usuario, u) : (igual(x.nombre, n) && igual(x.clase, c)));
       if (a) Object.assign(a.notas, notas);
       else lista.push({ nombre: n, usuario: u, clase: c, correo: "", notas, terminados: {} });
@@ -88,6 +89,13 @@ window.Profe = (function () {
       if (!a) { a = { nombre: String(nombre || ""), usuario: String(usuario || ""), clase: String(clase || ""), notas: {}, terminados: {} }; lista.push(a); }
       a.terminados[String(destino)] = { ruta: String(programa || "").replace(/^Terminado ·\s*/, ""), fecha };
     });
+    // Pantallas superadas en Programa y Robótica (pestaña «Progreso por rutas»): la nota que reparte 5 puntos entre las pantallas.
+    (datos.rutas || []).forEach((f) => {
+      const n = String(f[0] || ""), u = String(f[1] || ""), c = G(f[2]);
+      const a = lista.find((x) => u ? igual(x.usuario, u) : (igual(x.nombre, n) && igual(x.clase, c)));
+      const r = (i) => ({ hechas: Number(f[i]) || 0, total: Number(f[i + 1]) || 0, nota: Number(f[i + 2]) || 0 });
+      if (a) a.rutas = { prog: r(3), robot: r(6), essential: r(9), prime: r(12) };
+    });
     // Notas puestas en esta sesión (aún no recargadas de la hoja)
     lista.forEach((a) => Object.assign(a.notas, cambios[idDe(a)] || {}));
     extra.forEach((x) => { x.terminados = x.terminados || {}; if (!lista.some((a) => igual(a.nombre, x.nombre) && igual(a.clase, x.clase))) lista.push(x); });
@@ -98,19 +106,28 @@ window.Profe = (function () {
   /* Al pasar de 17 a 30 pantallas cambió el número de muchas ciudades (Dublín era la 8 y ahora es la 11).
      Las columnas antiguas de la hoja («Programación · 8. Dublín · Ind. …») se leen con el número de ahora,
      buscando la ciudad. Si hay nota en la antigua y en la nueva, vale la más alta. */
-  function normCol(t) {
+  /* El 11-nov algunas pantallas nuevas (Londres, Zúrich, Tallin…) llegaron a la hoja sin «Nº indicador» y su
+     columna es solo «Programación · 8. Londres». Con el curso (5º/6º) se les pone el indicador que tiene ahora esa ciudad. */
+  function normCol(t, curso) {
     t = String(t);
-    const m = /^Programación · \d+\. (.+?) · Ind\. (.+)$/.exec(t);
+    let m = /^Programación · \d+\. (.+?) · Ind\. (.+)$/.exec(t);
+    if (!m && curso) {
+      const s = /^Programación · \d+\. (.+)$/.exec(t), cod = s && ((window.INDICADOR_PROGRAMACION || {})[curso] || {})[s[1].trim()];
+      if (cod) m = [t, s[1].trim(), cod];
+    }
     if (!m) return t;
     const i = (window.PROG_NIVELES || []).findIndex((n) => n.ciudad === m[1]);
-    return i < 0 ? t : columna(`Programación · ${i + 1}. ${m[1]}`, m[2]);
+    return i < 0 ? columna(t.replace(/ · Ind\. .*$/, ""), m[2]) : columna(`Programación · ${i + 1}. ${m[1]}`, m[2]);
   }
-  function notasDe(cab, f) {
+  // curso (opcional, "5º"/"6º"): necesario para leer las columnas de Programa que no llevan indicador.
+  function notasDe(cab, f, curso) {
     const notas = {};
     (cab || []).forEach((t, i) => {
       t = String(t);
-      if (!/ · Ind\. /.test(t) || !f || f[i] === "" || f[i] == null) return;
-      const k = normCol(t), n = Number(f[i]);
+      if (!f || f[i] === "" || f[i] == null) return;
+      if (!/ · Ind\. /.test(t) && !(curso && /^Programación · \d+\. /.test(t))) return;
+      const k = normCol(t, curso), n = Number(f[i]);
+      if (!/ · Ind\. /.test(k)) return;
       if (!(k in notas) || n > notas[k]) notas[k] = n;
     });
     return notas;
@@ -127,6 +144,16 @@ window.Profe = (function () {
     const x = partes(a), y = partes(b); return x[0].localeCompare(y[0], "es", { sensitivity: "base" }) || x[1].localeCompare(y[1], "es", { sensitivity: "base" });
   });
 
+  /* Programa por pantallas superadas: 5 puntos repartidos entre las 30 pantallas (lo calcula el script en «Progreso por rutas»). */
+  const coma = (x) => String(Math.round(x * 100) / 100).replace(".", ",");
+  function lineaPantallas(a) {
+    const p = a.rutas && a.rutas.prog;
+    return `<small class="p-pantallas">🧩 ${p ? p.hechas : 0}/${p && p.total ? p.total : 30} pantallas · <b>${coma(p ? p.nota : 0)}</b> de 5</small>`;
+  }
+  function celdaProg(a, r) {
+    const p = a.rutas && a.rutas.prog;
+    return `<td title="Nota por pantallas superadas (5 puntos entre ${p && p.total ? p.total : 30} pantallas). Debajo, la media de calidad de las pantallas hechas."><b>${coma(p ? p.nota : 0)}</b><small>🧩 ${p ? p.hechas : 0}/${p && p.total ? p.total : 30} pantallas</small><small>calidad ${r.media === null ? "–" : coma(r.media)} · ${r.hechas} notas</small></td>`;
+  }
   function resumen(a, c) {
     const cat = catalogo(c, a), out = {};
     RINC.forEach((r) => {
@@ -214,7 +241,7 @@ window.Profe = (function () {
           const hechas = todas.reduce((s, x) => s + x.hechas, 0);
           const media = hechas ? Math.round(todas.reduce((s, x) => s + x.media * x.hechas, 0) / hechas * 10) / 10 : "–";
           return `<tr><td><button type="button" class="p-alumno" data-i="${i}">${esc(verNombre(a))}</button>${esAdaptado(a) ? ` <span class="p-ac-marca" title="Adaptación curricular">AC</span>` : ""}</td><td>${esc(a.usuario)}${a.correo ? ` <span title="${esc(a.correo)}">✉️</span>` : ""}</td>
-            ${RINC.map((r) => `<td>${res[r.id].media === null ? "–" : `<b>${res[r.id].media}</b>`}<small>${res[r.id].hechas}/${res[r.id].total} notas</small>${r.id === "crea" ? `<small>✓ ${res.crea.retos}/${res.crea.nRetos} retos</small>` : ""}</td>`).join("")}<td><b>${media}</b></td><td><button type="button" class="p-papelera" data-i="${i}" title="Dar de baja a ${esc(verNombre(a))}" aria-label="Dar de baja a ${esc(verNombre(a))}">🗑️</button></td></tr>`;
+            ${RINC.map((r) => r.id === "prog" && !esAC(a) ? celdaProg(a, res.prog) : `<td>${res[r.id].media === null ? "–" : `<b>${res[r.id].media}</b>`}<small>${res[r.id].hechas}/${res[r.id].total} notas</small>${r.id === "crea" ? `<small>✓ ${res.crea.retos}/${res.crea.nRetos} retos</small>` : ""}</td>`).join("")}<td><b>${media}</b></td><td><button type="button" class="p-papelera" data-i="${i}" title="Dar de baja a ${esc(verNombre(a))}" aria-label="Dar de baja a ${esc(verNombre(a))}">🗑️</button></td></tr>`;
         }).join("")}</tbody></table></div>` : `<p class="intro">Todavía no hay notas de este grupo en la hoja.</p>`}
       ${barraCodigos(lista)}
       <div class="p-codigos"><div><b>🔑 Contraseñas del alumnado</b><p class="intro">Cada alumno elige su propia contraseña al entrar por primera vez. Si alguien la olvida, puedes consultarla en la pestaña «Accesos alumnado» de la hoja de Google vinculada al proyecto.</p>
@@ -400,6 +427,12 @@ window.Profe = (function () {
       `<div class="envoltura seccion">
       <p class="p-barra"><button type="button" class="btn sec" id="p-volver">← Volver a ${esc(a.clase)}</button>
         <button type="button" class="btn sec p-borrar" id="p-borrar">🗑️ Dar de baja</button><span class="estado" id="p-borrar-est" aria-live="polite"></span></p>
+      <div class="rutas p-vistas" role="tablist" aria-label="Qué quieres ver">
+        <button type="button" role="tab" class="ruta p-vista" data-v="trabajo" aria-selected="${vista === "trabajo"}"><b>📂 Su trabajo</b><span>Lo que ha hecho en cada rincón</span></button>
+        <button type="button" role="tab" class="ruta p-vista" data-v="notas" aria-selected="${vista === "notas"}"><b>📝 Notas y datos</b><span>Notas por indicador, correos de la familia y adaptación</span></button>
+      </div>
+      <div id="p-trabajo"${vista === "trabajo" ? "" : " hidden"}><p class="estado">Cargando su trabajo…</p></div>
+      <div id="p-notas"${vista === "notas" ? "" : " hidden"}>
       <form class="alumno p-correo" id="p-correo" autocomplete="off">
         <label>Correo tutor 1<input id="p-correo-in" type="email" maxlength="120" value="${esc(separarCorreos(a.correo)[0] || "")}" placeholder="tutor1@ejemplo.com"></label>
         <label>Correo tutor 2 <small>(opcional)</small><input id="p-correo-in2" type="email" maxlength="120" value="${esc(separarCorreos(a.correo)[1] || "")}" placeholder="tutor2@ejemplo.com"></label>
@@ -408,7 +441,7 @@ window.Profe = (function () {
         <label class="p-ac"><input type="checkbox" id="p-ac"${esAdaptado(a) ? " checked" : ""}${a.usuario ? "" : " disabled"}> Adaptación curricular <small>(entra directamente y ve los contenidos adaptados)</small></label>
         <span class="estado" id="p-correo-est">${a.usuario ? "Con cualquiera de estos correos la familia puede ver los resultados en la pestaña Familias." : "Este alumno no tiene usuario de Educacyl: impórtalo con su usuario."}</span>
       </form>
-      <div class="p-resumen">${RINC.map((r) => `<div style="--rc:${r.color}"><b>${r.nombre}</b><span>${res[r.id].media === null ? "–" : res[r.id].media}</span><small>${res[r.id].hechas} de ${res[r.id].total} con nota${r.id === "crea" ? ` · ✓ ${res.crea.retos}/${res.crea.nRetos} retos terminados` : ""}</small></div>`).join("")}</div>
+      <div class="p-resumen">${RINC.map((r) => `<div style="--rc:${r.color}"><b>${r.nombre}</b><span>${res[r.id].media === null ? "–" : res[r.id].media}</span><small>${res[r.id].hechas} de ${res[r.id].total} con nota${r.id === "crea" ? ` · ✓ ${res.crea.retos}/${res.crea.nRetos} retos terminados` : ""}</small>${r.id === "prog" && !esAC(a) ? lineaPantallas(a) : ""}</div>`).join("")}</div>
       <h2 class="sa-tit">Robótica · resultados por modalidad</h2>
       <div class="p-resumen">${resumenRobotica(a, c).map((m, i) => `<div style="--rc:${["#3a7bd5", "#e8489b", "#14225a"][i] || "#2f8f5b"}"><b>${esc(m.nombre)}</b><span>${m.media === null ? "–" : m.media}</span><small>${m.hechas} de ${m.total} indicadores con nota</small></div>`).join("")}</div>
       <p class="intro">Las casillas marcadas son las notas que ya hay en la hoja. En Crea, el alumno solo marca el reto como terminado: la nota de cada indicador la pones tú aquí. Al pulsar una nota se guarda sola en la hoja (verás «✓ Guardada»).</p>
@@ -420,8 +453,14 @@ window.Profe = (function () {
             <div class="inds">${indsAl(x, a).map((cod) => { const col = columna(x.destino, cod), viejo = x.inds.indexOf(cod) < 0; return `<div class="fila-ind"><div class="fila-ind-t"><span class="cod">Ind. ${cod}</span> ${esc(textoInd(c, cod, a))}${viejo ? " <small>(indicador anterior: nota ya puesta)</small>" : ""}</div>${chips(col, a.notas[col])}</div>`; }).join("")}</div>
             <div class="enviar-fila"><button type="button" class="btn sec enviar-p">Volver a enviar</button><span class="estado" aria-live="polite"></span></div>
           </article>`).join("")}</div></details>`).join("")}
-      </div>`;
+      </div></div>`;
     $("#p-volver").onclick = pintarGrupo;
+    raiz.querySelectorAll(".p-vista").forEach((b) => b.onclick = () => {
+      vista = b.dataset.v;
+      raiz.querySelectorAll(".p-vista").forEach((x) => x.setAttribute("aria-selected", String(x === b)));
+      $("#p-trabajo").hidden = vista !== "trabajo"; $("#p-notas").hidden = vista !== "notas";
+    });
+    cargarTrabajo(a);
     $("#p-borrar").onclick = () => darDeBaja(a, $("#p-borrar"), $("#p-borrar-est"));
     $("#p-ac").onchange = async (e) => {
       const est = $("#p-correo-est"), si = e.target.checked; e.target.disabled = true;
@@ -442,6 +481,160 @@ window.Profe = (function () {
       if (j.ok) { a.correo = j.correo == null ? correo : j.correo; a.registrado = true; $("#p-cod-uno").disabled = !correo; est.textContent = correo ? "✓ Correos guardados." : "✓ Correos borrados."; est.dataset.tipo = "ok"; } else { est.textContent = j.error; est.dataset.tipo = "error"; }
     });
     window.scrollTo(0, 0);
+  }
+
+  /* ---------- Su trabajo: lo que ha hecho el alumno en cada rincón (filas de «Resultados») ---------- */
+  async function cargarTrabajo(a, recargar) {
+    const caja = $("#p-trabajo"), id = idDe(a);
+    if (!caja) return;
+    if (!trabajos[id] || recargar) {
+      caja.innerHTML = `<p class="estado">Cargando su trabajo…</p>`;
+      const j = await llamar({ accion: "trabajoAlumno", usuario: a.usuario, nombre: a.nombre, clase: a.clase }).catch(() => null);
+      if (alumnoSel !== a) return;   // el profe ya ha cambiado de alumno
+      if (!j || !j.ok) {
+        caja.innerHTML = `<p class="estado" data-tipo="error">${esc((j && j.error && !/responde bien/.test(j.error)) ? j.error : "La hoja todavía no sabe enviar el trabajo del alumno. Añade al script la función «trabajoAlumno» (mira las instrucciones del paquete) y crea una nueva versión de la implementación.")}</p>`;
+        return;
+      }
+      trabajos[id] = (j.filas || []).map((f) => ({ fecha: f[0], act: String(f[1] || ""), reto: String(f[2] || ""), est: f[3] === "" ? null : Number(f[3]), bloques: f[4], intentos: f[5], pers: String(f[6] || ""), prog: String(f[7] || ""), ind: String(f[8] || ""), val: f[9] === "" || f[9] == null ? null : Number(f[9]) }));
+    }
+    caja.innerHTML = trabajoHTML(a, cursoDe(a.clase), trabajos[id]);
+    const rb = $("#p-trab-recargar", caja); if (rb) rb.onclick = () => cargarTrabajo(a, true);
+  }
+  const fechaCorta = (f) => { const d = new Date(f); return isNaN(d) ? "" : d.toLocaleDateString("es-ES", { day: "numeric", month: "short" }) + " " + d.toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" }); };
+  const estrellas = (n) => n == null || isNaN(n) ? "" : "★".repeat(Math.max(0, Math.min(3, n))) + "☆".repeat(3 - Math.max(0, Math.min(3, n)));
+  /* El programa llega como texto («Avanzar, Repetir 3 [Saltar, Avanzar]»): se dibuja como bloques. */
+  function partirNivel(t) {
+    const out = []; let prof = 0, ini = 0;
+    for (let i = 0; i < t.length; i++) {
+      const ch = t[i];
+      if (ch === "[") prof++; else if (ch === "]") prof--;
+      else if (ch === "," && prof === 0) { out.push(t.slice(ini, i).trim()); ini = i + 1; }
+    }
+    if (t.slice(ini).trim()) out.push(t.slice(ini).trim());
+    return out;
+  }
+  function bloquesHTML(t) {
+    t = String(t || "").trim();
+    if (!t) return `<span class="bq-vacio">(programa vacío)</span>`;
+    return partirNivel(t).map((it) => {
+      const k = it.indexOf("[");
+      if (k < 0) return `<span class="bq ${tipoBloque(it)}">${esc(it)}</span>`;
+      // Cabecera y uno o más cuerpos entre corchetes («Si … [..] si no [..]»)
+      let html = `<div class="bq-c ${tipoBloque(it)}"><span class="bq-cab">${esc(it.slice(0, k).trim())}</span>`, i = k;
+      while (i < it.length && it[i] === "[") {
+        let prof = 0, j = i;
+        for (; j < it.length; j++) { if (it[j] === "[") prof++; else if (it[j] === "]" && --prof === 0) break; }
+        let dentro = it.slice(i + 1, j), etiqueta = "";
+        const m = /^si no:\s*/i.exec(dentro); if (m) { etiqueta = "si no"; dentro = dentro.slice(m[0].length); }
+        if (etiqueta) html += `<span class="bq-cab">${etiqueta}</span>`;
+        html += `<div class="bq-cuerpo">${bloquesHTML(dentro)}</div>`;
+        const resto = it.slice(j + 1), m2 = /^\s*(si no)\s*(?=\[)/i.exec(resto);
+        i = j + 1;
+        if (m2) { html += `<span class="bq-cab">si no</span>`; i += m2[0].length; }
+      }
+      return html + `</div>`;
+    }).join("");
+  }
+  function tipoBloque(t) {
+    t = t.toLowerCase();
+    if (/^repetir/.test(t)) return "b-rep";
+    if (/^si\b/.test(t)) return "b-si";
+    if (/girar|gira|izquierda|derecha|°/.test(t)) return "b-giro";
+    if (/saltar/.test(t)) return "b-salto";
+    return "b-mov";
+  }
+  const sinProfe = (r) => r.pers !== "Profe" && r.prog !== "Nota del profe" && r.prog !== "Nota revisada";
+  function mejor(rs) {
+    return rs.slice().sort((x, y) => (y.val || 0) - (x.val || 0) || (y.est || 0) - (x.est || 0) || String(y.fecha).localeCompare(String(x.fecha)))[0];
+  }
+  /* Tarjeta de una pantalla o reto: estado, mejor resultado, su programa y todos sus envíos. */
+  function tarjetaPrograma(titulo, rs, conEstrellas) {
+    const env = rs.filter(sinProfe).sort((x, y) => String(x.fecha).localeCompare(String(y.fecha)));
+    const b = env.length ? mejor(env) : null;
+    const sup = !!b && ((b.val || 0) >= 3 || (conEstrellas && (b.est || 0) >= 1));
+    const estado = !b ? "sin" : sup ? "si" : "no";
+    return `<details class="p-trab ${estado}"><summary><span class="p-trab-tit">${esc(titulo)}</span>
+        <span class="p-trab-est">${!b ? "Sin empezar" : sup ? "✓ Superada" : "Intentada"}</span>
+        ${b ? `<span class="p-trab-dat">${conEstrellas && b.est != null ? `<span class="p-estrellas" title="${b.est} estrellas">${estrellas(b.est)}</span>` : ""}${b.val != null ? `<b>${b.val}</b>/5` : ""} · ${env.length} ${env.length === 1 ? "envío" : "envíos"}</span>` : ""}</summary>
+      ${b ? `<div class="p-trab-cuerpo"><p class="p-trab-sub">Su mejor programa${b.bloques ? ` · ${b.bloques} bloques` : ""}${b.intentos ? ` · ${b.intentos} intentos` : ""}${b.pers ? ` · ${esc(b.pers)}` : ""} · ${fechaCorta(b.fecha)}</p>
+        <div class="bq-prog">${bloquesHTML(b.prog)}</div>
+        ${env.length > 1 ? `<details class="p-trab-hist"><summary>Ver los ${env.length} envíos</summary><ol>${env.map((r) => `<li><small>${fechaCorta(r.fecha)}${conEstrellas && r.est != null ? " · " + estrellas(r.est) : ""}${r.bloques ? " · " + r.bloques + " bloques" : ""}${r.val != null ? " · nota " + r.val : ""}</small><div class="bq-prog">${bloquesHTML(r.prog)}</div></li>`).join("")}</ol></details>` : ""}
+      </div>` : ""}</details>`;
+  }
+  // Igual que «Mis insignias» del alumno: una por actividad; en Crea basta con terminar el reto.
+  function insignias(a, c, filas) {
+    const out = {};
+    catalogo(c, a).forEach((x) => {
+      const o = out[x.rincon] = out[x.rincon] || { ganadas: 0, total: 0 };
+      const inds = x.inds; if (!inds.length) return;
+      o.total++;
+      if (x.rincon === "crea" && ((a.terminados || {})[x.destino.slice(0, 60)] || filas.some((r) => r.act === x.destino.slice(0, 60) && /^Terminado/.test(r.prog)))) { o.ganadas++; return; }
+      const n = inds.map((cod) => a.notas[columna(x.destino, cod)]).filter((v) => v !== undefined);
+      if (n.length === inds.length && n.reduce((s, v) => s + v, 0) / n.length >= 2.5) o.ganadas++;
+    });
+    return out;
+  }
+  function trabajoHTML(a, c, filas) {
+    const ac = esAC(a), R = window.Robotica || {}, ins = insignias(a, c, filas);
+    // Programa: se busca por ciudad (la numeración de las pantallas cambió al pasar a 30).
+    const niveles = (window.PROG_NIVELES || []).map((n, i) => ({ n, i })).filter(({ n }) => !ac || n.aventura === 0);
+    const deProg = (ciudad) => filas.filter((r) => r.act.indexOf("Programación") === 0 && (r.reto === ciudad || r.act.replace(/^Programación · \d+\. /, "") === ciudad));
+    const supProg = niveles.filter(({ n }) => deProg(n.ciudad).filter(sinProfe).some((r) => (r.val || 0) >= 3 || (r.est || 0) >= 1)).length;
+    const AV = window.AVENTURAS || [];
+    const progHTML = AV.map((av, k) => {
+      const L = niveles.filter(({ n }) => n.aventura === k);
+      if (!L.length) return "";
+      return `<h4 class="p-trab-grupo">${esc(av.nombre || "Aventura " + (k + 1))}</h4><div class="p-trab-lista">${L.map(({ n, i }) => tarjetaPrograma(`${i + 1}. ${n.ciudad}`, deProg(n.ciudad), true)).join("")}</div>`;
+    }).join("");
+    // Robótica: por modalidad y reto.
+    const modos = Object.keys(R.MODOS || {}).filter((k) => !ac || k === "robot"), retos = (ac && window.RETOS_ROB_AC) || R.RETOS || [];
+    let supRob = 0;
+    const robHTML = modos.map((k) => {
+      const nombre = R.MODOS[k].nombre;
+      const tarjetas = retos.map((r, i) => {
+        const rs = filas.filter((x) => x.act === `Robótica · ${nombre} · reto ${i + 1}`);
+        if (rs.filter(sinProfe).some((x) => (x.val || 0) >= 3)) supRob++;
+        return tarjetaPrograma(`Reto ${i + 1}. ${r.titulo}`, rs, false);
+      });
+      return `<h4 class="p-trab-grupo">${esc(nombre)}</h4><div class="p-trab-lista">${tarjetas.join("")}</div>`;
+    }).join("");
+    // Crea: retos terminados (con su ruta) y las notas que les has puesto.
+    const crea = catalogo(c, a).filter((x) => x.rincon === "crea");
+    const creaHTML = crea.map((x) => {
+      const fin = filas.filter((r) => r.act === x.destino.slice(0, 60) && /^Terminado/.test(r.prog)).pop();
+      const t = fin ? { ruta: fin.prog.replace(/^Terminado ·\s*/, ""), fecha: fin.fecha } : (a.terminados || {})[x.destino.slice(0, 60)];
+      const notas = x.inds.map((cod) => [cod, a.notas[columna(x.destino, cod)]]).filter((p) => p[1] !== undefined);
+      return `<div class="p-trab ${t ? "si" : "sin"} p-trab-fija"><div class="p-trab-fila"><span class="p-trab-tit">${esc(x.titulo)}</span>
+        <span class="p-trab-est">${t ? `✓ Terminado${t.ruta && t.ruta !== "Todos" ? " · ruta " + esc(t.ruta) : ""}${t.fecha ? " · " + fechaCorta(t.fecha) : ""}` : "Sin terminar"}</span>
+        <span class="p-trab-dat">${notas.length ? notas.map((p) => `<span class="cod-p">${esc(p[0])}</span> ${p[1]}`).join(" · ") : "Sin notas tuyas todavía"}</span></div></div>`;
+    }).join("");
+    // Piensa: la llave enviada y la nota de cada indicador.
+    const piensaHTML = (window.PIENSA || []).map((p) => {
+      const rs = filas.filter((r) => r.act === `Piensa · ${p.titulo}`.slice(0, 60) && sinProfe(r));
+      const ult = rs[rs.length - 1], llave = ult && /^Llave /.test(ult.prog) ? ult.prog.slice(6) : "";
+      const porInd = {}; rs.forEach((r) => { if (r.ind) porInd[r.ind] = r.val; });
+      return `<div class="p-trab ${ult ? "si" : "sin"} p-trab-fija"><div class="p-trab-fila"><span class="p-trab-tit">${esc(p.titulo)}</span>
+        <span class="p-trab-est">${ult ? `✓ Llave enviada${llave ? " · " + esc(llave) : ""} · ${fechaCorta(ult.fecha)}` : "Sin llave"}</span>
+        <span class="p-trab-dat">${Object.keys(porInd).map((k) => `<span class="cod-p">${esc(k)}</span> ${porInd[k]}`).join(" · ")}</span></div></div>`;
+    }).join("");
+    const nCrea = crea.filter((x) => (a.terminados || {})[x.destino.slice(0, 60)] || filas.some((r) => r.act === x.destino.slice(0, 60) && /^Terminado/.test(r.prog))).length;
+    const nPiensa = (window.PIENSA || []).filter((p) => filas.some((r) => r.act === `Piensa · ${p.titulo}`.slice(0, 60) && sinProfe(r))).length;
+    const totIns = Object.keys(ins).reduce((s, k) => s + ins[k].total, 0), ganIns = Object.keys(ins).reduce((s, k) => s + ins[k].ganadas, 0);
+    const caja = (r, valor, sub) => `<div style="--rc:${r.color}"><b>${r.nombre}</b><span>${valor}</span><small>${sub}</small></div>`;
+    const ri = (id) => RINC.find((r) => r.id === id), insTxt = (id) => ins[id] ? ` · 🏅 ${ins[id].ganadas}/${ins[id].total}` : "";
+    return `<div class="p-resumen">
+        ${caja(ri("crea"), `${nCrea}/${crea.length}`, "retos terminados" + insTxt("crea"))}
+        ${caja(ri("prog"), `${supProg}/${niveles.length}`, "pantallas superadas" + insTxt("prog"))}
+        ${caja(ri("rob"), `${supRob}/${modos.length * retos.length}`, "retos superados" + insTxt("rob"))}
+        ${caja(ri("piensa"), `${nPiensa}/${(window.PIENSA || []).length}`, "llaves enviadas" + insTxt("piensa"))}
+      </div>
+      <p class="intro">🏅 ${ganIns} de ${totIns} insignias, según las notas de la hoja (una por actividad: todos sus indicadores con nota y media de 2,5 o más; en Crea, al terminar el reto). Pulsa una pantalla o un reto para ver su programa y todos sus envíos.
+        <button type="button" class="btn sec" id="p-trab-recargar">Recargar su trabajo</button></p>
+      ${!filas.length ? `<p class="estado">Todavía no hay nada suyo en la hoja.</p>` : ""}
+      <details class="p-rincon" open><summary style="color:${ri("prog").color}">Programa</summary>${progHTML}</details>
+      <details class="p-rincon"><summary style="color:${ri("rob").color}">Robótica</summary>${robHTML}</details>
+      <details class="p-rincon"><summary style="color:${ri("crea").color}">Crea</summary><div class="p-trab-lista">${creaHTML}</div></details>
+      <details class="p-rincon"><summary style="color:${ri("piensa").color}">Piensa</summary><div class="p-trab-lista">${piensaHTML}</div></details>`;
   }
 
   /* ---------- Enviar el código a las familias ---------- */
