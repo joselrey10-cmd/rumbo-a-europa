@@ -95,6 +95,8 @@ window.Profe = (function () {
       const a = lista.find((x) => u ? igual(x.usuario, u) : (igual(x.nombre, n) && igual(x.clase, c)));
       const r = (i) => ({ hechas: Number(f[i]) || 0, total: Number(f[i + 1]) || 0, nota: Number(f[i + 2]) || 0 });
       if (a) a.rutas = { prog: r(3), robot: r(6), essential: r(9), prime: r(12) };
+      // Filas guardadas cuando Programa tenía 17 pantallas (6.º B, 10-nov): ahora son 30 y la nota se reparte entre 30.
+      if (a && a.rutas.prog.total && a.rutas.prog.total !== 30) { a.rutas.prog.total = 30; a.rutas.prog.nota = Math.round(5 * a.rutas.prog.hechas / 30 * 100) / 100; }
     });
     // Notas puestas en esta sesión (aún no recargadas de la hoja)
     lista.forEach((a) => Object.assign(a.notas, cambios[idDe(a)] || {}));
@@ -148,10 +150,13 @@ window.Profe = (function () {
   const coma = (x) => String(Math.round(x * 100) / 100).replace(".", ",");
   function lineaPantallas(a) {
     const p = a.rutas && a.rutas.prog;
+    if (!datos || !datos.rutas) return `<small class="p-pantallas">🧩 Pantallas: actualiza el script de la hoja</small>`;
     return `<small class="p-pantallas">🧩 ${p ? p.hechas : 0}/${p && p.total ? p.total : 30} pantallas · <b>${coma(p ? p.nota : 0)}</b> de 5</small>`;
   }
   function celdaProg(a, r) {
     const p = a.rutas && a.rutas.prog;
+    // Sin «rutas» el script de la hoja es el antiguo: no se sabe cuántas pantallas lleva (no es que tenga 0).
+    if (!datos || !datos.rutas) return `<td title="Actualiza el script de la hoja (nueva versión) para ver las pantallas superadas."><b>${r.media === null ? "–" : coma(r.media)}</b><small>🧩 ¿?/30 pantallas</small><small>actualiza el script</small></td>`;
     return `<td title="Nota por pantallas superadas (5 puntos entre ${p && p.total ? p.total : 30} pantallas). Debajo, la media de calidad de las pantallas hechas."><b>${coma(p ? p.nota : 0)}</b><small>🧩 ${p ? p.hechas : 0}/${p && p.total ? p.total : 30} pantallas</small><small>calidad ${r.media === null ? "–" : coma(r.media)} · ${r.hechas} notas</small></td>`;
   }
   function resumen(a, c) {
@@ -496,9 +501,22 @@ window.Profe = (function () {
         return;
       }
       trabajos[id] = (j.filas || []).map((f) => ({ fecha: f[0], act: String(f[1] || ""), reto: String(f[2] || ""), est: f[3] === "" ? null : Number(f[3]), bloques: f[4], intentos: f[5], pers: String(f[6] || ""), prog: String(f[7] || ""), ind: String(f[8] || ""), val: f[9] === "" || f[9] == null ? null : Number(f[9]) }));
+      trabajos[id].forEach((r) => { if (r.act.indexOf("Programación") === 0 && r.val != null) r.val = notaPantalla(r.val, r.est, r.intentos); });
     }
     caja.innerHTML = trabajoHTML(a, cursoDe(a.clase), trabajos[id]);
+    // Si «Progreso por rutas» se ha quedado atrás (o no tiene a este alumno), la línea de pantallas de «Notas y datos»
+    // usa las pantallas superadas que se ven en su trabajo.
+    const sup = +((caja.querySelector("[data-sup-prog]") || {}).dataset || {}).supProg || 0, linea = $("#p-notas .p-pantallas");
+    if (linea && !esAC(a) && (!a.rutas || !a.rutas.prog || a.rutas.prog.hechas < sup))
+      linea.innerHTML = `🧩 ${sup}/30 pantallas · <b>${coma(Math.round(5 * sup / 30 * 100) / 100)}</b> de 5`;
     const rb = $("#p-trab-recargar", caja); if (rb) rb.onclick = () => cargarTrabajo(a, true);
+  }
+  // Igual que notaPantalla() del script: las notas con decimales del 10-nov (reparto de 5 puntos) se recalculan con estrellas e intentos.
+  function notaPantalla(v, est, intentos) {
+    v = Number(v); if (v % 1 === 0) return v;
+    const e = Number(est) || 0, n = Number(intentos) || 1;
+    if (e < 1) return 2;
+    return Math.max(3, (n <= 2 ? 5 : n <= 4 ? 4 : 3) - (e >= 3 ? 0 : e === 2 ? 1 : 2));
   }
   const fechaCorta = (f) => { const d = new Date(f); return isNaN(d) ? "" : d.toLocaleDateString("es-ES", { day: "numeric", month: "short" }) + " " + d.toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" }); };
   const estrellas = (n) => n == null || isNaN(n) ? "" : "★".repeat(Math.max(0, Math.min(3, n))) + "☆".repeat(3 - Math.max(0, Math.min(3, n)));
@@ -658,7 +676,7 @@ window.Profe = (function () {
     const ri = (id) => RINC.find((r) => r.id === id), insTxt = (id) => ins[id] ? ` · 🏅 ${ins[id].ganadas}/${ins[id].total}` : "";
     return `<div class="p-resumen">
         ${caja(ri("crea"), `${nCrea}/${crea.length}`, "retos terminados" + insTxt("crea"))}
-        ${caja(ri("prog"), `${supProg}/${niveles.length}`, "pantallas superadas" + insTxt("prog"))}
+        ${caja(ri("prog"), `<span data-sup-prog="${supProg}">${supProg}/${niveles.length}</span>`, "pantallas superadas" + insTxt("prog"))}
         ${caja(ri("rob"), `${supRob}/${modos.length * retos.length}`, "retos superados" + insTxt("rob"))}
         ${caja(ri("piensa"), `${nPiensa}/${(window.PIENSA || []).length}`, "llaves enviadas" + insTxt("piensa"))}
       </div>

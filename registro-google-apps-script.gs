@@ -538,6 +538,16 @@ function indicadoresAuto(curso, mejor, adaptado) {
   });
   return out;
 }
+/* El 10-nov (6.º B) la app de entonces guardaba en «Valoración» un reparto de 5 puntos entre las pantallas
+   (0,29; 0,59…) en vez de la nota de la pantalla. Esas notas con decimales se recalculan con las estrellas y los intentos,
+   igual que lo hace la app (js/valoraciones.js): 1-2 intentos = 5, 3-4 = 4, más = 3; −1 con 2 estrellas, −2 con 1; mínimo 3. */
+function notaPantalla(valor, estrellas, intentos) {
+  const v = Number(valor);
+  if (v % 1 === 0) return v;
+  const e = Number(estrellas) || 0, n = Number(intentos) || 1;
+  if (e < 1) return 2;
+  return Math.max(3, (n <= 2 ? 5 : n <= 4 ? 4 : 3) - (e >= 3 ? 0 : e === 2 ? 1 : 2));
+}
 // Clave de una fila de Resultados para indicadoresAuto (o "" si no es de Programa ni de Robótica).
 function claveAuto(actividad, ciudad) {
   const a = String(actividad || "");
@@ -550,7 +560,7 @@ function prepararExcel(libro) {
   const res = libro.getSheetByName("Resultados");
   const r = res && res.getLastRow() > 1 ? res.getDataRange().getValues() : [[]];
   const c = r[0].map(String), I = (t) => c.indexOf(t);
-  const iF = I("Fecha"), iN = I("Nombre"), iU = I("Usuario Educacyl"), iC = I("Clase"), iA = I("Actividad"), iI = I("Nº indicador"), iV = I("Valoración (0-5)"), iPr = I("Programa");
+  const iF = I("Fecha"), iN = I("Nombre"), iU = I("Usuario Educacyl"), iC = I("Clase"), iA = I("Actividad"), iI = I("Nº indicador"), iV = I("Valoración (0-5)"), iPr = I("Programa"), iE = I("Estrellas"), iIn = I("Intentos");
   const mapa = mapaApellidos(libro);
   // Cada fila de Resultados se une a su alumno de Alumnado por el usuario (con o sin @educa…) o, si no, por el nombre.
   const sinDom = (u) => minus(u).replace(/@.*$/, "");
@@ -577,7 +587,7 @@ function prepararExcel(libro) {
   r.slice(1).forEach((f) => {
     const k = claveAuto(f[iA]); if (!k || f[iV] === "" || f[iV] == null) return;
     const id = idDe(f[iU], f[iN], f[iC]), x = auto[id] = auto[id] || { curso: /6/.test(normGrupo(f[iC])) ? "6º" : "5º", adaptado: adaptados.indexOf(sinDom(f[iU])) >= 0, mejor: {}, profe: {}, fecha: {} };
-    const v = Number(f[iV]), t0 = new Date(f[iF]).getTime() || 0;
+    const v = k.indexOf("Programación") === 0 ? notaPantalla(f[iV], f[iE], f[iIn]) : Number(f[iV]), t0 = new Date(f[iF]).getTime() || 0;
     // Si el profe ha puesto nota a esa pantalla o reto en el panel, manda la última suya; si no, la mejor del alumno.
     if (String(f[iPr]) === "Nota del profe") { if (!x.profe[k] || x.profe[k].t <= t0) x.profe[k] = { t: t0, v }; }
     else if (!(k in x.mejor) || v > x.mejor[k]) x.mejor[k] = v;
