@@ -66,6 +66,8 @@ function doPost(e) {
   if (pedido.accion === "guardarTexto") return guardarTexto(libro, pedido);
   if (pedido.accion === "retoCadena") return gestionarRetoCadena(libro, pedido);
   if (pedido.accion === "trabajoAlumno") return trabajoAlumno(libro, pedido);
+  if (pedido.accion === "comentario") return comentarioProfe(libro, pedido);
+  if (pedido.accion === "notasLote") return notasLote(libro, pedido);
   const hoja = libro.getSheetByName("Resultados") || libro.insertSheet("Resultados");
   if (hoja.getLastRow() === 0) {
     hoja.appendRow(COLUMNAS);
@@ -122,9 +124,10 @@ function datosProfe(libro, d) {
   const pr = libro.getSheetByName("Progreso por rutas");
   const rutas = pr && pr.getLastRow() > 1 ? pr.getRange(2, 1, pr.getLastRow() - 1, 16).getValues().map((f) => f.slice(1)) : [];
   const hoja = libro.getSheetByName("Valoraciones");
-  if (!hoja || hoja.getLastRow() < 1) return salida({ ok: true, cab: [], filas: [], hechos, alumnado, autoeval, rutas, adaptados: leerAdaptados() });
+  const comentarios = leerComentarios(libro);
+  if (!hoja || hoja.getLastRow() < 1) return salida({ ok: true, cab: [], filas: [], hechos, alumnado, autoeval, rutas, comentarios, adaptados: leerAdaptados() });
   const v = hoja.getDataRange().getValues();
-  return salida({ ok: true, cab: v[0], filas: v.slice(1), hechos, alumnado, autoeval, rutas, adaptados: leerAdaptados() });
+  return salida({ ok: true, cab: v[0], filas: v.slice(1), hechos, alumnado, autoeval, rutas, comentarios, adaptados: leerAdaptados() });
 }
 
 // Panel del profesor: todo lo que ha hecho un alumno (filas de «Resultados»: pantallas, programas, retos, llaves).
@@ -321,9 +324,10 @@ function familiaDatos(libro, d) {
   const res = libro.getSheetByName("Resultados");
   const r = res && res.getLastRow() > 1 ? res.getDataRange().getValues() : [[]];
   const rc = r[0], rU = rc.indexOf("Usuario Educacyl"), rA = rc.indexOf("Actividad"), rP = rc.indexOf("Programa"), rF = rc.indexOf("Fecha");
-  const adaptados = leerAdaptados();
+  const adaptados = leerAdaptados(), coms = leerComentarios(libro);
   return json({ ok: true, cab, hijos: hijos.map((f) => ({
     nombre: f[0], apellidos: f[1], usuario: f[2], clase: f[3], adaptado: adaptados.indexOf(minus(f[2])) >= 0,
+    comentarios: comentariosDe(coms, f[2]),
     fila: iU >= 0 ? (v.slice(1).find((x) => minus(x[iU]) === minus(f[2])) || null) : null,
     hechos: rU >= 0 ? r.slice(1).filter((x) => minus(x[rU]) === minus(f[2]) && String(x[rP]).indexOf("Terminado") === 0)
       .map((x) => [x[rA], x[rP], x[rF] instanceof Date ? x[rF].toISOString() : String(x[rF])]) : []
@@ -954,7 +958,7 @@ function alumnoResultados(libro, d) {
   const rc = r[0] || [], rU = rc.indexOf("Usuario Educacyl"), rA = rc.indexOf("Actividad"), rP = rc.indexOf("Programa"), rF = rc.indexOf("Fecha");
   const hechos = rU >= 0 ? r.slice(1).filter(x => minus(x[rU]) === minus(s.usuario) && String(x[rP] || "").indexOf("Terminado") === 0)
     .map(x => [x[rA], x[rP], x[rF] instanceof Date ? x[rF].toISOString() : String(x[rF])]) : [];
-  return json({ ok: true, nombre: s.nombre, clase: s.clase, cab, fila, hechos, adaptado: leerAdaptados().indexOf(minus(s.usuario)) >= 0 });
+  return json({ ok: true, nombre: s.nombre, clase: s.clase, cab, fila, hechos, comentarios: comentariosDe(leerComentarios(libro), s.usuario), adaptado: leerAdaptados().indexOf(minus(s.usuario)) >= 0 });
 }
 
 function alumnoSesion(libro, d) {
@@ -1124,5 +1128,99 @@ function gestionarRetoCadena(libro, d) {
       return json({ ok: true, desbloqueado: indice });
     }
     return json({ ok: false, error: "Operación no válida." });
+  } finally { lock.releaseLock(); }
+}
+
+
+/* ---------- Comentarios del profe por indicador (Crea) ---------- */
+// Pestaña «Comentarios»: una fila por alumno y columna de Valoraciones («Crea · SA1 S2 · … · Ind. 2.1.1»),
+// con el texto que leen el alumno (Mis notas) y su familia. Un comentario vacío borra la fila.
+const COL_COMENTARIOS = ["Nombre", "Usuario Educacyl", "Clase", "Actividad e indicador", "Comentario", "Fecha"];
+function hojaComentarios(libro) {
+  let h = libro.getSheetByName("Comentarios");
+  if (!h) { h = libro.insertSheet("Comentarios"); h.appendRow(COL_COMENTARIOS); h.setFrozenRows(1); h.getRange(1, 1, 1, COL_COMENTARIOS.length).setFontWeight("bold"); h.setColumnWidth(5, 420); }
+  return h;
+}
+// Devuelve [[usuario, columna, comentario], ...]
+function leerComentarios(libro) {
+  const h = libro.getSheetByName("Comentarios");
+  if (!h || h.getLastRow() < 2) return [];
+  return h.getRange(2, 1, h.getLastRow() - 1, COL_COMENTARIOS.length).getValues()
+    .filter((f) => f[1] && f[3] && String(f[4]).trim()).map((f) => [String(f[1]), String(f[3]), String(f[4])]);
+}
+function comentariosDe(lista, usuario) {
+  const o = {}, u = minus(usuario);
+  (lista || []).forEach((f) => { if (minus(f[0]) === u) o[f[1]] = f[2]; });
+  return o;
+}
+// items: [{ nombre, usuario, clase, columna, comentario }]. Sin bloqueo: lo pone quien llama.
+function escribirComentarios(libro, items) {
+  if (!items.length) return;
+  const h = hojaComentarios(libro);
+  const n = h.getLastRow() - 1;
+  let filas = n > 0 ? h.getRange(2, 1, n, COL_COMENTARIOS.length).getValues() : [];
+  items.forEach((x) => {
+    const u = minus(x.usuario), col = String(x.columna).slice(0, 90), t = String(x.comentario == null ? "" : x.comentario).trim().slice(0, 1500);
+    const i = filas.findIndex((f) => minus(f[1]) === u && String(f[3]) === col);
+    if (!t) { if (i >= 0) filas.splice(i, 1); return; }
+    const fila = [x.nombre || "", x.usuario, normGrupo(x.clase), col, t, new Date()];
+    if (i >= 0) filas[i] = fila; else filas.push(fila);
+  });
+  if (n > 0) h.getRange(2, 1, n, COL_COMENTARIOS.length).clearContent();
+  if (filas.length) h.getRange(2, 1, filas.length, COL_COMENTARIOS.length).setValues(filas);
+}
+function comentarioProfe(libro, d) {
+  if (CLAVE_PROFE === "cambia-esta-clave" || String(d.clave || "") !== CLAVE_PROFE) return json({ ok: false, error: "Clave incorrecta." });
+  if (!d.usuario || !d.columna) return json({ ok: false, error: "Falta el alumno o el indicador." });
+  const lock = LockService.getScriptLock(); lock.waitLock(20000);
+  try {
+    escribirComentarios(libro, [{ nombre: nombreCompleto(libro, String(d.nombre || ""), String(d.usuario)), usuario: String(d.usuario), clase: d.clase, columna: d.columna, comentario: d.comentario }]);
+  } finally { lock.releaseLock(); }
+  return json({ ok: true });
+}
+
+/* ---------- Notas del profe en lote (importar un CSV de correcciones) ---------- */
+// notas: [{ nombre, usuario, clase, destino, ciudad, indicador, valoracion, comentario }]
+// Escribe todo de una vez: filas en Resultados («Nota del profe»), celdas de Valoraciones y comentarios.
+function notasLote(libro, d) {
+  if (CLAVE_PROFE === "cambia-esta-clave" || String(d.clave || "") !== CLAVE_PROFE) return json({ ok: false, error: "Clave incorrecta." });
+  const lista = (d.notas || []).filter((x) => x && x.usuario && x.destino && x.indicador).slice(0, 1500);
+  if (!lista.length) return json({ ok: false, error: "No hay notas que guardar." });
+  const lock = LockService.getScriptLock(); lock.waitLock(30000);
+  try {
+    const limpiar = (v, max) => String(v == null ? "" : v).slice(0, max);
+    const mapa = mapaApellidos(libro), ahora = new Date();
+    lista.forEach((x) => { x.clase = normGrupo(limpiar(x.clase, 12)); x.nombre = nombreCompleto(libro, limpiar(x.nombre, 60), limpiar(x.usuario, 60), mapa); x.columna = limpiar(x.destino, 60) + " · Ind. " + limpiar(x.indicador, 10); });
+    // 1) Resultados
+    const res = libro.getSheetByName("Resultados");
+    const conNota = lista.filter((x) => x.valoracion !== "" && x.valoracion != null && isFinite(Number(x.valoracion)));
+    if (res && conNota.length) {
+      const filas = conNota.map((x) => [ahora, x.nombre, limpiar(x.usuario, 60), x.clase, limpiar(x.destino, 60), limpiar(x.ciudad, 40), "", "", "", "Profe", "Nota del profe", "'" + limpiar(x.indicador, 10), Number(x.valoracion)]);
+      res.getRange(res.getLastRow() + 1, 1, filas.length, filas[0].length).setValues(filas);
+    }
+    // 2) Valoraciones (última nota)
+    if (conNota.length) {
+      const hoja = libro.getSheetByName("Valoraciones") || libro.insertSheet("Valoraciones");
+      if (hoja.getLastRow() === 0) { hoja.appendRow(["Nombre", "Usuario Educacyl", "Clase"]); hoja.setFrozenRows(1); hoja.setFrozenColumns(3); }
+      let v = hoja.getDataRange().getValues();
+      const cab = v[0].map(String);
+      conNota.forEach((x) => { if (cab.indexOf(x.columna) < 0) cab.push(x.columna); });
+      const ancho = cab.length;
+      v = v.map((f) => { f = f.slice(); while (f.length < ancho) f.push(""); return f; });
+      v[0] = cab;
+      conNota.forEach((x) => {
+        let i = v.findIndex((f, k) => k > 0 && minus(f[1]) === minus(x.usuario));
+        if (i < 0) { const f = new Array(ancho).fill(""); f[0] = x.nombre; f[1] = x.usuario; f[2] = x.clase; v.push(f); i = v.length - 1; }
+        v[i][cab.indexOf(x.columna)] = Number(x.valoracion);
+      });
+      hoja.getRange(1, 1, v.length, ancho).setValues(v);
+      hoja.getRange(1, 1, 1, ancho).setFontWeight("bold");
+      SpreadsheetApp.flush();
+      ordenarHoja(libro, "Valoraciones", 0, 1, 2);
+      calcularMedias(libro);
+    }
+    // 3) Comentarios (solo si la fila trae la columna «comentario»)
+    escribirComentarios(libro, lista.filter((x) => x.comentario !== undefined).map((x) => ({ nombre: x.nombre, usuario: x.usuario, clase: x.clase, columna: x.columna, comentario: x.comentario })));
+    return json({ ok: true, notas: conNota.length, comentarios: lista.filter((x) => x.comentario !== undefined && String(x.comentario).trim()).length });
   } finally { lock.releaseLock(); }
 }
