@@ -506,12 +506,51 @@ function indicadorProgSinCodigo(actividad, clase) {
   const m = /^Programación · \d+\. (.+)$/.exec(String(actividad || ""));
   return m ? (IND_PROG_NUEVAS[/6/.test(normGrupo(clase)) ? "6º" : "5º"] || {})[m[1].trim()] || "" : "";
 }
+
+/* ---------- Indicadores automáticos de Programa y Robótica ----------
+   Mismo reparto que js/indicadores.js (INDICADOR_PROGRAMACION e INDICADOR_ROBOTICA). Cada indicador vale la suma
+   de la mejor nota de cada pantalla o reto que le corresponde, dividida entre cuántas son (las no hechas cuentan 0),
+   redondeada a un número entero. En Robótica se toma la modalidad (Robot, Essential o Prime) en la que mejor va.
+   Con adaptación curricular, Programa son solo las 10 primeras pantallas y Robótica solo el Robot. */
+const PROG_ORDEN = ["Madrid", "Lisboa", "París", "Roma", "Berlín", "Ámsterdam", "Bruselas", "Londres", "Zúrich", "Luxemburgo",
+  "Dublín", "Copenhague", "Estocolmo", "Oslo", "Helsinki", "Reikiavik", "Tallin", "Riga", "Vilna", "Edimburgo",
+  "Praga", "Viena", "Varsovia", "Budapest", "Bucarest", "Bratislava", "Liubliana", "Zagreb", "Sofía", "Belgrado"];
+const IND_PROG_TODAS = {
+  "5º": ["3.2.1", "3.2.1", "3.2.1", "3.2.1"].concat(Array(26).fill("3.2.2")),
+  "6º": ["3.2.2", "3.2.2", "3.2.2", "3.2.2"].concat(Array(16).fill("3.2.3"), Array(10).fill("3.2.6"))
+};
+const IND_ROB = {
+  "5º": { "Robot": ["3.2.3", "3.2.3", "3.2.3", "3.2.3", "3.2.6", "3.2.6", "3.2.6", "3.2.6", "3.2.6", "3.2.6"],
+    "SPIKE Essential": ["3.2.3", "3.2.3"].concat(Array(8).fill("3.2.9")), "SPIKE Prime": Array(10).fill("3.2.9") },
+  "6º": { "Robot": Array(10).fill("3.2.5"), "SPIKE Essential": Array(10).fill("3.2.5"),
+    "SPIKE Prime": Array(5).fill("3.2.5").concat(Array(5).fill("3.2.6")) }
+};
+// mejor: { "Programación|Madrid": 5, "Robótica|Robot|3": 4, … } (mejor nota de cada pantalla o reto de un alumno).
+function indicadoresAuto(curso, mejor, adaptado) {
+  const out = { prog: {}, rob: {} };
+  const reparte = (lista, nota) => { const t = {}; lista.forEach((cod, i) => { const x = t[cod] = t[cod] || { s: 0, n: 0, hechas: 0 }; const v = nota(i); x.n++; if (v != null) { x.s += v; x.hechas++; } }); return t; };
+  const nProg = adaptado ? 10 : 30;
+  const tp = reparte(IND_PROG_TODAS[curso].slice(0, nProg), (i) => mejor["Programación|" + PROG_ORDEN[i]]);
+  Object.keys(tp).forEach((cod) => { if (tp[cod].hechas) out.prog[cod] = Math.round(tp[cod].s / tp[cod].n); });
+  Object.keys(IND_ROB[curso]).filter((m) => !adaptado || m === "Robot").forEach((m) => {
+    const tr = reparte(IND_ROB[curso][m], (i) => mejor["Robótica|" + m + "|" + (i + 1)]);
+    Object.keys(tr).forEach((cod) => { if (tr[cod].hechas) { const v = Math.round(tr[cod].s / tr[cod].n); if (!(cod in out.rob) || v > out.rob[cod]) out.rob[cod] = v; } });
+  });
+  return out;
+}
+// Clave de una fila de Resultados para indicadoresAuto (o "" si no es de Programa ni de Robótica).
+function claveAuto(actividad, ciudad) {
+  const a = String(actividad || "");
+  let m = /^Programación · \d+\. (.+)$/.exec(a); if (m) return "Programación|" + m[1].trim();
+  m = /^Robótica · (.+) · reto (\d+)$/.exec(a); if (m) return "Robótica|" + m[1].trim() + "|" + m[2];
+  return "";
+}
 function prepararExcel(libro) {
   libro = libro || abrirLibro();
   const res = libro.getSheetByName("Resultados");
   const r = res && res.getLastRow() > 1 ? res.getDataRange().getValues() : [[]];
   const c = r[0].map(String), I = (t) => c.indexOf(t);
-  const iF = I("Fecha"), iN = I("Nombre"), iU = I("Usuario Educacyl"), iC = I("Clase"), iA = I("Actividad"), iI = I("Nº indicador"), iV = I("Valoración (0-5)");
+  const iF = I("Fecha"), iN = I("Nombre"), iU = I("Usuario Educacyl"), iC = I("Clase"), iA = I("Actividad"), iI = I("Nº indicador"), iV = I("Valoración (0-5)"), iPr = I("Programa");
   const mapa = mapaApellidos(libro);
   // Cada fila de Resultados se une a su alumno de Alumnado por el usuario (con o sin @educa…) o, si no, por el nombre.
   const sinDom = (u) => minus(u).replace(/@.*$/, "");
@@ -532,9 +571,30 @@ function prepararExcel(libro) {
     const k = idDe(f[iU], f[iN], f[iC]) + "#" + f[iA] + "#" + codigoDe(f[iI]), t = new Date(f[iF]).getTime() || 0;
     if (!ultima[k] || ultima[k].t <= t) ultima[k] = { t, f };
   });
-  // 2) Media por alumno, trimestre e indicador.
-  const suma = {};
+  // 2) Media por alumno, trimestre e indicador. Programa y Robótica no se promedian aquí: van aparte (indicadores automáticos).
+  const suma = {}, adaptados = leerAdaptados();
+  const auto = {};   // id -> { curso, adaptado, mejor: {clave: nota}, fecha: {prog, rob} }
+  r.slice(1).forEach((f) => {
+    const k = claveAuto(f[iA]); if (!k || f[iV] === "" || f[iV] == null) return;
+    const id = idDe(f[iU], f[iN], f[iC]), x = auto[id] = auto[id] || { curso: /6/.test(normGrupo(f[iC])) ? "6º" : "5º", adaptado: adaptados.indexOf(sinDom(f[iU])) >= 0, mejor: {}, profe: {}, fecha: {} };
+    const v = Number(f[iV]), t0 = new Date(f[iF]).getTime() || 0;
+    // Si el profe ha puesto nota a esa pantalla o reto en el panel, manda la última suya; si no, la mejor del alumno.
+    if (String(f[iPr]) === "Nota del profe") { if (!x.profe[k] || x.profe[k].t <= t0) x.profe[k] = { t: t0, v }; }
+    else if (!(k in x.mejor) || v > x.mejor[k]) x.mejor[k] = v;
+    const r0 = k.split("|")[0] === "Programación" ? "prog" : "rob", t = new Date(f[iF]); if (!isNaN(t) && (!x.fecha[r0] || t > x.fecha[r0])) x.fecha[r0] = t;
+  });
+  const meter = (id, curso, tri, cod, v) => {
+    const en = (t) => ORDEN_EXCEL[curso][t].split(" ").indexOf(cod) >= 0;
+    if (!en(tri)) { const otro = [tri + 1, tri + 2, tri - 1, tri - 2].find((t) => t >= 0 && t < 3 && en(t)); if (otro != null) tri = otro; }
+    const kk = id + "#" + tri + "#" + cod; (suma[kk] = suma[kk] || []).push(v);
+  };
+  Object.keys(auto).forEach((id) => {
+    const x = auto[id]; Object.keys(x.profe).forEach((k) => (x.mejor[k] = x.profe[k].v));
+    const ind = indicadoresAuto(x.curso, x.mejor, x.adaptado);
+    ["prog", "rob"].forEach((r0) => Object.keys(ind[r0]).forEach((cod) => meter(id, x.curso, trimestreDe("", x.fecha[r0] || new Date()), cod, ind[r0][cod])));
+  });
   Object.keys(ultima).forEach((k) => {
+    if (claveAuto(ultima[k].f[iA])) return;
     const f = ultima[k].f, id = idDe(f[iU], f[iN], f[iC]), curso = /6/.test(normGrupo(f[iC])) ? "6º" : "5º";
     let tri = trimestreDe(f[iA], f[iF]), cod = codigoDe(f[iI]);
     // 6º: la presentación de PowerPoint (Crea SA1 S2) era el 3.1.2 y en la programación nueva es el 3.1.4.
@@ -545,7 +605,7 @@ function prepararExcel(libro) {
     if (!en(tri)) { const otro = [tri + 1, tri + 2, tri - 1, tri - 2].find((t) => t >= 0 && t < 3 && en(t)); if (otro != null) tri = otro; }
     const kk = id + "#" + tri + "#" + cod; (suma[kk] = suma[kk] || []).push(Number(f[iV]));
   });
-  const notaDe = (id, tri, cod) => { const l = suma[id + "#" + tri + "#" + cod]; return l ? Math.round(l.reduce((a, b) => a + b, 0) / l.length * 10) / 10 : ""; };
+  const notaDe = (id, tri, cod) => { const l = suma[id + "#" + tri + "#" + cod]; return l ? Math.round(l.reduce((a, b) => a + b, 0) / l.length) : ""; };   // redondeada a un número entero
   // 3) Una pestaña por grupo.
   const alumnado = filasAlumnado(libro), hechos = [];
   GRUPOS_EXCEL.forEach((g) => {

@@ -574,6 +574,40 @@ window.Profe = (function () {
     });
     return out;
   }
+  /* Indicadores automáticos de Programa y Robótica (lo mismo que hace el script al preparar «Notas para el Excel»):
+     suma de la mejor nota de cada pantalla o reto del indicador ÷ cuántas son (las no hechas cuentan 0), redondeada.
+     Si el profe ha puesto nota a una pantalla, vale su última nota. En Robótica, la modalidad en la que mejor va. */
+  function indicadoresAuto(a, c, filas) {
+    const notaDe = (rs) => {
+      const pr = rs.filter((r) => r.prog === "Nota del profe" && r.val != null).sort((x, y) => String(x.fecha).localeCompare(String(y.fecha))).pop();
+      if (pr) return pr.val;
+      const v = rs.filter((r) => sinProfe(r) && r.val != null).map((r) => r.val);
+      return v.length ? Math.max(...v) : null;
+    };
+    const reparte = (items, filasDe) => {
+      const t = {};
+      items.forEach((x) => (x.inds || []).slice(0, 1).forEach((cod) => { const o = t[cod] = t[cod] || { s: 0, n: 0, h: 0 }, v = notaDe(filasDe(x)); o.n++; if (v != null) { o.s += v; o.h++; } }));
+      const out = {}; Object.keys(t).forEach((cod) => { if (t[cod].h) out[cod] = { nota: Math.round(t[cod].s / t[cod].n), hechas: t[cod].h, de: t[cod].n }; });
+      return out;
+    };
+    const cat = catalogo(c, a);
+    const prog = reparte(cat.filter((x) => x.rincon === "prog"), (x) => filas.filter((r) => r.act.indexOf("Programación") === 0 && (r.reto === x.ciudad || r.act.replace(/^Programación · \d+\. /, "") === x.ciudad)));
+    const rob = {};
+    Object.keys((window.Robotica || {}).MODOS || {}).forEach((k) => {
+      const nombre = window.Robotica.MODOS[k].nombre, items = cat.filter((x) => x.rincon === "rob" && x.destino.indexOf(`Robótica · ${nombre} ·`) === 0);
+      if (!items.length) return;
+      const r = reparte(items, (x) => filas.filter((f) => f.act === x.destino));
+      Object.keys(r).forEach((cod) => { if (!rob[cod] || r[cod].nota > rob[cod].nota) rob[cod] = Object.assign({ modo: nombre }, r[cod]); });
+    });
+    return { prog, rob };
+  }
+  function autoIndHTML(a, c, filas) {
+    const ind = indicadoresAuto(a, c, filas), L = [];
+    [["prog", "Programa"], ["rob", "Robótica"]].forEach(([k, nom]) => Object.keys(ind[k]).sort().forEach((cod) => L.push(`<tr><td>${nom}${ind[k][cod].modo ? " · " + esc(ind[k][cod].modo) : ""}</td><td><span class="cod-p">${esc(cod)}</span> ${esc(textoInd(c, cod, a))}</td><td>${ind[k][cod].hechas} de ${ind[k][cod].de}</td><td><b>${ind[k][cod].nota}</b></td></tr>`)));
+    return `<details class="p-rincon" open><summary style="color:#14225a">Indicadores de Programa y Robótica (automáticos)</summary>
+      ${L.length ? `<p class="intro">Se calculan solos con su trabajo y van redondeados a «Notas para el Excel»: mejor nota de cada pantalla o reto, sumadas y divididas entre todas las del indicador (las que no ha hecho cuentan 0). Si corriges la nota de una pantalla en «Notas y datos», vale la tuya.</p>
+      <div class="tabla-scroll"><table class="p-tabla"><thead><tr><th>Rincón</th><th>Indicador</th><th>Hechas</th><th>Nota</th></tr></thead><tbody>${L.join("")}</tbody></table></div>` : `<p class="intro">Todavía no tiene pantallas ni retos hechos.</p>`}</details>`;
+  }
   function trabajoHTML(a, c, filas) {
     const ac = esAC(a), R = window.Robotica || {}, ins = insignias(a, c, filas);
     // Programa: se busca por ciudad (la numeración de las pantallas cambió al pasar a 30).
@@ -631,6 +665,7 @@ window.Profe = (function () {
       <p class="intro">🏅 ${ganIns} de ${totIns} insignias, según las notas de la hoja (una por actividad: todos sus indicadores con nota y media de 2,5 o más; en Crea, al terminar el reto). Pulsa una pantalla o un reto para ver su programa y todos sus envíos.
         <button type="button" class="btn sec" id="p-trab-recargar">Recargar su trabajo</button></p>
       ${!filas.length ? `<p class="estado">Todavía no hay nada suyo en la hoja.</p>` : ""}
+      ${autoIndHTML(a, c, filas)}
       <details class="p-rincon" open><summary style="color:${ri("prog").color}">Programa</summary>${progHTML}</details>
       <details class="p-rincon"><summary style="color:${ri("rob").color}">Robótica</summary>${robHTML}</details>
       <details class="p-rincon"><summary style="color:${ri("crea").color}">Crea</summary><div class="p-trab-lista">${creaHTML}</div></details>

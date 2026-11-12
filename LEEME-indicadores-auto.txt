@@ -1,0 +1,11 @@
+Indicadores automáticos de Programa y Robótica (12-nov)
+
+1) Sube a GitHub (raíz del repo) js/profe.js.
+2) En Apps Script: copia tu línea CLAVE_PROFE, pega registro-google-apps-script.gs, vuelve a poner tu clave
+   y crea una nueva versión (Gestionar implementaciones → lápiz → Nueva versión).
+3) En el panel pulsa «📊 Notas para el Excel».
+
+Cómo se calcula cada indicador de Programa y Robótica: la mejor nota de cada pantalla o reto de ese indicador,
+sumadas y divididas entre todas las pantallas o retos del indicador (las no hechas cuentan 0), redondeado.
+Si has corregido la nota de una pantalla en el panel, vale la tuya. En Robótica, la modalidad en la que mejor va.
+Todas las notas de las pestañas «Excel …» salen ya redondeadas (sin decimales).
