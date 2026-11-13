@@ -682,3 +682,20 @@ html.adaptado #texto-objetivo, html.adaptado #rb-texto-reto { font-size: 22px; }
 .p-com-lista { margin: 6px 0 0; padding-left: 0; list-style: none; font-size: 14px; }
 .p-com-lista li { margin: 3px 0; }
 .p-com-alumno { margin: 6px 0 0; padding: 6px 10px; border-left: 4px solid #e07a1f; background: #fff6ec; border-radius: 6px; font-size: 14px; color: #1d2433; }
+
+/* Avisos del profe al alumno */
+.p-avisar { background: none; border: 1px solid var(--line, #ccd); border-radius: 8px; font-size: 18px; cursor: pointer; padding: 4px 8px; white-space: nowrap; }
+.p-avisar:hover:not(:disabled), .p-avisar:focus-visible { border-color: #e07a1f; background: rgba(224, 122, 31, .1); }
+.p-avisar:disabled { opacity: .35; cursor: default; }
+.p-avisar small { font: 800 12px var(--f-mono, monospace); color: #b3261e; }
+.p-tabla td small.p-bajas, .p-bajas { color: #b3261e; font-weight: 700; }
+.p-aviso-dlg { max-width: 680px; width: calc(100% - 32px); border: 0; border-radius: 16px; padding: 0; box-shadow: 0 20px 60px rgba(0, 0, 0, .35); }
+.p-aviso-dlg::backdrop { background: rgba(20, 34, 90, .45); }
+.p-aviso-f { padding: 20px 22px; display: grid; gap: 10px; background: #fff; color: #1d2433; }
+.p-aviso-f h2 { margin: 0; font-size: 20px; }
+.p-aviso-f textarea { width: 100%; box-sizing: border-box; font: 15px/1.45 inherit; padding: 10px; border: 1px solid #ccd; border-radius: 10px; resize: vertical; }
+.p-aviso-lista { max-height: 50vh; overflow: auto; border: 1px solid #ccd; border-radius: 10px; padding: 6px 10px; }
+.p-aviso-lista summary { cursor: pointer; padding: 4px 0; font-weight: 700; }
+.p-aviso-lista pre { white-space: pre-wrap; font: 14px/1.45 inherit; margin: 4px 0 10px; background: #f6f7fb; padding: 8px 10px; border-radius: 8px; }
+.aviso-profe { margin: 0 0 18px; padding: 14px 16px; border-left: 6px solid #e07a1f; background: #fff6ec; border-radius: 10px; color: #1d2433; }
+.aviso-profe p { margin: 8px 0 10px; line-height: 1.5; }
