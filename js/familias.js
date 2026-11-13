@@ -85,7 +85,7 @@ window.Familias = (function () {
           const medias = P.mediasInd([a], c);
           return `<section class="f-hijo">
             <h2 class="sa-tit">${esc(`${h.nombre || ""} ${h.apellidos || ""}`.trim())} · ${esc(window.normGrupo ? window.normGrupo(h.clase) : h.clase)}</h2>
-            <div class="p-resumen">${P.RINC.map((r) => `<div style="--rc:${r.color}"><b>${r.nombre}</b><span>${res[r.id].media === null ? "–" : res[r.id].media}</span><small>${res[r.id].hechas} de ${res[r.id].total} indicadores con nota${r.id === "crea" ? ` · ✓ ${res.crea.retos}/${res.crea.nRetos} retos terminados` : ""}</small></div>`).join("")}</div>
+            <div class="p-resumen">${P.RINC.map((r) => `<div style="--rc:${r.color}"><b>${r.nombre}</b><span>${res[r.id].hechas}/${res[r.id].total}</span><small>indicadores con nota${r.id === "crea" ? ` · ✓ ${res.crea.retos}/${res.crea.nRetos} retos terminados` : ""}</small></div>`).join("")}</div>
             ${P.RINC.map((r) => {
               const acts = cat.filter((x) => x.rincon === r.id && x.inds.length);
               return `<details class="p-rincon"><summary style="color:${r.color}">${r.nombre}</summary>

@@ -104,6 +104,7 @@ window.Rincones = (function () {
       </form>
     </div></section>
     <section class="seccion" style="padding-top:0"><div class="envoltura">
+      <div id="r-avisos"></div>
       <span class="etiqueta">Paso 2</span>
       <h2>Elige un rincón</h2>
       <div class="rincones" id="r-lista"></div>
@@ -124,7 +125,26 @@ window.Rincones = (function () {
     if (window.ListaAlumnos) window.ListaAlumnos.montar(n, c, u);
     if (window.Acceso) window.Acceso.montar($("#r-form"), { clase: c, nombre: n, usuario: u });
     ok();
+    avisosVistos = ""; mostrarAvisos();
   }
+  /* ---------- Avisos del profe (lo que le falta y lo que tiene con 2 o menos) ----------
+     Se ven en la portada al entrar con la contraseña, hasta que el alumno pulsa «Entendido». */
+  let avisosVistos = "";
+  async function mostrarAvisos() {
+    const ses = window.Acceso && window.Acceso.sesion ? window.Acceso.sesion() : null, R = window.REGISTRO || {};
+    if (!$("#r-avisos") || !ses || !ses.token || !R.url || avisosVistos === ses.usuario) return;
+    avisosVistos = ses.usuario;
+    const llamar = (o) => fetch(R.url, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify(Object.assign({ usuario: ses.usuario, token: ses.token }, o)) }).then((r) => r.text()).then((t) => JSON.parse(t));
+    let j; try { j = await llamar({ accion: "alumnoAvisos" }); } catch (e) { return; }
+    const zona = $("#r-avisos");
+    if (!zona || !j || !j.ok || !(j.avisos || []).length) return;
+    zona.innerHTML = j.avisos.map((x) => `<div class="aviso-profe" role="status"><b>📣 Mensaje de tu profe${x.fecha && !isNaN(new Date(x.fecha)) ? " · " + new Date(x.fecha).toLocaleDateString("es-ES") : ""}</b>
+      <p>${esc(x.texto).replace(/\n/g, "<br>")}</p><button type="button" class="btn sec" data-id="${esc(x.id)}">Entendido</button></div>`).join("");
+    zona.querySelectorAll("button[data-id]").forEach((b) => b.onclick = () => { b.closest(".aviso-profe").remove(); llamar({ accion: "avisoLeido", id: b.dataset.id }).catch(() => {}); });
+  }
+  // Al entrar con la contraseña en la portada (Acceso guarda la sesión y avisa con «alumno-cambiado»).
+  window.addEventListener("alumno-cambiado", () => { if (!location.hash || location.hash === "#" || location.hash === "#inicio") setTimeout(mostrarAvisos, 50); });
+
   function pintarTarjetas() {
     const l = $("#r-lista"); if (!l) return;
     l.innerHTML = RINCONES.map((r) => {
@@ -133,7 +153,7 @@ window.Rincones = (function () {
         <div class="rincon-ico" aria-hidden="true">${r.icono}</div>
         <h3>${r.nombre}</h3>
         <p>${r.texto}</p>
-        <div class="rincon-dato">${k.crea ? `${k.hechas} de ${k.total} retos terminados` : `${k.hechas} de ${k.total} indicadores con nota${k.hechas ? ` · media ${k.media}` : ""}`}</div>
+        <div class="rincon-dato">${k.crea ? `${k.hechas} de ${k.total} retos terminados` : `${k.hechas} de ${k.total} indicadores con nota`}</div>
         <div class="rincon-acc"><a class="btn" href="${r.ir}">${r.accion}</a>${r.notas ? `<a class="btn sec" href="${r.notas}">${r.notasTxt || "Mis notas"}</a>` : ""}</div>
       </article>`;
     }).join("");
@@ -437,10 +457,14 @@ window.Rincones = (function () {
     const mapa = new Map();
     filas.forEach((f) => {
       if (!f.destino || !f.clave) return;
-      const k = f.grupo + "|" + f.destino;
-      if (!mapa.has(k)) mapa.set(k, { grupo: f.grupo, destino: f.destino, actividad: f.actividad || f.destino, notas: [], total: 0, registradas: 0 });
+      // Programa: una insignia por aventura; Robótica: una por modalidad (Robot, SPIKE Essential, SPIKE Prime).
+      const porAventura = f.grupo === "prog" || f.grupo === "rob";
+      const nomAv = String(f.actividad || "").split(" · ")[0];
+      const k = porAventura ? f.grupo + "|" + nomAv : f.grupo + "|" + f.destino;
+      if (!mapa.has(k)) mapa.set(k, { grupo: f.grupo, destino: porAventura ? String(f.destino) : f.destino, actividad: porAventura ? (f.grupo === "prog" ? "Aventura " + nomAv : "Robótica · " + nomAv) : (f.actividad || f.destino), aventura: porAventura, notas: [], total: 0, registradas: 0, superadas: 0 });
       const g = mapa.get(k), r = registros[f.clave];
       g.total++;
+      if (porAventura) { if (r && typeof r.nota === "number" && r.nota >= 3) g.superadas++; return; }
       if (r && typeof r.nota === "number") { g.notas.push(r.nota); g.registradas++; }
       // Crea: el alumno no tiene nota propia (la pone el profe); la insignia se gana al terminar el reto.
       else if (f.grupo === "crea" && r && r.hecho) { g.registradas++; g.hechoCrea = true; }
@@ -449,6 +473,7 @@ window.Rincones = (function () {
     const resultado = Array.from(mapa.values()).map((g) => {
       const media = g.notas.length ? g.notas.reduce((x,y)=>x+y,0)/g.notas.length : 0;
       const completa = g.total > 0 && g.registradas === g.total;
+      if (g.aventura) return Object.assign(g, { media: 5, completa: g.superadas === g.total, ganada: g.total > 0 && g.superadas === g.total });
       if (g.hechoCrea) return Object.assign(g, { media: 5, completa, crea: true, ganada: completa });
       return Object.assign(g, { media: Math.round(media*10)/10, completa, ganada: completa && media >= 2.5 });
     });
@@ -470,8 +495,8 @@ window.Rincones = (function () {
         return `<h2 class="sa-tit">${grupoNombre[id]}</h2><div class="insignias-grid">${items.map(x=>`
           <article class="insignia ${x.ganada?"ganada":"pendiente"}">
             <div class="insignia-sello">${x.ganada?"🏅":"🔒"}</div>
-            <h3>${esc(x.actividad)}</h3><p>${x.crea?"Reto terminado":x.completa?`Media: ${x.media.toFixed(1)} / 5`:x.grupo==="crea"?"Termina el reto para conseguirla":"Pendiente de completar las valoraciones"}</p>
-            <span>${x.ganada?"¡Insignia conseguida!":x.completa?"Necesitas una media de 2,5":"Aún no conseguida"}</span>
+            <h3>${esc(x.actividad)}</h3><p>${x.aventura?`${x.superadas} de ${x.total} ${x.grupo==="prog"?"pantallas superadas":"retos superados"}`:x.crea?"Reto terminado":x.completa?`Media: ${x.media.toFixed(1)} / 5`:x.grupo==="crea"?"Termina el reto para conseguirla":"Pendiente de completar las valoraciones"}</p>
+            <span>${x.ganada?"¡Insignia conseguida!":x.aventura?`Supera ${x.grupo==="prog"?"todas las pantallas de la aventura":"todos los retos de esta modalidad"}`:x.completa?"Necesitas una media de 2,5":"Aún no conseguida"}</span>
           </article>`).join("")}</div>`;
       }).join("")}
       <div class="pasaporte-final ${todas?"desbloqueado":"bloqueado"}">
@@ -489,7 +514,7 @@ window.Rincones = (function () {
     w.document.write(`<!doctype html><html lang="es"><head><meta charset="utf-8"><title>Pasaporte Rumbo a Europa</title>
     <style>body{font-family:Arial,sans-serif;color:#173b62;margin:25px}.pas{border:8px double #b78a36;border-radius:18px;padding:28px;text-align:center;min-height:850px}h1{font-size:34px;margin:12px}h2{color:#b78a36}.nombre{font-size:24px;border-bottom:1px solid #aaa;padding:14px}.sellos{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin:28px 0}.sello{border:2px solid #b78a36;border-radius:14px;padding:16px;min-height:90px}.emoji{font-size:32px}.pie{margin-top:40px}@media print{button{display:none}}</style></head><body>
     <main class="pas"><h2>CEIP TIERRA DE PINARES</h2><h1>🌍 PASAPORTE</h1><h2>RUMBO A EUROPA</h2><p class="nombre">${esc(a.nombre||"")} · ${esc(a.clase||"")}</p>
-    <h2>Mis insignias de aprendizaje</h2><div class="sellos">${lista.map(x=>`<div class="sello"><div class="emoji">🏅</div><b>${esc(x.actividad)}</b><p>${x.crea?"Reto terminado":`Media ${x.media.toFixed(1)} / 5`}</p></div>`).join("")}</div>
+    <h2>Mis insignias de aprendizaje</h2><div class="sellos">${lista.map(x=>`<div class="sello"><div class="emoji">🏅</div><b>${esc(x.actividad)}</b><p>${x.aventura?(x.grupo==="prog"?"Aventura completada":"Modalidad completada"):x.crea?"Reto terminado":`Media ${x.media.toFixed(1)} / 5`}</p></div>`).join("")}</div>
     <h2>¡MISIÓN CUMPLIDA!</h2><p>Explorador/a digital de Europa</p><p class="pie">Fecha: ${new Date().toLocaleDateString("es-ES")}</p></main><script>window.onload=()=>window.print();</script></body></html>`);
     w.document.close();
   }
