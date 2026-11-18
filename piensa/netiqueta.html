@@ -212,8 +212,8 @@ footer{color:var(--muted);font-size:.85rem;text-align:center}
       </div>
       <div class="indic"><b class="t">Indicadores de logro · Programación de TIAC</b>
         <div class="cols">
-          <div><h4>5.º de Primaria</h4><ul><li><span class="crit">Crit. 2.1</span><b>2.1.2</b> Deja en el blog BiblioPini o en La Piña 3.0 un comentario respetuoso, pertinente y bien escrito sobre una entrada. <span class="do">(CCL5 · CCEC3)</span></li><li><span class="crit">Crit. 2.1</span><b>2.1.4</b> Participa en Teams (publicaciones, chat y tareas) con mensajes respetuosos y pertinentes y entrega las tareas con el archivo adjunto correcto. <span class="do">(CCL5 · CPSAA3)</span></li></ul></div>
-          <div><h4>6.º de Primaria</h4><ul><li><span class="crit">Crit. 2.1</span><b>2.1.3</b> Aplica la netiqueta en chats, correos y videollamadas: saluda, pide por favor, no grita en mayúsculas, pide turno y pide permiso antes de compartir imágenes de otros. <span class="do">(CPSAA3 · CC1)</span></li></ul></div>
+          <div><h4>5.º de Primaria</h4><ul><li><span class="crit">Crit. 2.1</span><b>2.1.2</b> Deja en el blog BiblioPini o en La Piña 3.0 un comentario respetuoso, pertinente y bien escrito sobre una entrada. <span class="do">(CCL5 · CPSAA4 · CCEC3)</span></li><li><span class="crit">Crit. 2.1</span><b>2.1.4</b> Participa en Teams (publicaciones, chat y tareas) con mensajes respetuosos y pertinentes y entrega las tareas con el archivo adjunto correcto. <span class="do">(CCL5 · CPSAA3 · CC1 · CCEC3)</span></li></ul></div>
+          <div><h4>6.º de Primaria</h4><ul><li><span class="crit">Crit. 2.1</span><b>2.1.3</b> Aplica la netiqueta en chats de TEAMS, correos y videollamadas: saluda, pide por favor, no grita en mayúsculas, pide turno y pide permiso antes de compartir imágenes de otros, escribe con educación…. <span class="do">(CPSAA3 · CC1 · CCEC3)</span></li></ul></div>
         </div>
       </div><!--/indic-->
     </div>
@@ -454,7 +454,7 @@ init();show(location.hash.slice(1));
 
 
 /* ---------- Valoración de indicadores y llave ---------- */
-const VAL_CFG={"pre": "NET", "i5": [["2.1.2", [1], "Deja en el blog BiblioPini o en La Piña 3.0 un comentario respetuoso, pertinente y bien escrito sobre una entrada.", "CCL5 · CCEC3"], ["2.1.4", [0, 3], "Participa en Teams (publicaciones, chat y tareas) con mensajes respetuosos y pertinentes y entrega las tareas con el archivo adjunto correcto.", "CCL5 · CPSAA3"]], "i6": [["2.1.3", [0, 1, 2, 3], "Aplica la netiqueta en chats, correos y videollamadas: saluda, pide por favor, no grita en mayúsculas, pide turno y pide permiso antes de compartir imágenes de otros.", "CPSAA3 · CC1"]], "vid": 4, "exam": 5};
+const VAL_CFG={"pre": "NET", "i5": [["2.1.2", [1], "Deja en el blog BiblioPini o en La Piña 3.0 un comentario respetuoso, pertinente y bien escrito sobre una entrada.", "CCL5 · CPSAA4 · CCEC3"], ["2.1.4", [0, 3], "Participa en Teams (publicaciones, chat y tareas) con mensajes respetuosos y pertinentes y entrega las tareas con el archivo adjunto correcto.", "CCL5 · CPSAA3 · CC1 · CCEC3"]], "i6": [["2.1.3", [0, 1, 2, 3], "Aplica la netiqueta en chats de TEAMS, correos y videollamadas: saluda, pide por favor, no grita en mayúsculas, pide turno y pide permiso antes de compartir imágenes de otros, escribe con educación….", "CPSAA3 · CC1 · CCEC3"]], "vid": 4, "exam": 5};
 function valRows(){return typeof informeRows==='function'?informeRows():Object.values(R)}
 function valScore(rows,idx){let ok=0,max=0,att=false;idx.forEach(i=>{const r=rows[i];if(!r)return;ok+=r.ok;max+=r.max;if(r.ok>0||r.done)att=true});return att?Math.max(1,Math.round(5*ok/(max||1))):0}
 function valAll(){const rows=valRows();return {rows,s5:VAL_CFG.i5.map(x=>valScore(rows,x[1])),s6:VAL_CFG.i6.map(x=>valScore(rows,x[1]))}}

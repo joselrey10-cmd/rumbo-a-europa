@@ -49,8 +49,8 @@
       "3.2.1": "Pone flechas en orden para que Pini llegue a la bandera en las primeras pantallas de Programa (Madrid, Lisboa, París y Roma).", // 1.º 3.2.1
       "3.2.2": "Ordena flechas, giros y saltos para llegar a la bandera y recoger los sellos ⭐ (pantallas 5 a 10 de Programa) y prueba su programa.", // 1.º 3.2.1
       "3.2.3": "Programa el robot con flechas (adelante, atrás y girar) para ir de un país a otro del tapete (retos 1 a 4 de Robótica).", // 1.º 3.2.2
-      "3.2.4": "Pulsa una tecla o un botón y mira qué pasa en el programa (code.org, con ayuda).", // 1.º 3.2.1
-      "3.2.5": "Repite un camino corto con flechas en code.org hasta conseguirlo.", // 1.º 3.2.1
+      "3.2.4": "Hace con ayuda un camino largo con flechas y lo repite hasta conseguirlo.", // 1.º 3.2.1
+      "3.2.5": "Elige con ayuda qué hacer si hay algo en el camino (saltar o girar) y lo prueba.", // 1.º 5.1.2
       "3.2.6": "Programa con flechas un viaje del robot por varios países en orden (retos 5 a 10 de Robótica) y lo vuelve a probar si se equivoca.", // 1.º 3.2.2
       "3.2.7": "Ve su nombre en la micro:bit con ayuda.", // 1.º 3.2.1
       "3.2.8": "Agita la micro:bit y mira qué pasa, con ayuda.", // 1.º 3.2.1
@@ -58,6 +58,7 @@
       "3.3.1": "Utiliza en su ficha o su correo imágenes con licencia Creative Commons que le da el docente.", // 1.º 3.3.1
       "3.3.2": "Usa en su cartel un dibujo o una imagen de las que le da el docente.", // 1.º 3.3.1
       "3.3.3": "Usa en su grabación una música que le da el docente.", // 1.º 3.3.1
+      "3.3.4": "Participa con ayuda en el grupo de radio diciendo una frase corta.", // 1.º 2.1.1
       "3.4.1": "Reconoce, con ayuda, si una imagen se puede usar libremente (símbolo CC).", // 1.º 3.3.2
       "3.4.2": "Reconoce el símbolo CC en su grabación o en un trabajo, con ayuda.", // 1.º 3.3.2
       "4.1.1": "Memoriza su contraseña, sabe que es secreta y no la dice a nadie.", // 1.º 4.1.1-4.1.2

@@ -481,7 +481,7 @@ window.Profe = (function () {
   function autoTabla(a, c) {
     const k = Object.keys(a.auto || {});
     const frases = Object.assign({}, (window.AUTOEVAL || {})[c] || {}, esAC(a) ? (window.AUTOEVAL_AC || {})[c] || {} : {}), ESC = window.ESCALA_AUTO || [];
-    if (!k.length) return `<details class="p-rincon"><summary style="color:#14225a">Autoevaluación</summary><p class="intro">Todavía no ha hecho la autoevaluación de Programa y Robótica.</p></details>`;
+    if (!k.length) return `<details class="p-rincon"><summary style="color:#14225a">Autoevaluación</summary><p class="intro">Todavía no ha hecho ninguna autoevaluación (Crea, Programa o Robótica).</p></details>`;
     const fecha = a.autoFecha && !isNaN(new Date(a.autoFecha)) ? ` · ${new Date(a.autoFecha).toLocaleDateString("es-ES")}` : "";
     return `<details class="p-rincon" open><summary style="color:#14225a">Autoevaluación del alumno${fecha}</summary>
       <div class="tabla-scroll"><table class="p-tabla"><thead><tr><th>Rincón</th><th>Lo que dice que sabe hacer</th><th>0-5</th></tr></thead><tbody>

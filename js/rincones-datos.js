@@ -22,6 +22,7 @@ window.CREA = {
    "extra": "Entra en BiblioPini y deja un comentario en una entrada.",
    "ind": [
     "1.1.1",
+    "1.1.3",
     "2.1.2",
     "2.3.1",
     "3.3.1",
@@ -40,6 +41,7 @@ window.CREA = {
    ],
    "extra": "Entra en La Piña 3.0 y deja un comentario en una entrada.",
    "ind": [
+    "1.1.5",
     "1.2.1",
     "2.1.1",
     "2.1.2",
@@ -133,6 +135,7 @@ window.CREA = {
     "1.1.1",
     "1.1.2",
     "1.1.4",
+    "2.1.3",
     "2.3.1",
     "3.3.1"
    ]
@@ -169,8 +172,10 @@ window.CREA = {
    "extra": "Sube la tabla de Excel a OneDrive (carpeta de TIAC del curso, nueva carpeta «Excel»).",
    "ind": [
     "1.1.2",
+    "2.1.3",
     "2.3.2",
-    "3.1.1"
+    "3.1.1",
+    "4.1.2"
    ]
   },
   {
@@ -187,7 +192,7 @@ window.CREA = {
    "ind": [
     "2.2.2",
     "3.1.2",
-    "3.1.4",
+    "3.3.1",
     "3.4.1"
    ]
   },
@@ -287,7 +292,7 @@ window.PIENSA = [
    ],
    [
     "4.1.2",
-    "Inicia sesión en Code.org y MakeCode con su cuenta Microsoft de Educacyl y la cierra al terminar sin dejar sus credenciales a la vista."
+    "Inicia sesión en MakeCode con su cuenta Microsoft de Educacyl y la cierra al terminar sin dejar sus credenciales a la vista."
    ]
   ],
   "i6": [
@@ -310,7 +315,7 @@ window.PIENSA = [
   "i5": [
    [
     "2.1.1",
-    "Redacta la carta al consulado en un correo de Educacyl con destinatario, asunto, saludo, cuerpo y despedida, desde la plantilla o con texto propio según su ruta, y lee los iconos y las palabras en inglés del correo (clip de adjuntar, Send, Reply, Forward) para usarlos correctamente."
+    "Redacta la carta/mail al “consulado” en un correo de Educacyl con destinatario, asunto, saludo, cuerpo y despedida, desde la plantilla o con texto propio según su ruta, y lee los iconos y las palabras en inglés del correo (clip de adjuntar, Send, Reply, Forward) para usarlos correctamente."
    ],
    [
     "2.2.1",
@@ -360,7 +365,7 @@ window.PIENSA = [
   "i6": [
    [
     "2.1.3",
-    "Aplica la netiqueta en chats, correos y videollamadas: saluda, pide por favor, no grita en mayúsculas, pide turno y pide permiso antes de compartir imágenes de otros."
+    "Aplica la netiqueta en chats de TEAMS, correos y videollamadas: saluda, pide por favor, no grita en mayúsculas, pide turno y pide permiso antes de compartir imágenes de otros, escribe con educación…."
    ]
   ],
   "sa5": "ExtraTIC",
@@ -565,7 +570,9 @@ window.PIENSA = [
 window.AUTOEVAL = {
   "5º": {
     "3.2.1": "Programo secuencias de direcciones y giros para llegar a la meta y digo los pasos en voz alta antes de ejecutar.",
-    "3.2.2": "Uso bucles (repetir) en lugar de repetir bloques, y condiciones cuando hacen falta.",
+    "3.2.2": "Uso bucles (repetir) en lugar de repetir bloques.",
+    "3.2.4": "Uso bucles con giros, y bucles dentro de bucles, para hacer caminos largos con pocos bloques.",
+    "3.2.5": "Uso «Si» y «Repetir hasta llegar» para que mi programa decida solo.",
     "3.2.3": "Programo el robot para ir de un sitio a otro del tablero, midiendo antes los avances y los giros.",
     "3.2.6": "Planifico la ruta en el tablero, la programo y la amplío a ida y vuelta reutilizando el programa.",
     "3.2.9": "Mido distancias y calculo avances y giros para programar con SPIKE la ruta de vuelta."

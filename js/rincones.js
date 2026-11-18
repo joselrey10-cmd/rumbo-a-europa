@@ -161,6 +161,10 @@ window.Rincones = (function () {
 
   /* ---------- Crea ---------- */
   function pintarCrea() {
+    if (!pintarCrea.sync) { pintarCrea.sync = true; Autoeval.sincronizar().then(() => { pintarCrea.sync = false; if (location.hash === "#crea") pintarCreaYa(); }); }
+    return pintarCreaYa();
+  }
+  function pintarCreaYa() {
     const r = RINCONES[0], lista = crea();
     const porSA = {};
     lista.forEach((a, i) => (porSA[a.sa] = porSA[a.sa] || []).push(i));
@@ -183,7 +187,7 @@ window.Rincones = (function () {
   }
   function tarjetaCreaAC(a, i) {
     const x = a.ac, lista = crea(), h = V().leer()[claveHecho(a)] || {};
-    if (i > 0 && !hecho(lista[i - 1])) {
+    if (i > 0 && !hecho(a) && !hecho(lista[i - 1])) {
       return `<article class="reto-r bloqueado ac-reto" data-tipo="crea" data-i="${i}"><div class="reto-r-cab"><span class="ses">${a.sa} · ${a.s}</span><h3>🔒 ${esc(x.facil)}</h3></div>
         <p class="aviso-bloq">Primero termina: <b>${esc(lista[i - 1].ac ? lista[i - 1].ac.facil : lista[i - 1].titulo)}</b>.</p></article>`;
     }
@@ -201,14 +205,42 @@ window.Rincones = (function () {
         : `<div class="enviar-fila"><button type="button" class="btn terminar">✅ He terminado</button><span class="estado" aria-live="polite"></span></div>`}
     </article>`;
   }
+  /* Desbloqueo de Crea (18-nov): el reto siguiente se abre cuando el anterior está terminado, tiene su
+     autoevaluación y la media de las notas que ha puesto el profe en sus indicadores es 2,5 o más.
+     Un reto ya terminado nunca se vuelve a cerrar. */
+  let notasNube = null, notasNubeDe = ""; // notas de la hoja (Valoraciones) del alumno con sesión; null = sin comprobar
+  function mediaCrea(a) {
+    const s = window.Acceso && window.Acceso.sesion ? window.Acceso.sesion() : null;
+    if (!notasNube || !s || notasNubeDe !== s.usuario) return null;
+    const pre = String(destinoCrea(a)).slice(0, 60) + " · Ind. ";
+    const v = Object.keys(notasNube).filter((k) => k.indexOf(pre) === 0).map((k) => Number(notasNube[k])).filter((n) => Number.isFinite(n));
+    return v.length ? { media: Math.round(v.reduce((x, y) => x + y, 0) / v.length * 100) / 100, n: v.length } : { media: null, n: 0 };
+  }
+  // Qué falta para abrir el reto i (o "" si está abierto).
+  function bloqueoCrea(i) {
+    const lista = crea(), a = lista[i], prev = lista[i - 1];
+    if (i === 0 || hecho(a)) return "";
+    if (!hecho(prev)) return `Se abre cuando termines el reto anterior: <b>${esc(prev.titulo)}</b>.`;
+    if (!Autoeval.hecha(Autoeval.etapaCrea(prev).etapa))
+      return `Haz tu autoevaluación del reto anterior (<b>${esc(prev.titulo)}</b>). <button type="button" class="btn sec ae-crea" data-i="${i - 1}">Hacer mi autoevaluación</button>`;
+    if (window.ADAPTADO) return "";
+    const s = window.Acceso && window.Acceso.sesion ? window.Acceso.sesion() : null;
+    if (!s) return `Entra con tu contraseña en <a href="#">Rincones</a> para comprobar tus notas.`;
+    const m = mediaCrea(prev);
+    if (!m) return "Comprobando tus notas…";
+    if (!m.n) return `Tu profe todavía no ha puesto la nota de <b>${esc(prev.titulo)}</b>. Se abre cuando tengas una media de 2,5 o más.`;
+    if (m.media < 2.5) return `Necesitas una media de 2,5 en <b>${esc(prev.titulo)}</b> y tienes ${String(m.media).replace(".", ",")}. Mira en «Mis notas» lo que te dice tu profe, mejora el reto y pídele que lo vuelva a corregir.`;
+    return "";
+  }
   function tarjetaCrea(a, i) {
     if (window.ADAPTADO && a.ac) return tarjetaCreaAC(a, i);
     const lista = crea(), h = V().leer()[claveHecho(a)] || {};
-    if (i > 0 && !hecho(lista[i - 1])) {
+    const bloq = bloqueoCrea(i);
+    if (bloq) {
       return `<article class="reto-r bloqueado" data-tipo="crea" data-i="${i}">
       <div class="reto-r-cab"><span class="ses">${a.sa} · ${a.s}</span><h3>🔒 ${esc(a.titulo)}</h3></div>
       <p>${esc(a.que)}</p>
-      <p class="aviso-bloq">Se abre cuando termines el reto anterior: <b>${esc(lista[i - 1].titulo)}</b>.</p>
+      <p class="aviso-bloq">${bloq}</p>
     </article>`;
     }
     const rutaGuardada = h.ruta || (V().leer()[`crea-ruta-${cursoN()}-${a.sa}-${a.s}`] || {}).ruta;
@@ -332,6 +364,8 @@ window.Rincones = (function () {
         preguntas: q.preguntas.map((x) => x[0]), archivo: `Ficha ${a.sa} ${a.s} ${paisAC()}${al.nombre ? " " + al.nombre : ""}`.replace(/[\\/:*?"<>|]/g, "") });
       return;
     }
+    const aeb = e.target.closest(".ae-crea");
+    if (aeb) { await Autoeval.asegurar(Autoeval.etapaCrea(crea()[+aeb.dataset.i])); pintarCrea(); return; }
     const fl = e.target.closest(".ac-flag");
     if (fl) { try { localStorage.setItem("rumbo-pais-ac", fl.dataset.pais); } catch (x) {} pintarCrea(); return; }
     const chip = e.target.closest(".chips button, .rutas .ruta");
@@ -408,6 +442,7 @@ window.Rincones = (function () {
       V().registrar(claveHecho(a), Object.assign({ nota: "✓ Terminado", hecho: true, ruta, pantalla: "Crea", actividad: a.titulo }, respuestas ? { respuestas } : {}), true);
       await V().enviar({ destino: destinoCrea(a), ciudad: a.titulo, personaje: "Crea", programa: "Terminado · " + ruta });
       pintarCrea();
+      if (!window.ADAPTADO) { await Autoeval.asegurar(Autoeval.etapaCrea(a)); pintarCrea(); }
       const sig = raiz.querySelector(`.reto-r[data-i="${+caja.dataset.i + 1}"]`);
       if (sig) sig.scrollIntoView({ behavior: "smooth", block: "center" });
       return;
@@ -452,6 +487,15 @@ window.Rincones = (function () {
 
 
   /* ---------- Insignias y pasaporte final ---------- */
+  /* Una pantalla de Programa o un reto de Robótica cuenta como superado si el servidor lo tiene completado
+     (progreso guardado en la hoja), si tiene nota 3 o más, o si tiene una nota con decimales: así se guardaban
+     las pantallas del 10-nov en 6ºB (0,29; 0,59…) y por eso no les salía la insignia aunque las habían pasado. */
+  function superada(f, r) {
+    const RC = window.RetosCadena, m = /^prog-(\d+)$/.exec(f.clave) || /^rob-(\w+)-(\d+)$/.exec(f.clave);
+    if (RC && RC.hecho && m) { if (m.length === 2 ? RC.hecho("programa", +m[1]) : RC.hecho("robot-" + m[1], +m[2])) return true; }
+    if (!r || typeof r.nota !== "number") return false;
+    return r.nota >= 3 || (r.nota > 0 && r.nota !== Math.round(r.nota));
+  }
   function datosInsignias() {
     const a = V().alumno(), registros = V().leer(), filas = V().filas();
     const mapa = new Map();
@@ -464,7 +508,7 @@ window.Rincones = (function () {
       if (!mapa.has(k)) mapa.set(k, { grupo: f.grupo, destino: porAventura ? String(f.destino) : f.destino, actividad: porAventura ? (f.grupo === "prog" ? "Aventura " + nomAv : "Robótica · " + nomAv) : (f.actividad || f.destino), aventura: porAventura, notas: [], total: 0, registradas: 0, superadas: 0 });
       const g = mapa.get(k), r = registros[f.clave];
       g.total++;
-      if (porAventura) { if (r && typeof r.nota === "number" && r.nota >= 3) g.superadas++; return; }
+      if (porAventura) { if (superada(f, r)) g.superadas++; return; }
       if (r && typeof r.nota === "number") { g.notas.push(r.nota); g.registradas++; }
       // Crea: el alumno no tiene nota propia (la pone el profe); la insignia se gana al terminar el reto.
       else if (f.grupo === "crea" && r && r.hecho) { g.registradas++; g.hechoCrea = true; }
@@ -532,6 +576,7 @@ window.Rincones = (function () {
         const cab = j.cab || [], fila = j.fila || [];
         // Notas de la hoja por columna (las columnas con la numeración antigua de Programa se pasan a la de ahora).
         const notasHoja = window.Profe && window.Profe.notasDe ? window.Profe.notasDe(cab, fila, V().curso()) : {};
+        notasNube = notasHoja; notasNubeDe = ses.usuario;
         // Rehidrata las notas que están guardadas en Google Sheets en el almacenamiento local.
         V().filas().forEach(x => {
           const col = String(x.destino).slice(0,60) + " · Ind. " + x.codigo;
@@ -586,6 +631,151 @@ window.Rincones = (function () {
     }
   }
 
+  /* ---------- Autoevaluaciones obligatorias (18-nov) ----------
+     Cada etapa terminada pide su autoevaluación antes de seguir:
+       · Crea: cada reto ("crea-<curso>-<SA>-<S>"); sin ella no se abre el reto siguiente.
+       · Programa: cada aventura ("prog-av0/1/2"); sin ella no se abre la aventura siguiente (también lo comprueba el script).
+       · Robótica: cada modalidad terminada ("rob-robot/essential/prime"); sin ella no se empieza otra modalidad.
+     Y no se entra en otro rincón con autoevaluaciones pendientes de los demás.
+     Lo hecho se guarda en el script (accion autoevaluacion con etapa; accion autoevalEstado lo devuelve).
+     window.Autoeval también lo pueden usar otras actividades (hecha, pedir, asegurar, sincronizar). */
+  const Autoeval = (function () {
+    const LOCAL = "rumbo-autoeval-etapas";
+    let etapas = null, deQuien = "", cargando = null;
+    const ses = () => (window.Acceso && window.Acceso.sesion ? window.Acceso.sesion() : null);
+    const exento = () => !!window.ADAPTADO;
+    const locales = () => { try { return JSON.parse(localStorage.getItem(LOCAL) || "{}") || {}; } catch (e) { return {}; } };
+    function apuntar(etapa) {
+      const s = ses(); if (!s) return;
+      const o = locales(); (o[s.usuario] = o[s.usuario] || {})[etapa] = 1;
+      try { localStorage.setItem(LOCAL, JSON.stringify(o)); } catch (e) {}
+      if (etapas && deQuien === s.usuario) etapas[etapa] = 1;
+    }
+    // Devuelve las etapas hechas, o null si no se pueden comprobar (sin sesión o script sin actualizar): entonces no se bloquea nada.
+    function sincronizar(forzar) {
+      const s = ses(), R = window.REGISTRO || {};
+      if (!s || !s.token || !R.url) { etapas = null; deQuien = ""; return Promise.resolve(null); }
+      if (!forzar && etapas && deQuien === s.usuario) return Promise.resolve(etapas);
+      if (cargando) return cargando;
+      cargando = fetch(R.url, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify({ accion: "autoevalEstado", usuario: s.usuario, token: s.token }) })
+        .then((r) => r.text()).then((t) => {
+          const j = JSON.parse(t);
+          if (j && j.ok) { etapas = {}; (j.etapas || []).forEach((e) => { etapas[e] = 1; }); deQuien = s.usuario; Object.keys(locales()[s.usuario] || {}).forEach((e) => { etapas[e] = 1; }); }
+          return etapas;
+        }).catch(() => etapas).then((x) => { cargando = null; return x; });
+      return cargando;
+    }
+    function hecha(etapa) {
+      const s = ses();
+      if (!s || exento() || !etapas || deQuien !== s.usuario) return true;
+      return !!(etapas[etapa] || (locales()[s.usuario] || {})[etapa]);
+    }
+    // info = { etapa, titulo, rincon, codigos }. Abre la ventana y resuelve true cuando se envía (false si se cierra).
+    function pedir(info) {
+      return new Promise((resolver) => {
+        const viejo = document.getElementById("autoeval-velo"); if (viejo) viejo.remove();
+        const frases = (window.AUTOEVAL || {})[V().curso()] || {}, ESC = window.ESCALA_AUTO || ESCALA;
+        const cods = [...new Set(info.codigos || [])].filter(Boolean);
+        const velo = document.createElement("div");
+        velo.id = "autoeval-velo";
+        velo.setAttribute("style", "position:fixed;inset:0;z-index:9999;background:rgba(10,20,50,.55);display:flex;align-items:flex-start;justify-content:center;overflow:auto;padding:16px");
+        velo.innerHTML = `<article class="reto-r auto-r" role="dialog" aria-modal="true" aria-label="Autoevaluación" style="max-width:760px;width:100%;margin:24px auto;background:var(--fondo, #fff);color:inherit">
+          <div class="reto-r-cab"><span class="ses">Autoevaluación obligatoria</span><h3>${esc(info.titulo)}</h3></div>
+          <p>Antes de seguir, dinos cómo te ha ido. Elige de 0 a 5 en <b>cada</b> frase. Sé sincero o sincera: no cambia tu nota, sirve para que tu profe sepa en qué ayudarte.</p>
+          <ol class="escala escala-auto" start="0">${ESC.map((t, n) => `<li><button type="button" class="leer mini oir" data-oir="${esc(n + ". " + String(t).replace(/<[^>]+>/g, ""))}" aria-label="Escuchar">🔊</button> <b>${n}</b> ${t}</li>`).join("")}</ol>
+          <div class="inds">${cods.map((cod) => { const f = frases[cod] || textoInd(cod).replace(/^(?:[A-Z]+\d*(?: · )?)+:\s*/, ""); return `<div class="fila-ind"><div class="fila-ind-t"><button type="button" class="leer mini oir" data-oir="${esc(f)}" aria-label="Escuchar la frase">🔊</button> <span class="cod">Ind. ${esc(cod)}</span> <b>${esc(f)}</b></div>${chips(`autoe|${cod}`, null)}</div>`; }).join("")}</div>
+          <div class="enviar-fila"><button type="button" class="btn ae-enviar">Enviar mi autoevaluación</button><button type="button" class="btn sec ae-cerrar">Ahora no</button><span class="estado" aria-live="polite"></span></div>
+        </article>`;
+        document.body.appendChild(velo);
+        const caja = velo.querySelector("article");
+        const fin = (v) => { velo.remove(); resolver(v); };
+        velo.addEventListener("click", async (e) => {
+          const oir = e.target.closest(".oir");
+          if (oir) { if (window.LeerAC) window.LeerAC(oir.dataset.oir); return; }
+          const chip = e.target.closest(".chips button");
+          if (chip) { chip.parentElement.querySelectorAll("button").forEach((b) => b.setAttribute("aria-checked", String(b === chip))); return; }
+          if (e.target.closest(".ae-cerrar")) { fin(false); return; }
+          const env = e.target.closest(".ae-enviar"); if (!env) return;
+          const notas = leerChips(caja);
+          if (notas.length < cods.length) { estado(caja, "Te falta elegir de 0 a 5 en alguna frase.", "error"); return; }
+          const obj = {}; notas.forEach((n) => { obj[n.clave.split("|")[1]] = n.nota; });
+          env.disabled = true; estado(caja, "Enviando…", "");
+          const ok = await V().enviar({ accion: "autoevaluacion", rincon: info.rincon, etapa: info.etapa, notas: obj });
+          env.disabled = false;
+          if (!ok) { estado(caja, "No se ha podido enviar. Revisa la conexión y vuelve a pulsar.", "error"); return; }
+          apuntar(info.etapa);
+          estado(caja, "✓ Autoevaluación enviada. ¡Gracias!", "ok");
+          setTimeout(() => fin(true), 700);
+        });
+        const b = velo.querySelector(".chips button"); if (b) b.focus();
+      });
+    }
+    // true si ya está hecha (o no se puede comprobar); si no, la pide.
+    async function asegurar(info, forzar) {
+      if (!info || exento()) return true;
+      await sincronizar(!!forzar);
+      if (!forzar && hecha(info.etapa)) return true;
+      return pedir(info);
+    }
+    // Datos de cada etapa
+    const curso = () => V().curso();
+    function etapaPrograma(k) {
+      const av = (window.AVENTURAS || [])[k] || { nombre: "Aventura " + (k + 1), niveles: [] };
+      const ip = (window.INDICADOR_PROGRAMACION || {})[curso()] || {};
+      return { etapa: "prog-av" + k, titulo: `Programa · ${av.nombre}`, rincon: `Programa · ${av.nombre}`, codigos: av.niveles.map((n) => ip[n.ciudad]) };
+    }
+    function etapaRobotica(m) {
+      const M = ((window.Robotica || {}).MODOS || {})[m] || { nombre: m }, ir = ((window.INDICADOR_ROBOTICA || {})[curso()] || {})[m] || [];
+      return { etapa: "rob-" + m, titulo: `Robótica · ${M.nombre}`, rincon: `Robótica · ${M.nombre}`, codigos: ir };
+    }
+    function etapaCrea(a) {
+      return { etapa: `crea-${cursoN()}-${a.sa}-${a.s}`, titulo: `Crea · ${a.sa} ${a.s} · ${a.titulo}`, rincon: `Crea · ${a.sa} ${a.s}`, codigos: a.ind || [] };
+    }
+    // Etapas terminadas sin autoevaluación. rincon: "crea" | "prog" | "rob".
+    async function pendientes() {
+      if (exento() || !ses()) return [];
+      const RC = window.RetosCadena;
+      await Promise.all([sincronizar(), RC && RC.sincronizar ? RC.sincronizar() : null]);
+      if (!etapas) return [];
+      const out = [];
+      crea().forEach((a) => { if (hecho(a)) { const x = etapaCrea(a); if (!hecha(x.etapa)) out.push(Object.assign({ id: "crea" }, x)); } });
+      if (RC && RC.hecho) {
+        (window.AVENTURAS || []).forEach((av, k) => {
+          const base = (window.AVENTURAS || []).slice(0, k).reduce((s, x) => s + x.niveles.length, 0);
+          if (av.niveles.length && av.niveles.every((n, i) => RC.hecho("programa", base + i))) { const x = etapaPrograma(k); if (!hecha(x.etapa)) out.push(Object.assign({ id: "prog" }, x)); }
+        });
+        Object.keys((window.Robotica || {}).MODOS || {}).forEach((m) => {
+          let todos = true; for (let i = 0; i < 10; i++) if (!RC.hecho("robot-" + m, i)) todos = false;
+          if (todos) { const x = etapaRobotica(m); if (!hecha(x.etapa)) out.push(Object.assign({ id: "rob", modo: m }, x)); }
+        });
+      }
+      return out;
+    }
+    // Pide una tras otra las pendientes que cumplen filtro. true si quedan todas hechas.
+    async function revisar(filtro) {
+      const l = (await pendientes()).filter(filtro || (() => true));
+      for (const x of l) if (!(await pedir(x))) return false;
+      return true;
+    }
+    return { sincronizar, hecha, pedir, asegurar, pendientes, revisar, etapaPrograma, etapaRobotica, etapaCrea };
+  })();
+  window.Autoeval = Autoeval;
+  // Para entrar en un rincón hay que tener hechas las autoevaluaciones pendientes de los demás rincones.
+  const RINCON_DE = (h) => (/^#crea/.test(h) ? "crea" : /^#(programa|destino)/.test(h) ? "prog" : /^#robotica/.test(h) ? "rob" : /^#piensa/.test(h) ? "piensa" : "");
+  let rinconAnterior = "", revisando = false;
+  async function puertaRincon() {
+    const id = RINCON_DE(location.hash);
+    if (!id || id === rinconAnterior || revisando) { rinconAnterior = id || rinconAnterior; return; }
+    revisando = true;
+    try {
+      const ok = await Autoeval.revisar((x) => x.id !== id);
+      if (!ok && RINCON_DE(location.hash) === id) { alert("Para entrar en otro rincón tienes que hacer antes tu autoevaluación de lo que has terminado."); location.hash = ""; rinconAnterior = ""; return; }
+      rinconAnterior = id;
+    } finally { revisando = false; }
+  }
+  window.addEventListener("hashchange", puertaRincon);
+  window.addEventListener("load", () => setTimeout(puertaRincon, 800));
+
   /* ---------- Rutas ---------- */
   function ruta(hash) {
     const h = hash || "";
@@ -595,7 +785,7 @@ window.Rincones = (function () {
     else if (h === "#piensa") pintarPiensa();
     else if (h === "#notas-prog") pintarNotas("prog");
     else if (h === "#notas-rob") pintarNotas("rob");
-    else if (h === "#insignias") { pintarInsignias(); recuperarProgresoNube().then(() => { if (location.hash === "#insignias") pintarInsignias(); }); }
+    else if (h === "#insignias") { pintarInsignias(); Promise.all([recuperarProgresoNube(), window.RetosCadena && window.RetosCadena.sincronizar ? window.RetosCadena.sincronizar(true) : null]).then(() => { if (location.hash === "#insignias") pintarInsignias(); }); }
     else if (h === "#mis-notas") { pintarMisNotas(); }
     else if (h === "#profe" && window.Profe) window.Profe.pintar(raiz);
     else if (h === "#familias" && window.Familias) window.Familias.pintar(raiz);

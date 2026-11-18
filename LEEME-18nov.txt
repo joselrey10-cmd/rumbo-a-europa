@@ -1,0 +1,20 @@
+ACTUALIZACIÓN 18-nov · Indicadores, insignias, Crea con media 2,5 y autoevaluaciones obligatorias
+=====================================================================================================
+
+ORDEN (importante):
+1) PRIMERO el script: abre el proyecto de script.google.com (cuenta rumboaeuropa@), pega entero
+   script-completo-APPS-SCRIPT-18nov.txt (cambia CLAVE_PROFE por tu clave de siempre) →
+   Implementar → Gestionar implementaciones → lápiz → Nueva versión → Implementar.
+2) DESPUÉS sube a GitHub (raíz del repo) todo lo de esta carpeta respetando las carpetas js/ y piensa/.
+
+Qué cambia:
+- Indicadores de las programaciones de TIAC (57 de 5.º y 42 de 6.º): indicadores.js, rincones-datos.js,
+  adaptacion.js y las 10 actividades de piensa/. (Era el paquete del 12-nov, que no llegó a subirse.)
+- Insignias de Programa y Robótica: una pantalla cuenta como superada si el servidor la tiene completada.
+  En 6.ºB las pantallas del 10-nov tenían notas con decimales (0,29; 0,59…) y por eso no salía la insignia.
+- Crea: el reto siguiente se abre cuando el anterior está terminado, tiene la autoevaluación del alumno y la
+  media de las notas del profe en sus indicadores es 2,5 o más. Lo ya terminado no se vuelve a cerrar.
+- Autoevaluaciones obligatorias: de cada reto de Crea, de cada aventura de Programa (sin ella no se abre la
+  aventura siguiente; lo comprueba también el script) y de cada modalidad de Robótica terminada. Tampoco se
+  entra en otro rincón con autoevaluaciones pendientes. Se guardan en la pestaña «Autoevaluación».
+- El alumnado con adaptación curricular no tiene estas restricciones.

@@ -573,6 +573,8 @@
     html += `<div class="acciones"><button class="btn sec" id="v-repetir">Repetir nivel</button>${ultimo ? `<button class="btn" id="v-pasaporte">${nivel.aventura < AVENTURAS.length - 1 ? "Elegir otra aventura" : "Ver pasaporte"}</button>` : `<button class="btn" id="v-siguiente">Siguiente: ${NIVELES[nivelI + 1].ciudad}</button>`}</div>`;
     $("#ventana").innerHTML = html;
     $("#velo").hidden = false;
+    // Aventura terminada: autoevaluación obligatoria (sin ella no se abre la aventura siguiente).
+    if (ultimo && todos && !AC && window.Autoeval) setTimeout(() => window.Autoeval.asegurar(window.Autoeval.etapaPrograma(nivel.aventura)), 1200);
     const cerrar = () => { $("#velo").hidden = true; };
     $("#v-repetir").onclick = () => { cerrar(); reiniciarPersonaje(); };
     const vx = $("#v-excel"); if (vx) vx.onclick = descargarExcel;

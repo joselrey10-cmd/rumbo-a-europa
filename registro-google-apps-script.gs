@@ -4,7 +4,9 @@
   y publícalo como aplicación web (mira LEEME.md).
 
   Pestañas que crea:
-  - "Autoevaluación": lo que cada alumno dice que sabe hacer en Programa y Robótica (aparte de las notas).
+  - "Autoevaluación": lo que cada alumno dice que sabe hacer en Programa, Robótica y en cada reto de Crea (aparte de las notas).
+    Desde el 18-nov es obligatoria: sin la autoevaluación de una aventura de Programa no se abre la siguiente
+    (lo comprueba este script), y la web la pide antes del siguiente reto de Crea o de entrar en otro rincón.
   - "Alumnado": la lista importada por el profe (con el correo de la familia).
   - "Resultados": una fila cada vez que un alumno termina (o intenta) una actividad.
   - "Valoraciones": una fila por alumno (usuario Educacyl, o nombre + clase) y una columna por actividad
@@ -12,6 +14,7 @@
   - "Medias por indicador": la media de cada indicador por alumno (se recalcula sola).
   - "Progreso por rutas": nota proporcional por pantallas superadas en Programa y cada modalidad de Robótica.
   - "Accesos alumnado": contraseñas elegidas por el alumnado, para recuperación por el profesor.
+  - "Avisos": mensajes del profe a cada alumno con lo que le falta (los ve al entrar y, si se marca, por correo).
 */
 // CLAVE DEL PANEL DEL PROFESOR: cámbiala por una tuya (la pedirá la página "Profe" de la web).
 // Está solo aquí, en el script, así que el alumnado no la puede ver.
@@ -48,6 +51,7 @@ function doPost(e) {
   if (pedido.accion === "guardarCorreosFamilia") return guardarCorreosFamilia(libro, pedido);
   if (pedido.accion === "borrar") return borrarAlumno(libro, pedido);
   if (pedido.accion === "autoevaluacion") return guardarAutoevaluacion(libro, pedido);
+  if (pedido.accion === "autoevalEstado") return autoevalEstado(libro, pedido);
   if (pedido.accion === "familiaCodigo") return familiaCodigo(libro, pedido);
   if (pedido.accion === "familiaDatos") return familiaDatos(libro, pedido);
   if (pedido.accion === "nombresGrupo") return nombresGrupo(libro, pedido);
@@ -68,6 +72,9 @@ function doPost(e) {
   if (pedido.accion === "trabajoAlumno") return trabajoAlumno(libro, pedido);
   if (pedido.accion === "comentario") return comentarioProfe(libro, pedido);
   if (pedido.accion === "notasLote") return notasLote(libro, pedido);
+  if (pedido.accion === "aviso") return avisarAlumnos(libro, pedido);
+  if (pedido.accion === "alumnoAvisos") return alumnoAvisos(libro, pedido);
+  if (pedido.accion === "avisoLeido") return avisoLeido(libro, pedido);
   const hoja = libro.getSheetByName("Resultados") || libro.insertSheet("Resultados");
   if (hoja.getLastRow() === 0) {
     hoja.appendRow(COLUMNAS);
@@ -125,9 +132,10 @@ function datosProfe(libro, d) {
   const rutas = pr && pr.getLastRow() > 1 ? pr.getRange(2, 1, pr.getLastRow() - 1, 16).getValues().map((f) => f.slice(1)) : [];
   const hoja = libro.getSheetByName("Valoraciones");
   const comentarios = leerComentarios(libro);
-  if (!hoja || hoja.getLastRow() < 1) return salida({ ok: true, cab: [], filas: [], hechos, alumnado, autoeval, rutas, comentarios, adaptados: leerAdaptados() });
+  const avisos = avisosResumen(libro);
+  if (!hoja || hoja.getLastRow() < 1) return salida({ ok: true, cab: [], filas: [], hechos, alumnado, autoeval, rutas, comentarios, avisos, adaptados: leerAdaptados() });
   const v = hoja.getDataRange().getValues();
-  return salida({ ok: true, cab: v[0], filas: v.slice(1), hechos, alumnado, autoeval, rutas, comentarios, adaptados: leerAdaptados() });
+  return salida({ ok: true, cab: v[0], filas: v.slice(1), hechos, alumnado, autoeval, rutas, comentarios, avisos, adaptados: leerAdaptados() });
 }
 
 // Panel del profesor: todo lo que ha hecho un alumno (filas de «Resultados»: pantallas, programas, retos, llaves).
@@ -152,7 +160,8 @@ function guardarAutoevaluacion(libro, d) {
   const limpiar = (v, max) => String(v == null ? "" : v).slice(0, max);
   const ses = alumnoDeSesion(libro, d);
   if (CODIGO_ALUMNO && !ses) return json({ ok: false, sesion: true, error: "Entra con tu contraseña antes de enviar." });
-  const rincon = limpiar(d.rincon, 20);
+  const rincon = limpiar(d.rincon, 40);
+  const etapa = limpiar(d.etapa, 40);
   const clase = ses ? ses.clase : normGrupo(limpiar(d.clase, 12));
   const usuario = ses ? ses.usuario : usuarioDeLista(libro, limpiar(d.nombre, 60), limpiar(d.usuario, 60), clase);
   const nombre = ses ? ses.nombre : nombreCompleto(libro, limpiar(d.nombre, 60), usuario);
@@ -175,8 +184,23 @@ function guardarAutoevaluacion(libro, d) {
     });
     SpreadsheetApp.flush();
     ordenarHoja(libro, "Autoevaluación", 1, 2, 3);
+    if (etapa && usuario) {
+      const e = etapasAutoeval(usuario); e[etapa] = new Date().toISOString();
+      PropertiesService.getScriptProperties().setProperty(claveEtapas(usuario), JSON.stringify(e));
+    }
     return ContentService.createTextOutput("ok");
   } finally { lock.releaseLock(); }
+}
+
+// Autoevaluaciones obligatorias hechas por cada alumno: { "prog-av0": fecha, "crea-5-SA1-S1": fecha, "rob-robot": fecha… }
+function claveEtapas(usuario) { return "autoe_" + Utilities.base64EncodeWebSafe(minus(usuario)).replace(/=+$/g, ""); }
+function etapasAutoeval(usuario) {
+  try { return JSON.parse(PropertiesService.getScriptProperties().getProperty(claveEtapas(usuario)) || "{}") || {}; } catch (e) { return {}; }
+}
+function autoevalEstado(libro, d) {
+  const s = alumnoDeSesion(libro, d);
+  if (!s) return json({ ok: false, sesion: true, error: "Tu sesión ha caducado. Sal y vuelve a entrar." });
+  return json({ ok: true, etapas: Object.keys(etapasAutoeval(s.usuario)) });
 }
 
 /* ---------- Alumnado (importado por el profe desde un CSV) ---------- */
@@ -480,14 +504,14 @@ function ordenarTodo(libro) {
    Se ejecuta con el botón «Notas para el Excel» del panel o eligiendo prepararExcel aquí arriba. */
 const ORDEN_EXCEL = {
   "5º": [
-    "1.1.1 1.2.1 1.2.2 2.1.1 2.1.2 2.1.4 2.2.1 2.3.1 3.1.1 3.2.1 3.2.2 3.2.3 3.3.1 3.4.1 4.1.1 4.1.2 4.3.1 4.3.2 4.3.4 5.1.1 5.2.1 5.2.2 5.3.1 5.3.2",
-    "1.1.2 1.1.3 1.1.4 1.2.3 2.1.3 2.1.4 2.2.2 3.1.2 3.1.3 3.2.4 3.2.5 3.2.6 3.3.2 4.1.2 4.1.3 4.2.1 4.2.2 4.3.4 5.1.2 5.2.3 5.3.1 5.3.2",
-    "1.1.5 2.1.4 2.2.3 2.3.2 3.1.4 3.2.7 3.2.8 3.2.9 3.3.3 3.4.2 4.1.2 4.1.4 4.2.3 4.3.3 4.3.4 5.1.3 5.2.1 5.2.4 5.3.1 5.3.2 5.3.3"
+    "1.1.1 1.1.3 1.1.5 1.2.1 1.2.2 2.1.1 2.1.2 2.1.4 2.2.1 2.3.1 3.1.1 3.2.1 3.2.2 3.2.3 3.3.1 3.3.4 3.4.1 4.1.1 4.1.2 4.3.1 4.3.2 4.3.4 5.1.1 5.2.1 5.2.2 5.3.1 5.3.2",
+    "1.1.2 1.1.3 1.1.4 1.2.3 2.1.3 2.1.4 2.2.2 3.1.2 3.1.3 3.2.4 3.2.5 3.2.6 3.3.2 3.3.4 4.1.2 4.1.3 4.2.1 4.2.2 4.3.4 5.1.2 5.2.3 5.3.1 5.3.2",
+    "1.1.5 2.1.4 2.2.3 2.3.2 3.1.4 3.2.7 3.2.8 3.2.9 3.3.3 3.3.4 3.4.2 4.1.2 4.1.4 4.2.3 4.3.3 4.3.4 5.1.3 5.2.1 5.2.4 5.3.1 5.3.2 5.3.3"
   ],
   "6º": [
-    "1.1.1 1.1.2 1.1.4 1.2.1 1.2.2 1.2.3 2.1.1 2.3.1 3.1.4 3.2.1 3.2.2 3.2.5 3.2.6 3.3.1 4.1.1 4.1.2 4.3.1 4.3.2 5.2.1",
-    "1.1.2 1.1.3 2.1.1 2.2.2 2.3.2 3.1.1 3.1.2 3.1.4 3.2.2 3.2.3 3.2.5 3.2.6 3.4.1 3.4.2 4.1.3 5.3.1",
-    "1.2.2 2.1.2 2.1.3 2.2.1 3.1.3 3.2.4 3.2.5 3.2.6 3.3.2 4.1.2 4.1.3 4.2.1 4.2.2 4.3.2 5.1.1 5.1.2 5.2.2 5.3.1 5.3.2"
+    "1.1.1 1.1.2 1.1.4 1.2.1 1.2.2 1.2.3 2.1.1 2.1.3 2.3.1 3.1.4 3.2.1 3.2.2 3.2.5 3.2.6 3.3.1 3.3.3 4.1.1 4.1.2 4.3.1 5.2.1",
+    "1.1.2 1.1.3 2.1.1 2.1.3 2.2.2 2.3.2 3.1.1 3.1.2 3.2.2 3.2.3 3.2.5 3.2.6 3.3.1 3.3.3 3.4.1 3.4.2 4.1.2 4.1.3 4.3.2 5.2.2 5.3.1",
+    "1.2.2 2.1.2 2.1.3 2.2.1 3.1.3 3.2.4 3.2.5 3.2.6 3.3.2 3.3.3 4.1.2 4.1.3 4.2.1 4.2.2 4.3.2 5.1.1 5.1.2 5.2.2 5.3.1 5.3.2"
   ]
 };
 const GRUPOS_EXCEL = ["P5A", "P5B", "P6A", "P6B"];
@@ -1118,6 +1142,9 @@ function gestionarRetoCadena(libro, d) {
     }
     if (op === "desbloquear") {
       if (indice <= estado.desbloqueado) return json({ ok: true, desbloqueado: estado.desbloqueado });
+      // La aventura siguiente no se abre sin la autoevaluación de la aventura terminada.
+      if (secuencia === "programa" && indice % 10 === 0 && !etapasAutoeval(alumno.usuario)["prog-av" + (indice / 10 - 1)])
+        return json({ ok: false, autoeval: "prog-av" + (indice / 10 - 1), error: "Antes de abrir la aventura siguiente, haz tu autoevaluación de la aventura que has terminado." });
       const esperado = estado.codigos[indice];
       const recibido = String(d.codigo || "").trim().toUpperCase();
       if (indice !== estado.desbloqueado + 1 || !esperado || recibido !== esperado || estado.completados.indexOf(indice - 1) < 0)
@@ -1223,4 +1250,83 @@ function notasLote(libro, d) {
     escribirComentarios(libro, lista.filter((x) => x.comentario !== undefined).map((x) => ({ nombre: x.nombre, usuario: x.usuario, clase: x.clase, columna: x.columna, comentario: x.comentario })));
     return json({ ok: true, notas: conNota.length, comentarios: lista.filter((x) => x.comentario !== undefined && String(x.comentario).trim()).length });
   } finally { lock.releaseLock(); }
+}
+
+/* ---------- Avisos del profe al alumno (lo que le falta y lo que tiene con 2 o menos) ----------
+   Pestaña «Avisos»: una fila por aviso. El alumno lo ve en la portada al entrar con su contraseña
+   hasta que pulsa «Entendido» (se apunta en «Leído»). Si el profe marca las casillas, también va por correo
+   a usuario@educa.jcyl.es y a los correos de la familia guardados en «Alumnado». */
+const COL_AVISOS = ["Fecha", "Nombre", "Usuario Educacyl", "Clase", "Mensaje", "Correo", "Leído", "Id"];
+const DIAS_AVISO = 60;   // días que el aviso sin leer sigue saliendo en la portada
+function hojaAvisos(libro) {
+  let h = libro.getSheetByName("Avisos");
+  if (!h) { h = libro.insertSheet("Avisos"); h.appendRow(COL_AVISOS); h.setFrozenRows(1); h.getRange(1, 1, 1, COL_AVISOS.length).setFontWeight("bold"); h.setColumnWidth(5, 480); }
+  return h;
+}
+function filasAvisos(libro) {
+  const h = libro.getSheetByName("Avisos");
+  return h && h.getLastRow() > 1 ? h.getRange(2, 1, h.getLastRow() - 1, COL_AVISOS.length).getValues() : [];
+}
+function avisarAlumnos(libro, d) {
+  if (CLAVE_PROFE === "cambia-esta-clave" || String(d.clave || "") !== CLAVE_PROFE) return json({ ok: false, error: "Clave incorrecta." });
+  const lista = (d.avisos || []).filter((x) => x && x.usuario && String(x.texto || "").trim()).slice(0, 200);
+  if (!lista.length) return json({ ok: false, error: "No hay ningún aviso que enviar." });
+  if ((d.correo || d.familia) && lista.length * ((d.correo ? 1 : 0) + (d.familia ? 2 : 0)) > MailApp.getRemainingDailyQuota()) return json({ ok: false, error: "Hoy ya no quedan envíos de correo suficientes. Quita la casilla del correo o prueba mañana." });
+  const alumnado = filasAlumnado(libro), ahora = new Date(), filas = [], fallos = [];
+  let correos = 0, familias = 0; const sinFamilia = [];
+  lista.forEach((x) => {
+    const u = minus(x.usuario).replace(/@.*$/, ""), texto = String(x.texto).trim().slice(0, 4000);
+    const f = alumnado.find((a) => minus(a[2]).replace(/@.*$/, "") === u);
+    let correo = "";
+    if (d.correo) {
+      try {
+        MailApp.sendEmail(opcionesCorreo({ to: u + "@" + DOMINIO_ALUMNADO, subject: "Rumbo a Europa: lo que te queda pendiente", body: texto, htmlBody: htmlDe(texto) }));
+        correo = "Enviado"; correos++;
+      } catch (e) { correo = "Error"; fallos.push(u); }
+    }
+    if (d.familia) {
+      const fam = f ? correosFamilia(f[4]) : [];
+      if (!fam.length) { correo += (correo ? " · " : "") + "Familia sin correo"; sinFamilia.push(f ? textoAlumno(f) : u); }
+      else {
+        const nom = f ? String(f[0] || "").trim() : u;
+        const tf = "Hola:\n\nOs reenviamos el aviso que el profesor de TIC ha mandado hoy a " + nom + " en Rumbo a Europa, para que sepáis lo que tiene pendiente:\n\n----------\n\n" + texto + "\n\n----------\n\nCEIP Tierra de Pinares";
+        let ok = 0;
+        fam.forEach((c) => { try { MailApp.sendEmail(opcionesCorreo({ to: c, subject: "Rumbo a Europa: tareas pendientes de " + nom, body: tf, htmlBody: htmlDe(tf) })); ok++; familias++; } catch (e) { fallos.push(c); } });
+        correo += (correo ? " · " : "") + "Familia: " + ok + "/" + fam.length;
+      }
+    }
+    filas.push([ahora, f ? textoAlumno(f) : String(x.nombre || "").slice(0, 60), u, f ? normGrupo(f[3]) : normGrupo(x.clase), texto, correo, "", Utilities.getUuid().slice(0, 8)]);
+  });
+  const lock = LockService.getScriptLock(); lock.waitLock(20000);
+  try {
+    const h = hojaAvisos(libro);
+    h.getRange(h.getLastRow() + 1, 1, filas.length, COL_AVISOS.length).setValues(filas);
+  } finally { lock.releaseLock(); }
+  return json({ ok: true, guardados: filas.length, correos, familias, sinFamilia, fallos });
+}
+// Para el panel: el último aviso de cada alumno { usuario: [fecha, leído] }.
+function avisosResumen(libro) {
+  const o = {};
+  filasAvisos(libro).forEach((f) => {
+    const u = minus(f[2]); if (!u) return;
+    const iso = (v) => v instanceof Date ? v.toISOString() : String(v || "");
+    if (!o[u] || iso(f[0]) >= o[u][0]) o[u] = [iso(f[0]), iso(f[6])];
+  });
+  return o;
+}
+// Para el alumno (con su sesión): sus avisos sin leer de los últimos días.
+function alumnoAvisos(libro, d) {
+  const s = alumnoDeSesion(libro, d);
+  if (!s) return json({ ok: false, error: "Tu sesión ha caducado. Sal y vuelve a entrar." });
+  const desde = Date.now() - DIAS_AVISO * 86400000;
+  const avisos = filasAvisos(libro).filter((f) => minus(f[2]) === minus(s.usuario) && !String(f[6] || "").trim() && f[0] instanceof Date && f[0].getTime() >= desde)
+    .slice(-3).reverse().map((f) => ({ id: String(f[7]), fecha: f[0].toISOString(), texto: String(f[4]) }));
+  return json({ ok: true, avisos });
+}
+function avisoLeido(libro, d) {
+  const s = alumnoDeSesion(libro, d);
+  if (!s) return json({ ok: false });
+  const filas = filasAvisos(libro), i = filas.findIndex((f) => String(f[7]) === String(d.id || "") && minus(f[2]) === minus(s.usuario));
+  if (i >= 0) libro.getSheetByName("Avisos").getRange(i + 2, 7).setValue(new Date());
+  return json({ ok: true });
 }

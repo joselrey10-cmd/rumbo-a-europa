@@ -20,9 +20,18 @@ window.RetosCadena = (function () {
     if (!estado.ok) { alert(estado.error || "No se ha podido comprobar el progreso."); return false; }
     if (indice <= estado.desbloqueado) return true;
     if (indice !== estado.desbloqueado + 1) { alert("Este reto está bloqueado. Completa primero los retos anteriores."); return false; }
+    // Autoevaluación obligatoria: la aventura siguiente de Programa no se abre sin la de la aventura terminada.
+    if (secuencia === "programa" && indice % 10 === 0 && window.Autoeval && !(await window.Autoeval.asegurar(window.Autoeval.etapaPrograma(indice / 10 - 1)))) return false;
     const codigo = prompt("🔐 Este reto está protegido. Escribe el código que conseguiste al terminar el reto anterior:");
     if (!codigo) return false;
     const r = await llamar(secuencia, "desbloquear", indice, total, codigo);
+    if (!r.ok && r.autoeval && window.Autoeval) {
+      // El servidor no tenía apuntada la autoevaluación: se pide y se vuelve a probar el código.
+      if (!(await window.Autoeval.asegurar(window.Autoeval.etapaPrograma(indice / 10 - 1), true))) return false;
+      const r2 = await llamar(secuencia, "desbloquear", indice, total, codigo);
+      if (!r2.ok) { alert(r2.error || "Código incorrecto."); return false; }
+      return true;
+    }
     if (!r.ok) { alert(r.error || "Código incorrecto."); return false; }
     return true;
   }

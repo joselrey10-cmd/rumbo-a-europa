@@ -524,6 +524,9 @@
     enviarResultado(prog, val);
     hechos[modo] = hechos[modo] || {}; hechos[modo][retoI] = true; guardar();
     const sig = retoI + 1 < RETOS.length;
+    // Modalidad terminada: autoevaluación obligatoria (la piden también antes de empezar otra modalidad u otro rincón).
+    if (!AC && window.Autoeval && RETOS.every((r, k) => hechos[modo][k] || (window.RetosCadena && window.RetosCadena.hecho && window.RetosCadena.hecho(`robot-${modo}`, k))))
+      setTimeout(() => window.Autoeval.asegurar(window.Autoeval.etapaRobotica(modo)), 1200);
     $("#rb-ventana").innerHTML = `<h2>¡Reto conseguido!</h2><p>${reto.titulo}: el robot ha visitado ${reto.metas.map((m) => m[1]).join(", ")}.</p>
       ${val && val.codigo ? `<p class="val-ind">Indicador ${val.codigo}: <b>${val.nota} de 5</b></p>` : ""}
       ${cadena && cadena.ok && Number.isFinite(cadena.nota) ? `<p class="val-ind">Valoración de ${MODOS[modo].nombre}: <b>${cadena.completados} de ${cadena.total} pantallas · ${cadena.nota} de ${cadena.maximo}</b></p>` : ""}
@@ -554,6 +557,8 @@
 
   async function abrirReto(m, i) {
     if (!AC && window.RetosCadena && !(await window.RetosCadena.entrar(`robot-${m}`, i, RETOS.length))) { location.hash = "robotica"; return; }
+    // Para empezar otra modalidad hay que autoevaluar antes las modalidades terminadas.
+    if (!AC && i === 0 && window.Autoeval && !(await window.Autoeval.revisar((x) => x.id === "rob" && x.modo !== m))) { location.hash = "robotica"; return; }
     modo = m; retoI = i; reto = RETOS[i]; intentos = 0;
     $("#rb-menu").hidden = true; $("#rb-juego").hidden = false;
     $("#rb-titulo").textContent = reto.titulo;
