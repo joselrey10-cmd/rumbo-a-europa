@@ -18,7 +18,7 @@
 */
 // CLAVE DEL PANEL DEL PROFESOR: cámbiala por una tuya (la pedirá la página "Profe" de la web).
 // Está solo aquí, en el script, así que el alumnado no la puede ver.
-const CLAVE_PROFE = "47001559";   // pon aquí tu clave SOLO en Apps Script, no en GitHub (el repo es público)
+const CLAVE_PROFE = "cambia-esta-clave";   // pon aquí tu clave SOLO en Apps Script, no en GitHub (el repo es público)
 
 // CORREO PARA LAS RESPUESTAS DE LAS FAMILIAS: si una familia contesta al correo del código, le llega a esta dirección.
 // Vacío ("") = las respuestas llegan a esta misma cuenta. Una dirección de otro dominio hace que más correos acaben en spam.
@@ -120,7 +120,8 @@ function datosProfe(libro, d) {
     const i = (t) => c.indexOf(t);
     const iF = i("Fecha"), iN = i("Nombre"), iU = i("Usuario Educacyl"), iC = i("Clase"), iA = i("Actividad"), iP = i("Programa");
     r.slice(1).forEach((f) => {
-      if (String(f[iP]).indexOf("Terminado") === 0) hechos.push([f[iN], iU >= 0 ? f[iU] : "", f[iC], f[iA], f[iP], f[iF] instanceof Date ? f[iF].toISOString() : String(f[iF])]);
+      // También «Desbloqueo del profe»: el profe ha abierto a mano un reto de Crea a ese alumno.
+      if (String(f[iP]).indexOf("Terminado") === 0 || String(f[iP]).indexOf("Desbloqueo") === 0) hechos.push([f[iN], iU >= 0 ? f[iU] : "", f[iC], f[iA], f[iP], f[iF] instanceof Date ? f[iF].toISOString() : String(f[iF])]);
     });
   }
   const au = libro.getSheetByName("Autoevaluación");
@@ -980,7 +981,7 @@ function alumnoResultados(libro, d) {
   const res = libro.getSheetByName("Resultados");
   const r = res && res.getLastRow() > 1 ? res.getDataRange().getValues() : [[]];
   const rc = r[0] || [], rU = rc.indexOf("Usuario Educacyl"), rA = rc.indexOf("Actividad"), rP = rc.indexOf("Programa"), rF = rc.indexOf("Fecha");
-  const hechos = rU >= 0 ? r.slice(1).filter(x => minus(x[rU]) === minus(s.usuario) && String(x[rP] || "").indexOf("Terminado") === 0)
+  const hechos = rU >= 0 ? r.slice(1).filter(x => minus(x[rU]) === minus(s.usuario) && (String(x[rP] || "").indexOf("Terminado") === 0 || String(x[rP] || "").indexOf("Desbloqueo") === 0))
     .map(x => [x[rA], x[rP], x[rF] instanceof Date ? x[rF].toISOString() : String(x[rF])]) : [];
   return json({ ok: true, nombre: s.nombre, clase: s.clase, cab, fila, hechos, comentarios: comentariosDe(leerComentarios(libro), s.usuario), adaptado: leerAdaptados().indexOf(minus(s.usuario)) >= 0 });
 }

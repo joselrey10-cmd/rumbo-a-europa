@@ -3,7 +3,7 @@ PROGRAMA · 2.º TRIMESTRE (18-nov)
 Este paquete YA INCLUYE el de autoevaluaciones e insignias (autoevaluacion-insignias-18nov.zip).
 Sube todo a la raíz del repositorio de GitHub (Add file → Upload files), sustituyendo lo que haya.
 El script de Google: usa script-completo-APPS-SCRIPT-18nov.txt (en la carpeta subir/) y haz
-Gestionar implementaciones → lápiz → Nueva versión. Mis cambios no tocan el script.
+Gestionar implementaciones → lápiz → Nueva versión. (Cambiado el 18-nov por la tarde: hay que volver a pegarlo.)
 
 5.º · PiniCraft (en Programa, debajo de las aventuras de los países)
   - Aventura 4 · PiniCraft Aventurero: 10 pantallas (Irati, Selva Negra, Kinderdijk, Cervino, Geirangerfjord,
@@ -23,6 +23,12 @@ Gestionar implementaciones → lápiz → Nueva versión. Mis cambios no tocan e
     y hacer su autoevaluación.
   - Las tarjetas en PDF van aparte: fichas-scratch-pdf.zip (carpeta scratch/). Si la subes, sale el botón
     «Ver las tarjetas (PDF)» en cada reto.
+
+Crea (cambio del 18-nov, 12:10): el siguiente reto se abre al terminar el anterior y hacer su
+autoevaluación (ya no se mira la media de 2,5). La insignia de Crea = reto terminado + autoevaluación.
+Además, en el panel → alumno → «Notas y datos», cada reto de Crea sin terminar tiene el botón
+«🔓 Abrirle este reto»: se lo abres a ese alumno aunque no haya terminado el anterior ni hecho su
+autoevaluación (queda en Resultados como «Desbloqueo del profe»). Necesita el script nuevo.
 
 Panel del profe: las pantallas de PiniCraft y los retos Scratch salen en «Notas y datos», en «Su trabajo»
 (con el programa de cada pantalla, o el billete y el enlace del proyecto Scratch), en avisos e insignias.
