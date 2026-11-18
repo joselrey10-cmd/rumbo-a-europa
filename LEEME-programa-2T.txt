@@ -1,0 +1,31 @@
+PROGRAMA · 2.º TRIMESTRE (18-nov)
+==================================
+Este paquete YA INCLUYE el de autoevaluaciones e insignias (autoevaluacion-insignias-18nov.zip).
+Sube todo a la raíz del repositorio de GitHub (Add file → Upload files), sustituyendo lo que haya.
+El script de Google: usa script-completo-APPS-SCRIPT-18nov.txt (en la carpeta subir/) y haz
+Gestionar implementaciones → lápiz → Nueva versión. Mis cambios no tocan el script.
+
+5.º · PiniCraft (en Programa, debajo de las aventuras de los países)
+  - Aventura 4 · PiniCraft Aventurero: 10 pantallas (Irati, Selva Negra, Kinderdijk, Cervino, Geirangerfjord,
+    Toscana, Lago Ness, Hekla, Laponia, Acueducto de Segovia). Romper, colocar, bucles y condicionales. Ind. 3.2.5.
+  - Aventura 5 · PiniCraft: El viaje del héroe: 10 pantallas (Atomium, Luxemburgo, Torre Eiffel, Venecia, Viena,
+    Partenón, Praga, Etna, Nyhavn, Parlamento Europeo). Eventos «Cuando pise una placa», «Cuando haya agua delante»…
+    Pini recupera las 12 estrellas de la bandera europea. Ind. 3.2.4.
+  - El viaje del héroe se abre al superar las 10 pantallas de Aventurero y hacer su autoevaluación.
+  - Si quieres que PiniCraft solo se abra al terminar las 30 pantallas de los países:
+    js/pinicraft.js → ABRIR_TRAS_PAISES = true.
+  - Niveles, dibujos e historia son propios (no se copia Code.org ni Minecraft). Niveles en js/pinicraft-niveles.js.
+
+6.º · Retos Scratch · Agencia EuroRuta (en Programa)
+  - B1–B6 de tus fichas: misión, rutas, comprobaciones, indicadores, mochila digital y billete de salida.
+  - El alumno marca «He terminado» (ruta + billete + enlace al proyecto) → al panel llega como reto terminado.
+  - La nota de cada indicador la pones tú en el panel (como en Crea). Cada reto se abre al terminar el anterior
+    y hacer su autoevaluación.
+  - Las tarjetas en PDF van aparte: fichas-scratch-pdf.zip (carpeta scratch/). Si la subes, sale el botón
+    «Ver las tarjetas (PDF)» en cada reto.
+
+Panel del profe: las pantallas de PiniCraft y los retos Scratch salen en «Notas y datos», en «Su trabajo»
+(con el programa de cada pantalla, o el billete y el enlace del proyecto Scratch), en avisos e insignias.
+
+Archivos nuevos: css/pinicraft.css, js/pinicraft-niveles.js, js/pinicraft-motor.js, js/pinicraft.js, js/scratch-retos.js
+Archivos cambiados: index.html, js/valoraciones.js, js/profe.js (+ los del paquete de autoevaluaciones).

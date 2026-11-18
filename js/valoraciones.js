@@ -64,12 +64,19 @@ window.Valoraciones = (function () {
   }
   // lista puede ser una función (para listas que cambian con el curso).
   function definirActividades(grupo, lista) { actividades[grupo] = lista; }
+  // Actividades que se suman a un grupo ya definido por otro archivo (p. ej. PiniCraft y Scratch en Programa).
+  const extras = {};   // grupo -> [función que devuelve una lista]
+  function añadirActividades(grupo, fn) { (extras[grupo] = extras[grupo] || []).push(fn); }
+  const listaDe = (g) => {
+    const base = typeof actividades[g] === "function" ? actividades[g]() : (actividades[g] || []);
+    return base.concat(...(extras[g] || []).map((f) => { try { return f() || []; } catch (e) { return []; } }));
+  };
   const ORDEN = ["crea", "prog", "rob", "piensa"];
-  const grupos = () => Object.keys(actividades).sort((a, b) => ORDEN.indexOf(a) - ORDEN.indexOf(b));
+  const grupos = () => [...new Set(Object.keys(actividades).concat(Object.keys(extras)))].sort((a, b) => ORDEN.indexOf(a) - ORDEN.indexOf(b));
 
   function filas() {
     const v = leer(), a = alumno(), out = [];
-    grupos().forEach((g) => (typeof actividades[g] === "function" ? actividades[g]() : actividades[g]).forEach((act) => {
+    grupos().forEach((g) => listaDe(g).forEach((act) => {
       const ind = indicador(act.tipo, act.ref) || { codigo: "", texto: "" };
       const r = v[act.clave];
       out.push({
@@ -156,5 +163,5 @@ window.Valoraciones = (function () {
     return ok;
   }
 
-  return { alumno, ponerAlumno, curso, indicador, nota, registrar, definirActividades, filas, excel, leer, enviar, enviarVarias };
+  return { alumno, ponerAlumno, curso, indicador, nota, registrar, definirActividades, añadirActividades, filas, excel, leer, enviar, enviarVarias };
 })();
