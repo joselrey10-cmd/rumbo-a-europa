@@ -44,6 +44,9 @@ window.Profe = (function () {
       const cod = ((window.INDICADOR_PROGRAMACION || {})[c] || {})[n.ciudad];
       L.push({ rincon: "prog", titulo: `${i + 1}. ${n.ciudad}`, destino: `Programación · ${i + 1}. ${n.ciudad}`, ciudad: n.ciudad, inds: cod ? [cod] : [], grupo: n.aventura });
     });
+    // Programa del 2.º trimestre: PiniCraft (5.º, js/pinicraft.js) y retos Scratch (6.º, js/scratch-retos.js).
+    // Traen grupo de texto ("pc1", "pc2", "scratch") y nombreGrupo; los de Scratch son «terminables» como Crea.
+    if (!ac && typeof window.PROG_EXTRA === "function") (window.PROG_EXTRA(c, a) || []).forEach((x) => L.push(x));
     const R = window.Robotica || {};
     Object.keys(R.MODOS || {}).filter((k) => !ac || k === "robot").forEach((k) => ((ac && window.RETOS_ROB_AC) || R.RETOS || []).forEach((r, i) => {
       const cod = (((window.INDICADOR_ROBOTICA || {})[c] || {})[k] || [])[i];
@@ -87,6 +90,7 @@ window.Profe = (function () {
       const clase = G(clase0);
       let a = lista.find((x) => usuario ? igual(x.usuario, usuario) : (igual(x.nombre, nombre) && igual(x.clase, clase)));
       if (!a) { a = { nombre: String(nombre || ""), usuario: String(usuario || ""), clase: String(clase || ""), notas: {}, terminados: {} }; lista.push(a); }
+      if (/^Desbloqueo/.test(String(programa || ""))) { (a.abiertos = a.abiertos || {})[String(destino)] = fecha; return; }   // reto de Crea abierto a mano por el profe
       a.terminados[String(destino)] = { ruta: String(programa || "").replace(/^Terminado ·\s*/, ""), fecha };
     });
     // Pantallas superadas en Programa y Robótica (pestaña «Progreso por rutas»): la nota que reparte 5 puntos entre las pantallas.
@@ -538,8 +542,8 @@ window.Profe = (function () {
       ${RINC.map((r) => `<details class="p-rincon" ${r.id === "crea" ? "open" : ""}><summary style="color:${r.color}">${r.nombre}</summary>
         <div class="retos-r">${cat.map((x, k) => ({ x, k })).filter(({ x }) => x.rincon === r.id && x.inds.length).map(({ x, k }) => `
           <article class="reto-r" data-k="${k}">
-            <div class="reto-r-cab"><h3>${esc(x.titulo)}</h3>${x.rincon === "crea" ? (() => { const t = (a.terminados || {})[x.destino.slice(0, 60)]; return t ? `<span class="p-hecho">✓ Terminado${t.ruta && t.ruta !== "Todos" ? " · " + esc(t.ruta) : ""}${t.fecha && !isNaN(new Date(t.fecha)) ? " · " + new Date(t.fecha).toLocaleDateString("es-ES") : ""}</span>` : `<span class="p-hecho no">Sin terminar</span>`; })() : ""}</div>
-            <div class="inds">${indsAl(x, a).map((cod) => { const col = columna(x.destino, cod), viejo = x.inds.indexOf(cod) < 0; return `<div class="fila-ind"><div class="fila-ind-t"><span class="cod">Ind. ${cod}</span> ${esc(textoInd(c, cod, a))}${viejo ? " <small>(indicador anterior: nota ya puesta)</small>" : ""}</div>${chips(col, a.notas[col])}${x.rincon === "crea" ? cajaComentario(col, (a.comentarios || {})[col]) : ""}</div>`; }).join("")}</div>
+            <div class="reto-r-cab"><h3>${esc(x.titulo)}</h3>${x.rincon === "crea" || x.terminable ? (() => { const t = (a.terminados || {})[x.destino.slice(0, 60)]; return t ? `<span class="p-hecho">✓ Terminado${t.ruta && t.ruta !== "Todos" ? " · " + esc(t.ruta) : ""}${t.fecha && !isNaN(new Date(t.fecha)) ? " · " + new Date(t.fecha).toLocaleDateString("es-ES") : ""}</span>` : `<span class="p-hecho no">Sin terminar</span>${x.rincon !== "crea" || (catalogo(cursoDe(a.clase), a).find((y) => y.rincon === "crea") || {}).destino === x.destino ? "" : (a.abiertos || {})[x.destino.slice(0, 60)] ? ` <span class="p-hecho">🔓 Abierto por ti</span>` : ` <button type="button" class="btn sec p-abrir" title="Abre este reto al alumno aunque no haya terminado el anterior ni hecho su autoevaluación">🔓 Abrirle este reto</button>`}`; })() : ""}</div>
+            <div class="inds">${indsAl(x, a).map((cod) => { const col = columna(x.destino, cod), viejo = x.inds.indexOf(cod) < 0; return `<div class="fila-ind"><div class="fila-ind-t"><span class="cod">Ind. ${cod}</span> ${esc(textoInd(c, cod, a))}${viejo ? " <small>(indicador anterior: nota ya puesta)</small>" : ""}</div>${chips(col, a.notas[col])}${x.rincon === "crea" || x.terminable ? cajaComentario(col, (a.comentarios || {})[col]) : ""}</div>`; }).join("")}</div>
             <div class="enviar-fila"><button type="button" class="btn sec enviar-p">Volver a enviar</button><span class="estado" aria-live="polite"></span></div>
           </article>`).join("")}</div></details>`).join("")}
       </div></div>`;
@@ -677,10 +681,12 @@ window.Profe = (function () {
     };
     catalogo(c, a).forEach((x) => {
       const o = out[x.rincon] = out[x.rincon] || { ganadas: 0, total: 0 };
-      if (x.rincon === "prog" || x.rincon === "rob") { const k = x.rincon + "|" + x.grupo; (aventuras[k] = aventuras[k] || { o, items: [] }).items.push(x); return; }
+      if ((x.rincon === "prog" && !x.terminable) || x.rincon === "rob") { const k = x.rincon + "|" + x.grupo; (aventuras[k] = aventuras[k] || { o, items: [] }).items.push(x); return; }
       const inds = x.inds; if (!inds.length) return;
       o.total++;
-      if (x.rincon === "crea" && ((a.terminados || {})[x.destino.slice(0, 60)] || filas.some((r) => r.act === x.destino.slice(0, 60) && /^Terminado/.test(r.prog)))) { o.ganadas++; return; }
+      // Crea: insignia = reto terminado + autoevaluación de ese reto (columnas «Crea · SA S · Ind.» de la pestaña Autoevaluación).
+      const autoCrea = x.rincon !== "crea" || Object.keys(a.auto || {}).some((k) => k.indexOf(`Crea · ${String(x.titulo).split(" · ")[0]} · Ind. `) === 0);
+      if ((x.rincon === "crea" || x.terminable) && ((a.terminados || {})[x.destino.slice(0, 60)] || filas.some((r) => r.act === x.destino.slice(0, 60) && /^Terminado/.test(r.prog)))) { if (autoCrea) o.ganadas++; return; }
       const n = inds.map((cod) => a.notas[columna(x.destino, cod)]).filter((v) => v !== undefined);
       if (n.length === inds.length && n.reduce((s, v) => s + v, 0) / n.length >= 2.5) o.ganadas++;
     });
@@ -704,7 +710,7 @@ window.Profe = (function () {
       return out;
     };
     const cat = catalogo(c, a);
-    const prog = reparte(cat.filter((x) => x.rincon === "prog"), (x) => filas.filter((r) => r.act.indexOf("Programación") === 0 && (r.reto === x.ciudad || r.act.replace(/^Programación · \d+\. /, "") === x.ciudad)));
+    const prog = reparte(cat.filter((x) => x.rincon === "prog" && !x.terminable), (x) => filas.filter((r) => r.act.indexOf("Programación") === 0 && (r.reto === x.ciudad || r.act.replace(/^Programación · \d+\. /, "") === x.ciudad)));
     const rob = {};
     Object.keys((window.Robotica || {}).MODOS || {}).forEach((k) => {
       const nombre = window.Robotica.MODOS[k].nombre, items = cat.filter((x) => x.rincon === "rob" && x.destino.indexOf(`Robótica · ${nombre} ·`) === 0);
@@ -721,6 +727,27 @@ window.Profe = (function () {
       ${L.length ? `<p class="intro">Se calculan solos con su trabajo y van redondeados a «Notas para el Excel»: mejor nota de cada pantalla o reto, sumadas y divididas entre todas las del indicador (las que no ha hecho cuentan 0). Si corriges la nota de una pantalla en «Notas y datos», vale la tuya.</p>
       <div class="tabla-scroll"><table class="p-tabla"><thead><tr><th>Rincón</th><th>Indicador</th><th>Hechas</th><th>Nota</th></tr></thead><tbody>${L.join("")}</tbody></table></div>` : `<p class="intro">Todavía no tiene pantallas ni retos hechos.</p>`}</details>`;
   }
+  // PiniCraft (pantallas con su programa) y retos Scratch (terminado, ruta, billete de salida y enlace).
+  function progExtraHTML(a, c, filas, deProg) {
+    const grupos = {};
+    catalogo(c, a).filter((x) => x.rincon === "prog" && x.nombreGrupo).forEach((x) => (grupos[x.grupo] = grupos[x.grupo] || { nombre: x.nombreGrupo, items: [] }).items.push(x));
+    return Object.keys(grupos).map((k) => {
+      const g = grupos[k];
+      const tarjetas = g.items.map((x) => {
+        if (!x.terminable) return tarjetaPrograma(x.titulo, deProg(x.ciudad), true);
+        const rs = filas.filter((r) => r.act === x.destino.slice(0, 60));
+        const fin = rs.filter((r) => /^Terminado/.test(r.prog)).pop(), bil = rs.filter((r) => /^Billete:/.test(r.prog)).pop();
+        const t = fin ? { ruta: fin.prog.replace(/^Terminado ·\s*/, ""), fecha: fin.fecha } : (a.terminados || {})[x.destino.slice(0, 60)];
+        const notas = x.inds.map((cod) => [cod, a.notas[columna(x.destino, cod)]]).filter((p) => p[1] !== undefined);
+        const enl = bil ? (/· Proyecto: (\S+)/.exec(bil.prog) || [])[1] : "";
+        return `<div class="p-trab ${t ? "si" : "sin"} p-trab-fija"><div class="p-trab-fila"><span class="p-trab-tit">${esc(x.titulo)}</span>
+          <span class="p-trab-est">${t ? `✓ Terminado${t.ruta ? " · " + esc(t.ruta) : ""}${t.fecha ? " · " + fechaCorta(t.fecha) : ""}` : "Sin terminar"}</span>
+          <span class="p-trab-dat">${notas.length ? notas.map((p) => `<span class="cod-p">${esc(p[0])}</span> ${p[1]}`).join(" · ") : "Sin notas tuyas todavía"}</span></div>
+          ${bil ? `<p class="p-com-lista">🎟️ ${esc(bil.prog.replace(/^Billete:\s*/, "").replace(/ · Proyecto: \S+$/, ""))}${/^https?:\/\//.test(enl || "") ? ` · <a href="${esc(enl)}" target="_blank" rel="noopener">Abrir su proyecto ↗</a>` : ""}</p>` : ""}</div>`;
+      }).join("");
+      return `<h4 class="p-trab-grupo">${esc(g.nombre)}</h4><div class="p-trab-lista">${tarjetas}</div>`;
+    }).join("");
+  }
   function trabajoHTML(a, c, filas) {
     const ac = esAC(a), R = window.Robotica || {}, ins = insignias(a, c, filas);
     // Programa: se busca por ciudad (la numeración de las pantallas cambió al pasar a 30).
@@ -732,7 +759,7 @@ window.Profe = (function () {
       const L = niveles.filter(({ n }) => n.aventura === k);
       if (!L.length) return "";
       return `<h4 class="p-trab-grupo">${esc(av.nombre || "Aventura " + (k + 1))}</h4><div class="p-trab-lista">${L.map(({ n, i }) => tarjetaPrograma(`${i + 1}. ${n.ciudad}`, deProg(n.ciudad), true)).join("")}</div>`;
-    }).join("");
+    }).join("") + progExtraHTML(a, c, filas, deProg);
     // Robótica: por modalidad y reto.
     const modos = Object.keys(R.MODOS || {}).filter((k) => !ac || k === "robot"), retos = (ac && window.RETOS_ROB_AC) || R.RETOS || [];
     let supRob = 0;
@@ -777,7 +804,7 @@ window.Profe = (function () {
         ${caja(ri("rob"), `${supRob}/${modos.length * retos.length}`, "retos superados" + insTxt("rob"))}
         ${caja(ri("piensa"), `${nPiensa}/${(window.PIENSA || []).length}`, "llaves enviadas" + insTxt("piensa"))}
       </div>
-      <p class="intro">🏅 ${ganIns} de ${totIns} insignias, según las notas de la hoja (Programa: una por aventura y Robótica: una por modalidad, al superar todas sus pantallas o retos; Crea: al terminar el reto; Piensa: todos sus indicadores con nota y media de 2,5 o más). Pulsa una pantalla o un reto para ver su programa y todos sus envíos.
+      <p class="intro">🏅 ${ganIns} de ${totIns} insignias, según las notas de la hoja (Programa: una por aventura y Robótica: una por modalidad, al superar todas sus pantallas o retos; Crea: al terminar el reto y hacer su autoevaluación; Piensa: todos sus indicadores con nota y media de 2,5 o más). Pulsa una pantalla o un reto para ver su programa y todos sus envíos.
         <button type="button" class="btn sec" id="p-trab-recargar">Recargar su trabajo</button></p>
       ${!filas.length ? `<p class="estado">Todavía no hay nada suyo en la hoja.</p>` : ""}
       ${autoIndHTML(a, c, filas)}
@@ -792,7 +819,7 @@ window.Profe = (function () {
      para no avisar de lo que todavía no se ha trabajado en clase. En Programa se mira la aventura entera
      y en Robótica la modalidad entera: si alguien la ha empezado, al alumno le falta lo que no tenga superado. */
   function hechaPor(a, x) {
-    if (x.rincon === "crea" && (a.terminados || {})[x.destino.slice(0, 60)]) return true;
+    if ((x.rincon === "crea" || x.terminable) && (a.terminados || {})[x.destino.slice(0, 60)]) return true;
     return indsAl(x, a).some((cod) => a.notas[columna(x.destino, cod)] !== undefined);
   }
   function mandadas(lista) {
@@ -805,23 +832,23 @@ window.Profe = (function () {
     const c = cursoDe(a.clase), cat = catalogo(c, a), out = { crea: [], prog: [], rob: [], piensa: [] };
     const nota = (x, cod) => a.notas[columna(x.destino, cod)];
     // Crea y Piensa: actividad a actividad.
-    cat.filter((x) => (x.rincon === "crea" || x.rincon === "piensa") && x.inds.length).forEach((x) => {
+    cat.filter((x) => (x.rincon === "crea" || x.rincon === "piensa" || x.terminable) && x.inds.length).forEach((x) => {
       const L = out[x.rincon];
-      if (!hechaPor(a, x)) { if (m[x.destino]) L.push(x.rincon === "crea" ? `Termina el reto «${x.titulo}».` : `Haz la actividad «${x.titulo}» y envía tu llave.`); return; }
+      if (!hechaPor(a, x)) { if (m[x.destino]) L.push(x.rincon === "crea" || x.terminable ? `Termina el reto «${x.titulo}».` : `Haz la actividad «${x.titulo}» y envía tu llave.`); return; }
       const b = indsAl(x, a).filter((cod) => nota(x, cod) !== undefined && nota(x, cod) <= SUSP);
       if (b.length) L.push(`Mejora «${x.titulo}». Tienes 2 o menos en:\n${b.map((cod) => `   - ${cod} ${corto(textoInd(c, cod, a), 110)} (${String(nota(x, cod)).replace(".", ",")})`).join("\n")}`);
     });
     // Programa (por aventura) y Robótica (por modalidad).
     [["prog", "pantalla", "pantallas"], ["rob", "reto", "retos"]].forEach(([rinc, uno, varios]) => {
       const por = {};
-      cat.filter((x) => x.rincon === rinc).forEach((x) => (por[x.grupo] = por[x.grupo] || []).push(x));
+      cat.filter((x) => x.rincon === rinc && !x.terminable).forEach((x) => (por[x.grupo] = por[x.grupo] || []).push(x));
       Object.keys(por).forEach((k) => {
         const items = por[k];
         if (!items.some((x) => m[x.destino])) return;   // nadie del grupo la ha empezado
         const sin = [], mal = [];
         items.forEach((x) => { const cod = x.inds[0]; if (!cod) return; const v = nota(x, cod); if (v === undefined) sin.push(x); else if (v <= SUSP) mal.push(x); });
         if (!sin.length && !mal.length) return;
-        const nom = rinc === "prog" ? `Aventura «${((window.AVENTURAS || [])[k] || {}).nombre || "Aventura " + (+k + 1)}»` : `${(((window.Robotica || {}).MODOS || {})[k] || {}).nombre || k}`;
+        const nom = rinc === "prog" ? `Aventura «${items[0].nombreGrupo || ((window.AVENTURAS || [])[k] || {}).nombre || "Aventura " + (+k + 1)}»` : `${(((window.Robotica || {}).MODOS || {})[k] || {}).nombre || k}`;
         const ver = (x) => rinc === "prog" ? x.titulo : `${x.n}. ${x.reto}`;
         const partes = [];
         if (mal.length) partes.push(`empezaste y no superaste ${mal.length === 1 ? "la " + uno : "estas " + varios}: ${mal.map(ver).join(", ")}`);
@@ -913,6 +940,16 @@ window.Profe = (function () {
       pintarGrupo();
   }
 
+  // Abre a mano un reto de Crea a un alumno (sin esperar a que termine el anterior ni a su autoevaluación).
+  async function abrirReto(btn) {
+    const a = alumnoSel, caja = btn.closest(".reto-r"), x = catalogo(cursoDe(a.clase), a)[+caja.dataset.k], est = $(".estado", caja);
+    btn.disabled = true; est.textContent = "Abriendo…"; est.dataset.tipo = "";
+    const ok = await window.Valoraciones.enviar({ clave: claveGuardada(), nombre: a.nombre, usuario: a.usuario, clase: a.clase, destino: x.destino, ciudad: x.ciudad, personaje: "Profe", programa: "Desbloqueo del profe" });
+    if (!ok) { btn.disabled = false; est.textContent = "No se ha podido abrir. Revisa la conexión y vuelve a pulsar."; est.dataset.tipo = "error"; return; }
+    (a.abiertos = a.abiertos || {})[x.destino.slice(0, 60)] = new Date().toISOString();
+    btn.outerHTML = `<span class="p-hecho">🔓 Abierto por ti</span>`;
+    est.textContent = "✓ Reto abierto. El alumno lo verá al entrar en Crea."; est.dataset.tipo = "ok";
+  }
   function claveGuardada() { try { return sessionStorage.getItem(CLAVE_SES) || ""; } catch (e) { return ""; } }
   async function enviarProfe(caja, todas) {
     const a = alumnoSel, x = catalogo(cursoDe(a.clase), a)[+caja.dataset.k], est = $(".estado", caja), filas = [];
@@ -944,6 +981,7 @@ window.Profe = (function () {
         if (e.target.closest("#p-recargar")) { let k = ""; try { k = sessionStorage.getItem(CLAVE_SES) || ""; } catch (x) {} datos = null; pintarClave(); cargar(k); return; }
         if (e.target.closest("#p-textos") && window.Textos) { window.Textos.activar(true); location.hash = ""; return; }
         if (e.target.closest("#p-salir")) { try { sessionStorage.removeItem(CLAVE_SES); } catch (x) {} datos = null; cambios = {}; pintarClave(); return; }
+        const ab = e.target.closest(".p-abrir"); if (ab && alumnoSel) { abrirReto(ab); return; }
         const env = e.target.closest(".enviar-p"); if (env) enviarProfe(env.closest(".reto-r"), true);
       }, true);
     }

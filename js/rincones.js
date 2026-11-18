@@ -29,6 +29,7 @@ window.Rincones = (function () {
   const crea = () => (window.CREA || {})[V().curso()] || [];
   const destinoCrea = (a) => `Crea · ${a.sa} ${a.s} · ${a.titulo}`;
   const claveHecho = (a) => `crea-hecho-${cursoN()}-${a.sa}-${a.s}`;
+  const claveAbierto = (a) => `crea-abierto-${cursoN()}-${a.sa}-${a.s}`;   // abierto a mano por el profe
   const hecho = (a) => !!(a && (V().leer()[claveHecho(a)] || {}).hecho);
   const indPiensa = (p) => (cursoN() === "6" ? p.i6 : p.i5);
   const destinoPiensa = (p) => `Piensa · ${p.titulo}`;
@@ -205,8 +206,9 @@ window.Rincones = (function () {
         : `<div class="enviar-fila"><button type="button" class="btn terminar">✅ He terminado</button><span class="estado" aria-live="polite"></span></div>`}
     </article>`;
   }
-  /* Desbloqueo de Crea (18-nov): el reto siguiente se abre cuando el anterior está terminado, tiene su
-     autoevaluación y la media de las notas que ha puesto el profe en sus indicadores es 2,5 o más.
+  /* Desbloqueo de Crea (18-nov, a petición del profe): el reto siguiente se abre cuando el anterior está
+     terminado y tiene su autoevaluación. Ya NO se mira la nota del profe (antes pedía media de 2,5).
+     El profe también puede abrir un reto a un alumno desde su ficha del panel («Desbloqueo del profe»).
      Un reto ya terminado nunca se vuelve a cerrar. */
   let notasNube = null, notasNubeDe = ""; // notas de la hoja (Valoraciones) del alumno con sesión; null = sin comprobar
   function mediaCrea(a) {
@@ -219,17 +221,10 @@ window.Rincones = (function () {
   // Qué falta para abrir el reto i (o "" si está abierto).
   function bloqueoCrea(i) {
     const lista = crea(), a = lista[i], prev = lista[i - 1];
-    if (i === 0 || hecho(a)) return "";
+    if (i === 0 || hecho(a) || (V().leer()[claveAbierto(a)] || {}).abierto) return "";
     if (!hecho(prev)) return `Se abre cuando termines el reto anterior: <b>${esc(prev.titulo)}</b>.`;
     if (!Autoeval.hecha(Autoeval.etapaCrea(prev).etapa))
       return `Haz tu autoevaluación del reto anterior (<b>${esc(prev.titulo)}</b>). <button type="button" class="btn sec ae-crea" data-i="${i - 1}">Hacer mi autoevaluación</button>`;
-    if (window.ADAPTADO) return "";
-    const s = window.Acceso && window.Acceso.sesion ? window.Acceso.sesion() : null;
-    if (!s) return `Entra con tu contraseña en <a href="#">Rincones</a> para comprobar tus notas.`;
-    const m = mediaCrea(prev);
-    if (!m) return "Comprobando tus notas…";
-    if (!m.n) return `Tu profe todavía no ha puesto la nota de <b>${esc(prev.titulo)}</b>. Se abre cuando tengas una media de 2,5 o más.`;
-    if (m.media < 2.5) return `Necesitas una media de 2,5 en <b>${esc(prev.titulo)}</b> y tienes ${String(m.media).replace(".", ",")}. Mira en «Mis notas» lo que te dice tu profe, mejora el reto y pídele que lo vuelva a corregir.`;
     return "";
   }
   function tarjetaCrea(a, i) {
@@ -518,7 +513,12 @@ window.Rincones = (function () {
       const media = g.notas.length ? g.notas.reduce((x,y)=>x+y,0)/g.notas.length : 0;
       const completa = g.total > 0 && g.registradas === g.total;
       if (g.aventura) return Object.assign(g, { media: 5, completa: g.superadas === g.total, ganada: g.total > 0 && g.superadas === g.total });
-      if (g.hechoCrea) return Object.assign(g, { media: 5, completa, crea: true, ganada: completa });
+      // Crea: la insignia se gana al marcar el reto como terminado y hacer su autoevaluación.
+      if (g.hechoCrea) {
+        const ca = crea().find((x) => destinoCrea(x) === g.destino);
+        const auto = !ca || Autoeval.hecha(Autoeval.etapaCrea(ca).etapa);
+        return Object.assign(g, { media: 5, completa, crea: true, faltaAuto: !auto, ganada: completa && auto });
+      }
       return Object.assign(g, { media: Math.round(media*10)/10, completa, ganada: completa && media >= 2.5 });
     });
     return resultado.sort((x,y) => x.grupo.localeCompare(y.grupo) || x.destino.localeCompare(y.destino));
@@ -539,8 +539,8 @@ window.Rincones = (function () {
         return `<h2 class="sa-tit">${grupoNombre[id]}</h2><div class="insignias-grid">${items.map(x=>`
           <article class="insignia ${x.ganada?"ganada":"pendiente"}">
             <div class="insignia-sello">${x.ganada?"🏅":"🔒"}</div>
-            <h3>${esc(x.actividad)}</h3><p>${x.aventura?`${x.superadas} de ${x.total} ${x.grupo==="prog"?"pantallas superadas":"retos superados"}`:x.crea?"Reto terminado":x.completa?`Media: ${x.media.toFixed(1)} / 5`:x.grupo==="crea"?"Termina el reto para conseguirla":"Pendiente de completar las valoraciones"}</p>
-            <span>${x.ganada?"¡Insignia conseguida!":x.aventura?`Supera ${x.grupo==="prog"?"todas las pantallas de la aventura":"todos los retos de esta modalidad"}`:x.completa?"Necesitas una media de 2,5":"Aún no conseguida"}</span>
+            <h3>${esc(x.actividad)}</h3><p>${x.aventura?`${x.superadas} de ${x.total} ${x.grupo==="prog"?"pantallas superadas":"retos superados"}`:x.crea?(x.faltaAuto?"Reto terminado · falta tu autoevaluación":"Reto terminado y autoevaluado"):x.completa?`Media: ${x.media.toFixed(1)} / 5`:x.grupo==="crea"?"Termina el reto para conseguirla":"Pendiente de completar las valoraciones"}</p>
+            <span>${x.ganada?"¡Insignia conseguida!":x.aventura?`Supera ${x.grupo==="prog"?"todas las pantallas de la aventura":"todos los retos de esta modalidad"}`:x.faltaAuto?"Haz la autoevaluación del reto en Crea":x.completa?"Necesitas una media de 2,5":"Aún no conseguida"}</span>
           </article>`).join("")}</div>`;
       }).join("")}
       <div class="pasaporte-final ${todas?"desbloqueado":"bloqueado"}">
@@ -586,6 +586,8 @@ window.Rincones = (function () {
         // Restaura también los retos de Crea terminados, aunque se haya cambiado de navegador o dispositivo.
         (j.hechos || []).forEach(h => {
           const a = crea().find(x => destinoCrea(x) === h[0]);
+          // «Desbloqueo del profe»: el profe le ha abierto este reto a mano desde el panel.
+          if (a && /^Desbloqueo/.test(String(h[1] || ""))) { V().registrar(claveAbierto(a), { nota: "abierto", abierto: true, fecha: h[2] || "" }, true); return; }
           if (a) V().registrar(claveHecho(a), { nota: "✓ Terminado", hecho: true,
             ruta: String(h[1] || "").replace(/^Terminado ·\s*/, ""), fecha: h[2] || "" }, true);
         });
@@ -785,7 +787,7 @@ window.Rincones = (function () {
     else if (h === "#piensa") pintarPiensa();
     else if (h === "#notas-prog") pintarNotas("prog");
     else if (h === "#notas-rob") pintarNotas("rob");
-    else if (h === "#insignias") { pintarInsignias(); Promise.all([recuperarProgresoNube(), window.RetosCadena && window.RetosCadena.sincronizar ? window.RetosCadena.sincronizar(true) : null]).then(() => { if (location.hash === "#insignias") pintarInsignias(); }); }
+    else if (h === "#insignias") { pintarInsignias(); Promise.all([recuperarProgresoNube(), Autoeval.sincronizar(), window.RetosCadena && window.RetosCadena.sincronizar ? window.RetosCadena.sincronizar(true) : null]).then(() => { if (location.hash === "#insignias") pintarInsignias(); }); }
     else if (h === "#mis-notas") { pintarMisNotas(); }
     else if (h === "#profe" && window.Profe) window.Profe.pintar(raiz);
     else if (h === "#familias" && window.Familias) window.Familias.pintar(raiz);
