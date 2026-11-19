@@ -699,3 +699,22 @@ html.adaptado #texto-objetivo, html.adaptado #rb-texto-reto { font-size: 22px; }
 .p-aviso-lista pre { white-space: pre-wrap; font: 14px/1.45 inherit; margin: 4px 0 10px; background: #f6f7fb; padding: 8px 10px; border-radius: 8px; }
 .aviso-profe { margin: 0 0 18px; padding: 14px 16px; border-left: 6px solid #e07a1f; background: #fff6ec; border-radius: 10px; color: #1d2433; }
 .aviso-profe p { margin: 8px 0 10px; line-height: 1.5; }
+
+/* ---------- Robótica (18-nov): espacio de trabajo más amplio y el tapete siempre a la vista ----------
+   El reto ocupa casi todo el ancho de la pantalla, el tapete se queda fijo al lado del programa
+   mientras se baja (position: sticky) y el área de bloques cabe en la pantalla junto a los botones. */
+#rb-juego > .envoltura { max-width: min(1680px, 100%); }
+#rb-juego .juego.con-puzle { grid-template-columns: minmax(0, 1fr) minmax(0, 1.3fr); align-items: start; }
+#rb-juego .tablero-marco { position: sticky; top: 8px; z-index: 2; }
+#rb-juego .mapa-robot { max-width: min(100%, calc(100vh - 40px)); margin-inline: auto; }
+#rb-juego #rb-blockly { height: max(440px, calc(100vh - 150px)); min-height: 440px; }
+@media (max-width: 860px) {
+  #rb-juego .juego.con-puzle { grid-template-columns: minmax(0, .9fr) minmax(0, 1.1fr); gap: 10px; }
+  #rb-juego #rb-blockly { height: max(420px, calc(100vh - 140px)); min-height: 420px; }
+}
+@media (max-width: 640px) {
+  /* Móvil: uno encima del otro, con el tapete pequeño y fijo arriba para verlo mientras se programa. */
+  #rb-juego .juego.con-puzle { grid-template-columns: 1fr; }
+  #rb-juego .tablero-marco { top: 0; padding: 4px; }
+  #rb-juego .mapa-robot { max-width: min(100%, 38vh); }
+}
