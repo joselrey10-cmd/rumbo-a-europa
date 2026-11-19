@@ -530,7 +530,7 @@
     $("#rb-ventana").innerHTML = `<h2>¡Reto conseguido!</h2><p>${reto.titulo}: el robot ha visitado ${reto.metas.map((m) => m[1]).join(", ")}.</p>
       ${val && val.codigo ? `<p class="val-ind">Indicador ${val.codigo}: <b>${val.nota} de 5</b></p>` : ""}
       ${cadena && cadena.ok && Number.isFinite(cadena.nota) ? `<p class="val-ind">Valoración de ${MODOS[modo].nombre}: <b>${cadena.completados} de ${cadena.total} pantallas · ${cadena.nota} de ${cadena.maximo}</b></p>` : ""}
-      ${cadena && cadena.ok && cadena.codigo ? `<div class="codigo-desbloqueo"><p>🔐 <b>Código para el siguiente reto de ${MODOS[modo].nombre}</b></p><strong>${cadena.codigo}</strong><p>Guárdalo: lo necesitarás para continuar en esta modalidad.</p></div>` : cadena && !cadena.ok ? `<p class="aviso">${cadena.error || "No se ha podido generar el código."}</p>` : ""}
+      ${cadena && cadena.ok && cadena.codigo && !sig ? `<div class="codigo-desbloqueo"><p>🔐 <b>Código final de ${MODOS[modo].nombre}</b></p><strong>${cadena.codigo}</strong><p>Guárdalo: acredita que has terminado los ${RETOS.length} retos de ${MODOS[modo].nombre}.</p></div>` : cadena && !cadena.ok ? `<p class="aviso">${cadena.error || "No se ha podido generar el código."}</p>` : ""}
       <p class="pista">Ahora prueba el mismo programa con el robot de verdad sobre el tapete.</p>
       ${!sig && window.XLSX ? `<p><button class="btn sec" id="rbv-excel">Descargar mi valoración (Excel)</button></p>` : ""}
       <div class="acciones"><button class="btn sec" id="rbv-otra">Repetir</button>${sig ? `<button class="btn" id="rbv-sig">Siguiente reto</button>` : `<button class="btn" id="rbv-menu">Elegir otro nivel</button>`}</div>`;
