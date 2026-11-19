@@ -26,3 +26,8 @@
 .pc-ruta li.ok { color: #217a21; }
 .pc-ruta li.no { color: #b3261e; }
 @media (max-width: 1100px) { .pc-barra { max-width: calc(100vw - 20px); top: auto; bottom: 10px; } .pc-panel { top: auto; bottom: 60px; } }
+
+/* Modo fácil (adaptación curricular): sin extensiones y con la ayuda a mano. */
+body.pc-facil [class*="gui_extension-button-container"] { display: none !important; }
+.pc-pasos { margin: 4px 0 8px; padding-left: 22px; font-size: 15px; line-height: 1.5; }
+.pc-pasos li { margin: 6px 0; }

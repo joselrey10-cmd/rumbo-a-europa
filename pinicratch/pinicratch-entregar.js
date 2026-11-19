@@ -127,8 +127,24 @@
     });
   }
 
+  /* ---------- Modo fácil (adaptación curricular): ?facil=1 ---------- */
+  function modoFacil() {
+    document.body.classList.add("pc-facil");
+    const b = barra(`<span class="pc-tit">🐿️ <b>Pinicratch fácil</b></span><button type="button" class="pc-btn sec" id="pc-ayuda">❓ ¿Cómo se hace?</button>`);
+    const ayuda = () => panel(`<h3>¿Cómo se hace?</h3><ol class="pc-pasos">
+        <li>Pulsa <b>Eventos</b> (amarillo) y arrastra <b>«al hacer clic en 🏁»</b> a la zona blanca.</li>
+        <li>Pulsa <b>Movimiento</b> (azul) y engancha <b>«mover 10 pasos»</b> debajo.</li>
+        <li>Pulsa la <b>bandera verde</b> 🏁 encima de Pini. ¡Pini se mueve!</li>
+        <li>Prueba más: <b>Apariencia</b> (Pini habla, cambia de disfraz) y <b>Control</b> (repetir).</li></ol>
+        <p class="pc-ayuda">Para guardar: Archivo → Guardar en tu ordenador.</p>`);
+    b.querySelector("#pc-ayuda").onclick = ayuda;
+    document.title = "Pinicratch fácil";
+    try { if (!localStorage.getItem("pinicratch-facil-visto")) { ayuda(); localStorage.setItem("pinicratch-facil-visto", "1"); } } catch (e) { ayuda(); }
+  }
+
   function iniciar() {
     if (abrir === "profe") { modoProfe(); return; }
+    if (q.get("facil") === "1") { modoFacil(); return; }
     if (RETOS[reto]) modoReto();
   }
   // La corrección vive en otro archivo; se carga aquí para no tocar index.html al recompilar.

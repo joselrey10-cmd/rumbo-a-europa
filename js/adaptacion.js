@@ -235,3 +235,15 @@
   // Crea: se marca cada reto como adaptado (rincones.js pinta la versión fácil).
   ((window.CREA || {})["5º"] || []).forEach((a) => { const x = window.CREA_AC["5º"][a.sa + "-" + a.s]; if (x) a.ac = x; });
 })();
+
+/* Pinicratch fácil (19-nov): con adaptación curricular, el taller abre la versión con pocos bloques. */
+(function () {
+  "use strict";
+  if (!window.ADAPTADO) return;
+  function poner() {
+    const s = document.getElementById("pinicratch-seccion"); if (!s) return;
+    const a = s.querySelector("a.btn"); if (a) { a.href = "pinicratch/?facil=1"; a.textContent = "Abrir Pinicratch fácil ↗"; }
+    const p = s.querySelector(".intro"); if (p) p.innerHTML = "Programa a Pini con pocos bloques: bandera verde, moverse, hablar y repetir. Para guardar: <b>Archivo → Guardar en tu ordenador</b>.";
+  }
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", poner); else poner();
+})();

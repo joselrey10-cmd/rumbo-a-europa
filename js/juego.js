@@ -271,13 +271,22 @@
     }
     aviso(null);
     window.scrollTo(0, 0);
+    altoNav();
   }
+  // Alto de la barra de arriba: la pantalla de juego ocupa el resto de la ventana sin scroll (css/estilo.css).
+  function altoNav() {
+    const n = document.querySelector(".nav-global");
+    document.documentElement.style.setProperty("--alto-nav", (n ? n.offsetHeight : 0) + "px");
+    if (PUZLE && window.EditorBloques) setTimeout(() => window.EditorBloques.redimensionar(), 0);
+  }
+  window.addEventListener("resize", altoNav);
 
   function pintarTablero() {
     const t = $("#tablero");
     const filas = nivel.mapa.length, cols = nivel.mapa[0].length;
     t.style.gridTemplateColumns = `repeat(${cols}, minmax(0, 1fr))`;
-    t.style.maxWidth = Math.min(cols * 92, 900) + "px";
+    t.style.maxWidth = Math.min(cols * 120, 1000) + "px";
+    t.style.setProperty("--cols", cols); t.style.setProperty("--filas", filas);   // para que quepa en el alto de la pantalla (css)
     t.style.setProperty("--suelo", nivel.suelo);
     let h = "";
     for (let y = 0; y < filas; y++) for (let x = 0; x < cols; x++) {
