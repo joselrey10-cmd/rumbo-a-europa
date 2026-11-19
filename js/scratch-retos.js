@@ -1,7 +1,7 @@
 /*
   RETOS SCRATCH · AGENCIA EURORUTA (6.º · Programa)
   --------------------------------------------------
-  Los 6 bloques de las fichas del profe (B1–B6): el alumno hace el proyecto en scratch.mit.edu,
+  Los 6 bloques de las fichas del profe (B1–B6): el alumno hace el proyecto en Pinicratch (pinicratch/, editor Scratch con Pini) o en scratch.mit.edu,
   lo guarda en OneDrive y aquí elige su ruta, comprueba la lista, contesta el billete de salida
   y marca «He terminado». La nota de cada indicador la pone el profe en el panel (como en Crea).
   - Se ven en #programa (apartado «2.º trimestre», que crea js/pinicraft.js) y cada reto en #programa-scratch-B1…B6.
@@ -25,7 +25,7 @@
       id: "B1", titulo: "El nombre de mi país cobra vida", tri: "1.er trimestre", sda: "SdA 1 · Europa bajo la lupa",
       mision: "La Agencia EuroRuta necesita una pantalla de bienvenida para cada país que investigáis. Escribe el nombre de tu país con letras de Scratch y dales vida con los colores de su bandera.",
       producto: "Proyecto Scratch con el nombre de tu país animado.",
-      antes: ["Abre scratch.mit.edu → Crear.", "Borra el gato: clic derecho → borrar.", "Añade una a una las letras del nombre de tu país (Elige un objeto → Letras).", "Elige un fondo que recuerde a tu país."],
+      antes: ["Abre Pinicratch (botón de abajo).", "Borra a Pini: clic derecho → borrar.", "Añade una a una las letras del nombre de tu país (Elige un objeto → Letras).", "Elige un fondo que recuerde a tu país."],
       rutas: [["Sencilla", "Cada letra cambia de color al hacer clic y gira.", "Cambiar color · Rotar"], ["Intermedia", "Cada letra suena y cambia de tamaño.", "Reproducir un sonido · Cambiar el tamaño"], ["Avanzada", "Al pulsar una tecla las letras se deslizan, y una dice «hola» en la lengua del país.", "Presiona una tecla · Deslizar alrededor"]],
       compruebo: ["Al menos 3 letras reaccionan al hacer clic.", "Los colores recuerdan a la bandera.", "Pruebo cada letra y corrijo lo que falla."],
       ind: [["3.2.1", "Animo las letras con «al hacer clic» y bloques de apariencia, movimiento y sonido."], ["3.2.6", "Pruebo cada letra, encuentro lo que falla y lo corrijo."], ["2.1.2", "Escribo «hola» bien en la lengua de mi país (avanzada)."]],
@@ -35,7 +35,7 @@
       id: "B2", titulo: "Mi guía turístico", tri: "1.er trimestre", sda: "SdA 1 · Europa bajo la lupa",
       mision: "Cada país necesita un guía que reciba a los viajeros. Elige un personaje que pasea por un paisaje de tu país y cuenta lo que has descubierto en el dossier.",
       producto: "Un personaje que se mueve, cambia de disfraz y cuenta datos de tu país.",
-      antes: ["Abre un proyecto nuevo en Scratch.", "Elige un fondo parecido a un lugar de tu país (playa, montaña, ciudad…).", "Elige un personaje que tenga varios disfraces.", "Ten a mano tu dossier de viaje."],
+      antes: ["Abre un proyecto nuevo en Pinicratch.", "Elige un fondo parecido a un lugar de tu país (playa, montaña, ciudad…).", "Elige un personaje que tenga varios disfraces.", "Ten a mano tu dossier de viaje."],
       rutas: [["Sencilla", "El guía se mueve con las flechas y cambia de disfraz.", "Mover con las teclas · Cambiar el disfraz"], ["Intermedia", "El guía planea de la capital al monumento y anda.", "Planea de un punto a otro · Animar - andar"], ["Avanzada", "El guía cuenta 3 datos del dossier y, después, sale volando.", "Animar - hablar · Animar - volar"]],
       compruebo: ["El guía responde a las flechas o al clic.", "Los datos que dice son los del dossier.", "Si uso una imagen de fuera de Scratch, apunto el autor y la licencia."],
       ind: [["3.2.2", "Programo movimiento, disfraces y mensajes del guía en orden y con eventos."], ["3.2.6", "Pruebo, encuentro un fallo y lo corrijo."], ["3.3.1", "Uso imágenes de la biblioteca o con licencia y apunto su autor."]],
@@ -139,7 +139,7 @@
     const L = $("#scratch-retos-lista");
     if (!L) return;
     if (!esSexto()) { L.innerHTML = ""; return; }
-    L.innerHTML = `<div class="aventura sc-aventura"><div class="aventura-cab"><span class="etiqueta">Retos Scratch</span><h3>Agencia EuroRuta</h3><p>Programa en <b>scratch.mit.edu</b> y guarda en OneDrive (carpeta TIAC / Scratch EuroRuta). Las rutas se suman: para la intermedia, haz antes la sencilla; para la avanzada, la intermedia.</p><span class="aventura-cuenta">${RETOS.filter(terminado).length} / ${RETOS.length}</span></div>
+    L.innerHTML = `<div class="aventura sc-aventura"><div class="aventura-cab"><span class="etiqueta">Retos Scratch</span><h3>Agencia EuroRuta</h3><p>Programa en <b>Pinicratch</b> (o en scratch.mit.edu), guarda con Archivo → Guardar en tu ordenador y súbelo a OneDrive (carpeta TIAC / Scratch EuroRuta). Las rutas se suman: para la intermedia, haz antes la sencilla; para la avanzada, la intermedia.</p><span class="aventura-cuenta">${RETOS.filter(terminado).length} / ${RETOS.length}</span></div>
       <div class="destinos sc-retos">${RETOS.map((r, k) => {
         const ok = abierto(k), fin = terminado(r), ruta = (mio()[r.id] || {}).ruta || (typeof hoja[r.id] === "string" ? hoja[r.id] : "");
         return `<button class="destino sc-reto" data-id="${r.id}" ${ok ? "" : "disabled"}><span class="num">${esc(r.id)} · ${esc(r.tri)}</span><span class="sc-ico" aria-hidden="true">${["🔤", "🧭", "🎤", "🎵", "🧳", "✈️"][k]}</span><strong>${esc(r.titulo)}</strong><span class="pais">${esc(r.sda)}</span><span class="ind-mini">Ind. ${esc(codigos(r).join(" · "))}</span><span class="estrellas">${!ok ? "Bloqueado" : fin ? `<b>✓ Terminado${ruta && ruta !== true ? " · " + esc(ruta) : ""}</b>` : "Por hacer"}</span></button>`;
@@ -167,7 +167,7 @@
       <div class="barra-juego"><div class="envoltura"><button class="volver" id="sc-volver">← Programa</button><div><h2>${esc(r.titulo)}</h2><div class="pais">Scratch ${esc(r.id)} de 6 · ${esc(r.tri)} · ${esc(r.sda)}</div></div>${fin ? `<div class="contador">✓ Terminado</div>` : ""}</div></div>
       <div class="envoltura sc-ficha">
         <section class="sc-caja sc-mision"><h3>🎯 Misión</h3><p>${esc(r.mision)}</p><p><b>Producto:</b> ${esc(r.producto)}</p>
-          <p class="sc-botones"><a class="btn" href="https://scratch.mit.edu/projects/editor/" target="_blank" rel="noopener">Abrir Scratch ↗</a><a class="btn sec" id="sc-pdf" href="scratch/${esc(r.id)}.pdf" target="_blank" rel="noopener" hidden>Ver las tarjetas (PDF)</a></p></section>
+          <p class="sc-botones"><a class="btn" href="pinicratch/" target="_blank" rel="noopener">Abrir Pinicratch ↗</a><a class="btn sec" href="https://scratch.mit.edu/projects/editor/" target="_blank" rel="noopener">Abrir Scratch ↗</a><a class="btn sec" id="sc-pdf" href="scratch/${esc(r.id)}.pdf" target="_blank" rel="noopener" hidden>Ver las tarjetas (PDF)</a></p></section>
         <section class="sc-caja"><h3>🧳 Antes de empezar</h3><ol>${r.antes.map((t) => `<li>${esc(t)}</li>`).join("")}</ol></section>
         <section class="sc-caja"><h3>🛫 Elige tu ruta</h3><div class="sc-rutas">${r.rutas.map(([n, t, tar], j) => `<label class="sc-ruta"><input type="radio" name="sc-ruta" value="${esc(n)}" ${m.ruta === n ? "checked" : ""}><span><b>● Ruta ${esc(n.toLowerCase())}</b>${esc(t)}<small>Tarjetas: ${esc(tar)}</small></span></label>`).join("")}</div><p class="sc-nota">Las rutas se suman: para la intermedia, haz antes la sencilla; para la avanzada, la intermedia.</p></section>
         <section class="sc-caja"><h3>✅ Compruebo antes de guardar</h3>${r.compruebo.map((t, j) => `<label class="sc-check"><input type="checkbox" data-j="${j}" ${m.ok && m.ok[j] ? "checked" : ""}> ${esc(t)}</label>`).join("")}</section>

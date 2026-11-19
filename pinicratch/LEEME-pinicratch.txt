@@ -1,0 +1,15 @@
+PINICRATCH · editor de bloques de Rumbo a Europa
+=================================================
+Pinicratch es una versión modificada de scratch-gui v5.3.0 (Scratch Foundation / MIT),
+software libre con licencia AGPL-3.0 (ver LICENSE-scratch-gui.txt). Su código fuente
+modificado es el propio de esta carpeta más el parche «pinicratch.patch» guardado en
+la carpeta del proyecto; el original está en https://github.com/scratchfoundation/scratch-gui
+
+Cambios respecto a Scratch:
+- Nombre y logo propios (Pinicratch con Pini). «Scratch» es marca del MIT (ver TRADEMARK-scratch.txt):
+  esta web no está relacionada con Scratch ni con el MIT.
+- Personaje inicial: Pini (disfraces Pini, balón, rayas y granjero) con el sonido «Pío».
+- Quitados de la biblioteca el gato y los personajes Gobo, Pico, Nano, Tera y Giga (son marcas).
+- Sin tutoriales (sus imágenes muestran el gato). Español por defecto (?locale=en para otro idioma).
+- El logo vuelve a Programa de Rumbo a Europa.
+Los proyectos se guardan con Archivo → Guardar en tu ordenador (.sb3) y se abren también en Scratch.

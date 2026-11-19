@@ -485,7 +485,7 @@
     s.hidden = !!window.ADAPTADO;
     $("#pc-sec-tit", s).textContent = c === "6º" ? "Retos Scratch · Agencia EuroRuta" : "PiniCraft";
     $("#pc-sec-intro", s).textContent = c === "6º"
-      ? "Seis retos de Scratch: cada uno con su ruta sencilla, intermedia y avanzada. Haz el proyecto en scratch.mit.edu, guárdalo en OneDrive y márcalo aquí como terminado."
+      ? "Seis retos de Scratch: cada uno con su ruta sencilla, intermedia y avanzada. Haz el proyecto en Pinicratch (o en scratch.mit.edu), guárdalo en OneDrive y márcalo aquí como terminado."
       : "Dos aventuras nuevas de bloques por los paisajes y monumentos de Europa. Completa cada pantalla para abrir la siguiente.";
     const L = $("#pc-sec-lista", s);
     if (c !== "5º" || window.ADAPTADO) { L.innerHTML = ""; return; }
