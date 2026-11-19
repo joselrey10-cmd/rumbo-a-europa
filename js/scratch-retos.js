@@ -83,6 +83,8 @@
     }
   ];
   window.RETOS_SCRATCH = RETOS;
+  // Indicador que corrige solo Pinicratch al entregar (pinicratch/pinicratch-rubricas.js).
+  const AUTO = { B1: "3.2.1", B2: "3.2.2", B3: "3.2.2", B4: "3.2.3", B5: "3.2.2", B6: "3.2.2" };
 
   const alumno = () => (V() ? V().alumno() : { nombre: "", usuario: "", clase: "" });
   const curso = () => (V() ? V().curso() : "5º");
@@ -167,12 +169,12 @@
       <div class="barra-juego"><div class="envoltura"><button class="volver" id="sc-volver">← Programa</button><div><h2>${esc(r.titulo)}</h2><div class="pais">Scratch ${esc(r.id)} de 6 · ${esc(r.tri)} · ${esc(r.sda)}</div></div>${fin ? `<div class="contador">✓ Terminado</div>` : ""}</div></div>
       <div class="envoltura sc-ficha">
         <section class="sc-caja sc-mision"><h3>🎯 Misión</h3><p>${esc(r.mision)}</p><p><b>Producto:</b> ${esc(r.producto)}</p>
-          <p class="sc-botones"><a class="btn" href="pinicratch/" target="_blank" rel="noopener">Abrir Pinicratch ↗</a><a class="btn sec" href="https://scratch.mit.edu/projects/editor/" target="_blank" rel="noopener">Abrir Scratch ↗</a><a class="btn sec" id="sc-pdf" href="scratch/${esc(r.id)}.pdf" target="_blank" rel="noopener" hidden>Ver las tarjetas (PDF)</a></p></section>
+          <p class="sc-botones"><a class="btn" href="pinicratch/?reto=${esc(r.id)}" target="_blank" rel="noopener">Abrir Pinicratch ↗</a><a class="btn sec" href="https://scratch.mit.edu/projects/editor/" target="_blank" rel="noopener">Abrir Scratch ↗</a><a class="btn sec" id="sc-pdf" href="scratch/${esc(r.id)}.pdf" target="_blank" rel="noopener" hidden>Ver las tarjetas (PDF)</a></p></section>
         <section class="sc-caja"><h3>🧳 Antes de empezar</h3><ol>${r.antes.map((t) => `<li>${esc(t)}</li>`).join("")}</ol></section>
         <section class="sc-caja"><h3>🛫 Elige tu ruta</h3><div class="sc-rutas">${r.rutas.map(([n, t, tar], j) => `<label class="sc-ruta"><input type="radio" name="sc-ruta" value="${esc(n)}" ${m.ruta === n ? "checked" : ""}><span><b>● Ruta ${esc(n.toLowerCase())}</b>${esc(t)}<small>Tarjetas: ${esc(tar)}</small></span></label>`).join("")}</div><p class="sc-nota">Las rutas se suman: para la intermedia, haz antes la sencilla; para la avanzada, la intermedia.</p></section>
         <section class="sc-caja"><h3>✅ Compruebo antes de guardar</h3>${r.compruebo.map((t, j) => `<label class="sc-check"><input type="checkbox" data-j="${j}" ${m.ok && m.ok[j] ? "checked" : ""}> ${esc(t)}</label>`).join("")}</section>
-        <section class="sc-caja"><h3>📋 Mis indicadores</h3><ul class="sc-ind">${r.ind.map(([cod, t]) => `<li><span class="cod">Ind. ${esc(cod)}</span> <b>${esc(t)}</b>${textoInd(cod) ? `<small>${esc(textoInd(cod))}</small>` : ""}</li>`).join("")}</ul><p class="sc-nota">La nota de cada indicador la pone tu profe cuando revise tu proyecto.</p></section>
-        <section class="sc-caja"><h3>💾 Mochila digital</h3><p>Archivo → Guardar en tu ordenador y súbelo a OneDrive, a la carpeta <b>TIAC / Scratch EuroRuta</b>.<br>Nombre: <code>${esc(r.archivo)}</code><br>Lo reutilizarás en el proyecto final del 3.er trimestre.</p>
+        <section class="sc-caja"><h3>📋 Mis indicadores</h3><ul class="sc-ind">${r.ind.map(([cod, t]) => `<li><span class="cod">Ind. ${esc(cod)}</span> <b>${esc(t)}</b>${textoInd(cod) ? `<small>${esc(textoInd(cod))}</small>` : ""}</li>`).join("")}</ul><p class="sc-nota">Haz el reto en <b>Pinicratch</b>: con «🔍 Comprobar» ves qué te falta y con «📤 Entregar a la profe» se guarda tu proyecto y se pone sola la nota del indicador <b>${esc(AUTO[r.id] || "")}</b> (cuenta tu mejor entrega). Los demás indicadores los pone tu profe; si tu profe corrige una nota, vale la suya.</p></section>
+        <section class="sc-caja"><h3>💾 Mochila digital</h3><p>Al entregar en Pinicratch, tu profe recibe una copia. Guarda también la tuya: Archivo → Guardar en tu ordenador y súbelo a OneDrive, a la carpeta <b>TIAC / Scratch EuroRuta</b>.<br>Nombre: <code>${esc(r.archivo)}</code><br>Lo reutilizarás en el proyecto final del 3.er trimestre.</p>
           <label class="sc-campo">Enlace a tu proyecto (de Scratch o de OneDrive), si lo tienes<input id="sc-enlace" type="url" maxlength="200" placeholder="https://…" value="${esc(m.enlace || "")}"></label></section>
         <section class="sc-caja"><h3>🎟️ Billete de salida</h3><label class="sc-campo">${esc(r.billete)}<textarea id="sc-billete" rows="3" maxlength="300">${esc(m.billete || "")}</textarea></label></section>
         <div class="enviar-fila"><button class="btn" id="sc-fin">${fin ? "Volver a enviar" : "✓ He terminado el reto"}</button><span class="estado" id="sc-estado" aria-live="polite">${fin ? "Ya lo marcaste como terminado." : ""}</span></div>

@@ -13,3 +13,7 @@ Cambios respecto a Scratch:
 - Sin tutoriales (sus imágenes muestran el gato). Español por defecto (?locale=en para otro idioma).
 - El logo vuelve a Programa de Rumbo a Europa.
 Los proyectos se guardan con Archivo → Guardar en tu ordenador (.sb3) y se abren también en Scratch.
+
+Añadido el 19-nov (archivos propios, fuera del código compilado):
+- pinicratch-entregar.js / .css: barra de reto (Comprobar / Entregar) y apertura de proyectos desde el panel.
+- pinicratch-rubricas.js: lo que se comprueba en cada reto B1–B6 y cómo se calcula la nota.

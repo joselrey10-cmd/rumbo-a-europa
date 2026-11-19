@@ -1,0 +1,21 @@
+PINICRATCH · CORRECCIÓN AUTOMÁTICA Y PROYECTOS EN DRIVE (19-nov)
+================================================================
+Qué hace
+- En cada Reto Scratch de 6.º, «Abrir Pinicratch» abre el editor con el reto ya elegido (pinicratch/?reto=B1…B6).
+- Arriba aparecen «🔍 Comprobar» (dice qué falta en cada ruta) y «📤 Entregar a la profe».
+- Entregar: guarda el .sb3 en el Drive de rumboaeuropa@ (carpeta «Pinicratch · proyectos del alumnado» / clase)
+  y pone sola la nota del indicador de programación del reto:
+    B1 3.2.1 · B2 3.2.2 · B3 3.2.2 · B4 3.2.3 · B5 3.2.2 · B6 3.2.2
+  Sencilla completa = 3, + intermedia = 4, + avanzada = 5 (a medias: 1-2). Cuenta la mejor entrega.
+  Si el profe ha puesto su nota en ese indicador, la automática ya no la cambia.
+- Panel del profe → alumno → «Su trabajo» → Programa → Retos Scratch: entregas, mejor nota y
+  «▶ Abrir la última en Pinicratch» (abre su proyecto y la corrección automática).
+- Lo que se comprueba está en pinicratch/pinicratch-rubricas.js (se puede cambiar).
+
+LO QUE TIENES QUE HACER (una vez)
+1. Abre el proyecto de Apps Script de la web (script.google.com, cuenta rumboaeuropa@; NO el de Extensiones de la hoja).
+2. Copia tu línea  const CLAVE_PROFE = "…";  (la de tu clave real).
+3. Borra todo y pega script-completo-APPS-SCRIPT-19nov-pinicratch.txt. Vuelve a poner tu línea de CLAVE_PROFE.
+4. Guarda. Arriba elige la función «autorizarDrive» y pulsa Ejecutar: acepta el permiso de Google Drive.
+5. Implementar → Gestionar implementaciones → lápiz → Versión: Nueva versión → Implementar.
+Hasta que lo hagas, «Entregar» avisa al alumno de que guarde en su ordenador y no envía nota.

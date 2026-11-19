@@ -608,6 +608,7 @@ window.Profe = (function () {
     if (linea && !esAC(a) && (!a.rutas || !a.rutas.prog || a.rutas.prog.hechas < sup))
       linea.innerHTML = `🧩 ${sup}/30 pantallas · <b>${coma(Math.round(5 * sup / 30 * 100) / 100)}</b> de 5`;
     const rb = $("#p-trab-recargar", caja); if (rb) rb.onclick = () => cargarTrabajo(a, true);
+    caja.querySelectorAll(".p-pc-abrir").forEach((b) => (b.onclick = () => abrirEnPinicratch(b, a)));
   }
   // Igual que notaPantalla() del script: las notas con decimales del 10-nov (reparto de 5 puntos) se recalculan con estrellas e intentos.
   function notaPantalla(v, est, intentos) {
@@ -753,10 +754,35 @@ window.Profe = (function () {
         return `<div class="p-trab ${t ? "si" : "sin"} p-trab-fija"><div class="p-trab-fila"><span class="p-trab-tit">${esc(x.titulo)}</span>
           <span class="p-trab-est">${t ? `✓ Terminado${t.ruta ? " · " + esc(t.ruta) : ""}${t.fecha ? " · " + fechaCorta(t.fecha) : ""}` : "Sin terminar"}</span>
           <span class="p-trab-dat">${notas.length ? notas.map((p) => `<span class="cod-p">${esc(p[0])}</span> ${p[1]}`).join(" · ") : "Sin notas tuyas todavía"}</span></div>
-          ${bil ? `<p class="p-com-lista">🎟️ ${esc(bil.prog.replace(/^Billete:\s*/, "").replace(/ · Proyecto: \S+$/, ""))}${/^https?:\/\//.test(enl || "") ? ` · <a href="${esc(enl)}" target="_blank" rel="noopener">Abrir su proyecto ↗</a>` : ""}</p>` : ""}</div>`;
+          ${bil ? `<p class="p-com-lista">🎟️ ${esc(bil.prog.replace(/^Billete:\s*/, "").replace(/ · Proyecto: \S+$/, ""))}${/^https?:\/\//.test(enl || "") ? ` · <a href="${esc(enl)}" target="_blank" rel="noopener">Abrir su proyecto ↗</a>` : ""}</p>` : ""}${pinicratchHTML(x, rs)}</div>`;
       }).join("");
       return `<h4 class="p-trab-grupo">${esc(g.nombre)}</h4><div class="p-trab-lista">${tarjetas}</div>`;
     }).join("");
+  }
+  // Entregas hechas desde Pinicratch (pinicratch/pinicratch-entregar.js): nota automática y botón para abrir el proyecto.
+  function pinicratchHTML(x, rs) {
+    const ent = rs.filter((r) => /^Entrega Pinicratch/.test(r.prog) && r.pers === "Pinicratch");
+    if (!ent.length) return "";
+    const b = ent.slice().sort((p, q) => (q.val || 0) - (p.val || 0) || String(q.fecha).localeCompare(String(p.fecha)))[0];
+    const ult = ent[ent.length - 1], id = (/· Proyecto: (\S+)/.exec(ult.prog) || [])[1] || "";
+    const reto = (/Scratch (B\d)/.exec(x.titulo) || [])[1] || "";
+    const ruta = (/· Ruta ([^·]+)/.exec(b.prog) || [])[1] || "";
+    return `<p class="p-com-lista">🐿️ Pinicratch: ${ent.length} ${ent.length === 1 ? "entrega" : "entregas"} · mejor nota automática <b>${b.val != null ? b.val : "–"}</b>/5${b.ind ? ` (ind. ${esc(b.ind)})` : ""}${ruta ? ` · ruta ${esc(ruta.trim())}` : ""} · última ${fechaCorta(ult.fecha)}${id ? ` <button type="button" class="btn sec p-pc-abrir" data-id="${esc(id)}" data-reto="${esc(reto)}" data-tit="${esc(x.titulo)}">▶ Abrir la última en Pinicratch</button>` : ""}</p>`;
+  }
+  // Abre en Pinicratch el proyecto guardado en el Drive del cole (accion «verProyecto» del script).
+  async function abrirEnPinicratch(btn, a) {
+    const w = window.open("about:blank", "_blank");
+    btn.disabled = true; const antes = btn.textContent; btn.textContent = "Cargando…";
+    try {
+      const j = await llamar({ accion: "verProyecto", id: btn.dataset.id });
+      if (!j || !j.ok || !j.b64) throw new Error((j && j.error) || "La hoja no ha devuelto el proyecto.");
+      localStorage.setItem("pinicratch-abrir", JSON.stringify({ b64: j.b64, titulo: `${a.nombre} · ${btn.dataset.tit}` }));
+      const url = `pinicratch/?abrir=profe${btn.dataset.reto ? "&reto=" + encodeURIComponent(btn.dataset.reto) : ""}`;
+      if (w) w.location.href = url; else window.open(url, "_blank");
+    } catch (e) {
+      if (w) w.close();
+      alert("No se ha podido abrir el proyecto: " + (e.message || e));
+    } finally { btn.disabled = false; btn.textContent = antes; }
   }
   function trabajoHTML(a, c, filas) {
     const ac = esAC(a), R = window.Robotica || {}, ins = insignias(a, c, filas);

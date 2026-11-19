@@ -75,6 +75,8 @@ function doPost(e) {
   if (pedido.accion === "aviso") return avisarAlumnos(libro, pedido);
   if (pedido.accion === "alumnoAvisos") return alumnoAvisos(libro, pedido);
   if (pedido.accion === "avisoLeido") return avisoLeido(libro, pedido);
+  if (pedido.accion === "guardarProyecto") return guardarProyecto(libro, pedido);
+  if (pedido.accion === "verProyecto") return verProyecto(libro, pedido);
   const hoja = libro.getSheetByName("Resultados") || libro.insertSheet("Resultados");
   if (hoja.getLastRow() === 0) {
     hoja.appendRow(COLUMNAS);
@@ -102,7 +104,10 @@ function doPost(e) {
   ]);
   if (nota !== "") {
     const columna = limpiar(d.destino, 60) + (d.indicador ? " · Ind. " + limpiar(d.indicador, 10) : "");
-    actualizarValoraciones(libro, nombre, usuario, clase, columna, nota);
+    // 19-nov · Pinicratch: la nota automática solo se apunta si es mejor que la que hay y si el profe no ha puesto la suya.
+    const auto = !esProfe && String(d.personaje || "") === "Pinicratch";
+    if (!auto || !hayNotaProfe(libro, usuario, nombre, limpiar(d.destino, 60), limpiar(d.indicador, 10)))
+      actualizarValoraciones(libro, nombre, usuario, clase, columna, nota, auto);
   }
   return ContentService.createTextOutput("ok");
 }
@@ -131,12 +136,17 @@ function datosProfe(libro, d) {
   // Nota de Programa y Robótica por pantallas superadas (pestaña «Progreso por rutas»).
   const pr = libro.getSheetByName("Progreso por rutas");
   const rutas = pr && pr.getLastRow() > 1 ? pr.getRange(2, 1, pr.getLastRow() - 1, 16).getValues().map((f) => f.slice(1)) : [];
+  // 18-nov: arreglos que se hacen solos al abrir el panel.
+  try { arreglarDecimalesProgramacion(libro); } catch (e) { console.log("arreglarDecimalesProgramacion: " + e); }
+  try { const lk = LockService.getScriptLock(); if (lk.tryLock(5000)) { try { ordenarYMedias(libro, true); } finally { lk.releaseLock(); } } } catch (e) {}
   const hoja = libro.getSheetByName("Valoraciones");
   const comentarios = leerComentarios(libro);
   const avisos = avisosResumen(libro);
-  if (!hoja || hoja.getLastRow() < 1) return salida({ ok: true, cab: [], filas: [], hechos, alumnado, autoeval, rutas, comentarios, avisos, adaptados: leerAdaptados() });
+  // Pantallas y retos superados según el servidor (lo que de verdad cuenta): { usuario: { programa: [índices], "robot-robot": [...] } }
+  const cadenas = todasLasCadenas();
+  if (!hoja || hoja.getLastRow() < 1) return salida({ ok: true, cab: [], filas: [], hechos, alumnado, autoeval, rutas, comentarios, avisos, cadenas, adaptados: leerAdaptados() });
   const v = hoja.getDataRange().getValues();
-  return salida({ ok: true, cab: v[0], filas: v.slice(1), hechos, alumnado, autoeval, rutas, comentarios, avisos, adaptados: leerAdaptados() });
+  return salida({ ok: true, cab: v[0], filas: v.slice(1), hechos, alumnado, autoeval, rutas, comentarios, avisos, cadenas, adaptados: leerAdaptados() });
 }
 
 // Panel del profesor: todo lo que ha hecho un alumno (filas de «Resultados»: pantallas, programas, retos, llaves).
@@ -379,9 +389,10 @@ function doGet() {
   return ContentService.createTextOutput("Funciona: revisa la pestaña Resultados de tu hoja: " + abrirLibro().getUrl());
 }
 
-function actualizarValoraciones(libro, nombre, usuario, clase, columna, nota) {
+function actualizarValoraciones(libro, nombre, usuario, clase, columna, nota, soloMejor) {
   const lock = LockService.getScriptLock();
-  lock.waitLock(10000);
+  // 18-nov: con toda la clase a la vez, 10 s de espera no bastaban y se perdían notas. Ahora 30 s.
+  lock.waitLock(30000);
   try {
     const hoja = libro.getSheetByName("Valoraciones") || libro.insertSheet("Valoraciones");
     if (hoja.getLastRow() === 0) {
@@ -403,13 +414,29 @@ function actualizarValoraciones(libro, nombre, usuario, clase, columna, nota) {
     if (fila < 2) { fila = hoja.getLastRow() + 1; hoja.getRange(fila, 1, 1, 3).setValues([[nombre, usuario, clase]]); }
     else hoja.getRange(fila, 1, 1, 3).setValues([[nombre, usuario || filas[fila - 2][1], clase]]);
     // Se guarda la última nota enviada (el alumno puede revisarla y volver a enviarla).
+    // Pinicratch (soloMejor): cuenta la mejor entrega, así que una peor no baja la nota.
+    const antes = hoja.getRange(fila, col).getValue();
+    if (soloMejor && antes !== "" && isFinite(Number(antes)) && Number(antes) >= Number(nota)) return;
     hoja.getRange(fila, col).setValue(nota);
     SpreadsheetApp.flush();
-    ordenarHoja(libro, "Valoraciones", 0, 1, 2);
-    calcularMedias(libro);
+    // Ordenar y recalcular medias es lento: se hace como mucho cada 90 s (y siempre al abrir el panel del profe).
+    ordenarYMedias(libro, false);
   } finally {
     lock.releaseLock();
   }
+}
+
+// Ordena «Valoraciones» y recalcula «Medias por indicador». Sin «forzar», solo si han pasado 90 s desde la última vez;
+// si no, lo deja apuntado como pendiente para la próxima vez (o para cuando el profe abra el panel).
+function ordenarYMedias(libro, forzar) {
+  const props = PropertiesService.getScriptProperties();
+  const ultima = Number(props.getProperty("orden_ultima") || 0);
+  if (!forzar && Date.now() - ultima < 90000) { props.setProperty("orden_pendiente", "1"); return; }
+  if (forzar && !props.getProperty("orden_pendiente")) return;
+  ordenarHoja(libro, "Valoraciones", 0, 1, 2);
+  calcularMedias(libro);
+  props.setProperty("orden_ultima", String(Date.now()));
+  props.deleteProperty("orden_pendiente");
 }
 
 // Pestaña "Medias por indicador": una fila por alumno y una columna por indicador,
@@ -1060,8 +1087,66 @@ function actualizarResumenRutas(libro, alumno) {
     salida.prime.hechas, salida.prime.total, salida.prime.nota];
   hoja.getRange(fila, 1, 1, valores.length).setValues([valores]);
   [7, 10, 13, 16].forEach((c) => hoja.getRange(fila, c).setNumberFormat("0.00"));
-  hoja.autoResizeColumns(1, cab.length);
   return salida;
+}
+
+/* ---------- Pantallas superadas según el servidor (18-nov) ----------
+   El progreso de los retos encadenados vive en ScriptProperties («cadena_» + base64(usuario|secuencia)).
+   Es lo que de verdad dice si una pantalla está superada: la fila de Resultados o la nota de Valoraciones
+   se pueden perder si la hoja está muy ocupada, pero esto no. */
+function todasLasCadenas() {
+  const todas = PropertiesService.getScriptProperties().getProperties(), o = {};
+  Object.keys(todas).forEach((k) => {
+    if (k.indexOf("cadena_") !== 0) return;
+    let id = "";
+    try { let b = k.slice(7); while (b.length % 4) b += "="; id = Utilities.newBlob(Utilities.base64DecodeWebSafe(b)).getDataAsString(); } catch (e) { return; }
+    const i = id.lastIndexOf("|"); if (i < 0) return;
+    const u = minus(id.slice(0, i)), sec = id.slice(i + 1);
+    let e = {}; try { e = JSON.parse(todas[k] || "{}"); } catch (x) { return; }
+    (o[u] = o[u] || {})[sec] = (e.completados || []).map(Number);
+  });
+  return o;
+}
+function cadenasDe(usuario) {
+  const props = PropertiesService.getScriptProperties(), o = {};
+  ["programa", "robot-robot", "robot-essential", "robot-prime"].forEach((sec) => {
+    const clave = "cadena_" + Utilities.base64EncodeWebSafe(usuario + "|" + sec).replace(/=+$/g, "");
+    let e = {}; try { e = JSON.parse(props.getProperty(clave) || "{}"); } catch (x) { e = {}; }
+    o[sec] = (e.completados || []).map(Number);
+  });
+  return o;
+}
+/* 6.º B (10-nov): las notas de Programa se guardaron como reparto de 5 puntos (0,29; 0,59…) y parecían suspensas.
+   Se cambian una sola vez por la nota de la pantalla calculada con sus estrellas e intentos (como en el Excel). */
+function arreglarDecimalesProgramacion(libro) {
+  const props = PropertiesService.getScriptProperties();
+  if (props.getProperty("decimales_prog_ok")) return;
+  const val = libro.getSheetByName("Valoraciones"), res = libro.getSheetByName("Resultados");
+  if (!val || val.getLastRow() < 2) { props.setProperty("decimales_prog_ok", "1"); return; }
+  const lock = LockService.getScriptLock(); if (!lock.tryLock(20000)) return;
+  try {
+    const v = val.getDataRange().getValues(), cab = v[0].map(String);
+    const r = res && res.getLastRow() > 1 ? res.getDataRange().getValues() : [[]];
+    const rc = r[0].map(String), iU = rc.indexOf("Usuario Educacyl"), iA = rc.indexOf("Actividad"), iE = rc.indexOf("Estrellas"), iI = rc.indexOf("Intentos"), iV = rc.indexOf("Valoración (0-5)");
+    let cambios = 0;
+    for (let f = 1; f < v.length; f++) {
+      for (let c = 3; c < cab.length; c++) {
+        const x = v[f][c];
+        if (x === "" || x == null || cab[c].indexOf("Programación · ") !== 0 || Number(x) % 1 === 0) continue;
+        const act = cab[c].replace(/ · Ind\. .*$/, ""), u = minus(v[f][1]);
+        let mejor = 0;
+        r.slice(1).forEach((g) => {
+          if (minus(g[iU]) !== u || String(g[iA]) !== act) return;
+          mejor = Math.max(mejor, notaPantalla(g[iV] === "" ? 0.5 : g[iV], g[iE], g[iI]));
+        });
+        val.getRange(f + 1, c + 1).setValue(mejor >= 3 ? mejor : 3);
+        cambios++;
+      }
+    }
+    if (cambios) calcularMedias(libro);
+    props.setProperty("decimales_prog_ok", "1");
+    console.log("Notas de Programa con decimales arregladas: " + cambios);
+  } finally { lock.releaseLock(); }
 }
 
 /* ---------- Retos encadenados: progreso y códigos individuales por alumno ----------
@@ -1079,7 +1164,8 @@ function gestionarRetoCadena(libro, d) {
   const props = PropertiesService.getScriptProperties();
   const clave = "cadena_" + Utilities.base64EncodeWebSafe(alumno.usuario + "|" + secuencia).replace(/=+$/g, "");
   const lock = LockService.getScriptLock();
-  lock.waitLock(10000);
+  // 18-nov: con toda la clase a la vez, 10 s no bastaban y la pantalla superada no se apuntaba.
+  if (!lock.tryLock(30000)) return json({ ok: false, ocupado: true, error: "El servidor está muy ocupado. Espera unos segundos y vuelve a intentarlo." });
   try {
     let estado = {};
     try { estado = JSON.parse(props.getProperty(clave) || "{}"); } catch (e) { estado = {}; }
@@ -1104,6 +1190,13 @@ function gestionarRetoCadena(libro, d) {
       } else return json({ ok: false, error: "Ha cambiado el número de pantallas de esta ruta. Contacta con tu profesor." });
     }
     estado.total = total;
+    // Robótica (18-nov): ya no hay código entre retos. Si una versión anterior dejó al alumno esperando un código
+    // dentro de la modalidad, se le abre el siguiente reto que le toca.
+    if (secuencia.indexOf("robot-") === 0) {
+      let avanzo = false;
+      while (estado.desbloqueado + 1 < total && estado.completados.indexOf(estado.desbloqueado) >= 0) { estado.desbloqueado++; avanzo = true; }
+      if (avanzo) { estado.codigos = {}; props.setProperty(clave, JSON.stringify(estado)); }
+    }
     const op = String(d.op || "estado");
     if (op === "estado") return json({ ok: true, desbloqueado: estado.desbloqueado, completados: estado.completados });
     const indice = Number(d.indice);
@@ -1122,7 +1215,8 @@ function gestionarRetoCadena(libro, d) {
         }
       }
       let codigo = "";
-      const finAventura = secuencia === "programa" && [9, 19, 29].includes(indice);
+      // Código solo al terminar cada aventura de Programa y cada modalidad de Robótica (Robot, SPIKE Essential, SPIKE Prime).
+      const finAventura = secuencia === "programa" ? [9, 19, 29].includes(indice) : secuencia.indexOf("robot-") === 0 && indice === total - 1;
       if (indice === estado.desbloqueado) {
         if (finAventura) {
           // Se entrega código de progreso al cerrar cada aventura, incluida la última.
@@ -1320,9 +1414,125 @@ function alumnoAvisos(libro, d) {
   const s = alumnoDeSesion(libro, d);
   if (!s) return json({ ok: false, error: "Tu sesión ha caducado. Sal y vuelve a entrar." });
   const desde = Date.now() - DIAS_AVISO * 86400000;
-  const avisos = filasAvisos(libro).filter((f) => minus(f[2]) === minus(s.usuario) && !String(f[6] || "").trim() && f[0] instanceof Date && f[0].getTime() >= desde)
+  let avisos = filasAvisos(libro).filter((f) => minus(f[2]) === minus(s.usuario) && !String(f[6] || "").trim() && f[0] instanceof Date && f[0].getTime() >= desde)
     .slice(-3).reverse().map((f) => ({ id: String(f[7]), fecha: f[0].toISOString(), texto: String(f[4]) }));
+  // 18-nov: el aviso se rehace con lo que el alumno tiene AHORA: se quita lo que ya ha superado o entregado
+  // y, si ya no le queda nada, el aviso no se enseña.
+  if (avisos.length) {
+    let ctx = null;
+    try { ctx = contextoAvisos(libro, s.usuario); } catch (e) { console.log("contextoAvisos: " + e); }
+    if (ctx) avisos = avisos.map((x) => { const t = rehacerAviso(x.texto, ctx); return t === null ? x : Object.assign(x, { texto: t }); }).filter((x) => x.texto);
+  }
   return json({ ok: true, avisos });
+}
+// Lo que tiene ahora el alumno: notas de Valoraciones, retos terminados (Resultados) y pantallas superadas (servidor).
+function contextoAvisos(libro, usuario) {
+  const u = minus(usuario), notas = {}, terminados = [];
+  const val = libro.getSheetByName("Valoraciones");
+  if (val && val.getLastRow() > 1) {
+    const v = val.getDataRange().getValues(), cab = v[0].map(String);
+    v.slice(1).filter((f) => minus(f[1]) === u).forEach((f) => cab.forEach((t, i) => {
+      if (i < 3 || f[i] === "" || f[i] == null) return;
+      const n = Number(f[i]); if (!(t in notas) || n > notas[t]) notas[t] = n;
+    }));
+  }
+  const res = libro.getSheetByName("Resultados");
+  if (res && res.getLastRow() > 1) {
+    const r = res.getRange(1, 1, res.getLastRow(), Math.min(res.getLastColumn(), 13)).getValues(), c = r[0].map(String);
+    const iU = c.indexOf("Usuario Educacyl"), iA = c.indexOf("Actividad"), iP = c.indexOf("Programa");
+    r.slice(1).forEach((f) => { if (minus(f[iU]) === u && String(f[iP]).indexOf("Terminado") === 0) terminados.push(String(f[iA])); });
+  }
+  return { notas, terminados, cad: cadenasDe(usuario) };
+}
+const MODOS_ROB = { "Robot": "robot-robot", "SPIKE Essential": "robot-essential", "SPIKE Prime": "robot-prime" };
+const AVENTURAS_PAISES = ["Europa Occidental", "Europa del Norte", "Europa del Este"];
+// Devuelve el texto del aviso sin lo ya hecho, "" si ya no queda nada, o null si no se ha podido leer (se deja igual).
+function rehacerAviso(texto, ctx) {
+  const N = ctx.notas, cols = Object.keys(N);
+  const supera = (n) => n >= 3 || (n > 0 && n % 1 !== 0);
+  const conNota = (pred, ok) => cols.some((t) => pred(t) && ok(N[t]));
+  // Programa: «N. Ciudad» (aventuras de países: servidor) o pantallas de PiniCraft; Robótica: «N. Título» de una modalidad.
+  function hecha(seccion, grupo, item) {
+    const m = /^(\d+)\. (.+)$/.exec(item);
+    if (seccion === "prog") {
+      if (m && AVENTURAS_PAISES.indexOf(grupo) >= 0) {
+        if ((ctx.cad.programa || []).indexOf(Number(m[1]) - 1) >= 0) return true;
+        const ciudad = m[2].trim();
+        return conNota((t) => new RegExp("^Programación · \\d+\\. " + ciudad.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + "( ·|$)").test(t), supera);
+      }
+      const cola = m ? item : item.replace(/^.*? (\d+\. )/, "$1");
+      return conNota((t) => t.indexOf("Programación · ") === 0 && t.indexOf(cola) >= 0, supera);
+    }
+    if (!m) return false;
+    const sec = MODOS_ROB[grupo];
+    if (sec && (ctx.cad[sec] || []).indexOf(Number(m[1]) - 1) >= 0) return true;
+    return conNota((t) => t.indexOf("Robótica · " + grupo + " · reto " + m[1] + " ·") === 0, supera);
+  }
+  const bloques = String(texto).split(/\n\n/);
+  let secciones = 0, quedan = 0, entendido = false;
+  const salida = [];
+  bloques.forEach((b) => {
+    const lineas = b.split("\n"), titulo = lineas[0];
+    const seccion = /^🎨 CREA/.test(titulo) ? "crea" : /^💻 PROGRAMA/.test(titulo) ? "prog" : /^🤖 ROBÓTICA/.test(titulo) ? "rob" : /^🧠 PIENSA/.test(titulo) ? "piensa" : "";
+    if (!seccion) { salida.push(b); return; }
+    secciones++;
+    // Viñetas: «• …» con sus líneas «   - …» debajo.
+    const vinetas = [];
+    lineas.slice(1).forEach((l) => { if (/^• /.test(l) || !vinetas.length) vinetas.push([l]); else vinetas[vinetas.length - 1].push(l); });
+    const nuevas = [];
+    vinetas.forEach((v) => {
+      const l0 = v[0];
+      let m;
+      if ((m = /^• Termina el reto «(.+)»\.$/.exec(l0))) {
+        entendido = true;
+        const t = m[1].slice(0, 40);
+        if (!ctx.terminados.some((a) => a.indexOf(t) >= 0)) nuevas.push(v.join("\n"));
+        return;
+      }
+      if ((m = /^• Haz la actividad «(.+)» y envía tu llave\.$/.exec(l0))) {
+        entendido = true;
+        const pre = ("Piensa · " + m[1]).slice(0, 60) + " · Ind. ";
+        if (!cols.some((t) => t.indexOf(pre) === 0)) nuevas.push(v.join("\n"));
+        return;
+      }
+      if ((m = /^• Mejora «(.+)»\. Tienes 2 o menos en:$/.exec(l0))) {
+        entendido = true;
+        const t = m[1].slice(0, 30);
+        const subs = v.slice(1).filter((s) => {
+          const k = /^\s+- (\S+) /.exec(s); if (!k) return true;
+          const col = cols.find((c) => c.indexOf(t) >= 0 && c.slice(-(" · Ind. " + k[1]).length) === " · Ind. " + k[1]);
+          return !col || !(N[col] > 2);
+        });
+        if (subs.length) nuevas.push([l0].concat(subs).join("\n"));
+        return;
+      }
+      if ((seccion === "prog" || seccion === "rob") && (m = /^• (.+?): (.+)\.$/.exec(l0)) && v.length === 1) {
+        const ga = /^Aventura «(.+)»$/.exec(m[1]), grupo = ga ? ga[1] : m[1];
+        const uno = seccion === "prog" ? "pantalla" : "reto", varios = uno + "s";
+        const mal = [], sin = [];
+        let leido = true;
+        m[2].split("; ").forEach((p) => {
+          let q;
+          if ((q = /^empezaste y no superaste (?:la|el|estas|estos) \S+: (.+)$/.exec(p))) q[1].split(", ").forEach((x) => { if (!hecha(seccion, grupo, x)) mal.push(x); });
+          else if ((q = /^te falta(?:n)? \d+ \S+: (.+)$/.exec(p))) q[1].split(", ").forEach((x) => { if (!hecha(seccion, grupo, x)) sin.push(x); });
+          else leido = false;
+        });
+        if (!leido) { nuevas.push(l0); return; }
+        entendido = true;
+        if (!mal.length && !sin.length) return;
+        const partes = [];
+        if (mal.length) partes.push("empezaste y no superaste " + (mal.length === 1 ? (uno === "pantalla" ? "la " : "el ") + uno : (uno === "pantalla" ? "estas " : "estos ") + varios) + ": " + mal.join(", "));
+        if (sin.length) partes.push("te " + (sin.length === 1 ? "falta 1 " + uno : "faltan " + sin.length + " " + varios) + ": " + sin.join(", "));
+        nuevas.push("• " + m[1] + ": " + partes.join("; ") + ".");
+        return;
+      }
+      nuevas.push(v.join("\n"));   // texto escrito a mano por el profe: se deja tal cual
+    });
+    if (nuevas.length) { salida.push([titulo].concat(nuevas).join("\n")); quedan++; }
+  });
+  if (!secciones || !entendido) return null;
+  if (!quedan) return "";
+  return salida.join("\n\n");
 }
 function avisoLeido(libro, d) {
   const s = alumnoDeSesion(libro, d);
@@ -1330,4 +1540,86 @@ function avisoLeido(libro, d) {
   const filas = filasAvisos(libro), i = filas.findIndex((f) => String(f[7]) === String(d.id || "") && minus(f[2]) === minus(s.usuario));
   if (i >= 0) libro.getSheetByName("Avisos").getRange(i + 2, 7).setValue(new Date());
   return json({ ok: true });
+}
+
+
+/* =====================================================================
+   PINICRATCH (19-nov): proyectos entregados desde pinicratch/?reto=B1…B6
+   - guardarProyecto: el alumno (con su sesión) manda el .sb3 en base64; se guarda en la carpeta
+     «Pinicratch · proyectos del alumnado» / <clase> del Drive de esta cuenta. Devuelve el id del archivo.
+   - verProyecto: el panel del profe (con su clave) pide un proyecto de esa carpeta para abrirlo en Pinicratch.
+   - hayNotaProfe: si el profe ya ha puesto nota a ese indicador, la nota automática no la pisa.
+   La primera vez, ejecuta «autorizarDrive» desde el editor y acepta el permiso de Google Drive.
+   ===================================================================== */
+const CARPETA_PROYECTOS = "Pinicratch · proyectos del alumnado";
+// Si pones aquí tu correo, la carpeta se comparte contigo (solo lectura) para verla en tu Drive. Vacío = no se comparte.
+const CORREO_PROFE_PROYECTOS = "";
+
+function autorizarDrive() {
+  const c = carpetaProyectos();
+  Logger.log("Carpeta de proyectos lista: " + c.getUrl());
+}
+
+function carpetaProyectos() {
+  const props = PropertiesService.getScriptProperties();
+  const id = props.getProperty("carpeta_pinicratch");
+  if (id) { try { return DriveApp.getFolderById(id); } catch (e) {} }
+  const it = DriveApp.getFoldersByName(CARPETA_PROYECTOS);
+  const c = it.hasNext() ? it.next() : DriveApp.createFolder(CARPETA_PROYECTOS);
+  props.setProperty("carpeta_pinicratch", c.getId());
+  if (CORREO_PROFE_PROYECTOS) { try { c.addViewer(CORREO_PROFE_PROYECTOS); } catch (e) { console.log("No se pudo compartir la carpeta: " + e); } }
+  return c;
+}
+
+function guardarProyecto(libro, d) {
+  const s = alumnoDeSesion(libro, d);
+  if (!s) return json({ ok: false, sesion: true, error: "Tu sesión ha caducado. Vuelve a entrar con tu contraseña." });
+  const reto = String(d.reto || "").toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 4);
+  const b64 = String(d.b64 || "");
+  if (!reto || !b64) return json({ ok: false, error: "Falta el proyecto." });
+  if (b64.length > 28 * 1024 * 1024) return json({ ok: false, error: "El proyecto es demasiado grande." });
+  const raiz = carpetaProyectos();
+  const clase = s.clase || "sin-clase";
+  const it = raiz.getFoldersByName(clase);
+  const carpeta = it.hasNext() ? it.next() : raiz.createFolder(clase);
+  const fecha = Utilities.formatDate(new Date(), "Europe/Madrid", "yyyy-MM-dd_HH-mm");
+  const nombre = `${reto}_${s.usuario}_${fecha}.sb3`;
+  const blob = Utilities.newBlob(Utilities.base64Decode(b64), "application/x.scratch.sb3", nombre);
+  const f = carpeta.createFile(blob);
+  f.setDescription(`Pinicratch · ${s.nombre} (${s.clase}) · reto ${reto}`);
+  return json({ ok: true, id: f.getId() });
+}
+
+function verProyecto(libro, d) {
+  if (CLAVE_PROFE === "cambia-esta-clave" || String(d.clave || "") !== CLAVE_PROFE) return json({ ok: false, error: "Clave incorrecta." });
+  let f;
+  try { f = DriveApp.getFileById(String(d.id || "")); } catch (e) { return json({ ok: false, error: "No encuentro ese proyecto en el Drive del cole." }); }
+  // Solo se entregan archivos de la carpeta de proyectos (o de sus subcarpetas).
+  const raizId = carpetaProyectos().getId();
+  let dentro = false;
+  const padres = f.getParents();
+  while (padres.hasNext() && !dentro) {
+    const p = padres.next();
+    if (p.getId() === raizId) dentro = true;
+    else { const ab = p.getParents(); while (ab.hasNext()) if (ab.next().getId() === raizId) dentro = true; }
+  }
+  if (!dentro) return json({ ok: false, error: "Ese archivo no es un proyecto de Pinicratch." });
+  return json({ ok: true, nombre: f.getName(), b64: Utilities.base64Encode(f.getBlob().getBytes()) });
+}
+
+// ¿Ha puesto ya el profe nota a este indicador de esta actividad? (filas «Nota del profe» de Resultados)
+function hayNotaProfe(libro, usuario, nombre, destino, indicador) {
+  const h = libro.getSheetByName("Resultados");
+  if (!h || h.getLastRow() < 2) return false;
+  const v = h.getDataRange().getValues(), c = v[0];
+  const iN = c.indexOf("Nombre"), iU = c.indexOf("Usuario Educacyl"), iA = c.indexOf("Actividad"), iP = c.indexOf("Programa"), iI = c.indexOf("Nº indicador");
+  const u = minus(usuario), n = minus(nombre), ind = String(indicador || "").replace(/^'/, "");
+  for (let k = v.length - 1; k > 0; k--) {
+    const f = v[k];
+    if (String(f[iP]) !== "Nota del profe" && String(f[iP]) !== "Nota revisada") continue;
+    if (String(f[iA]) !== destino) continue;
+    if (String(f[iI]).replace(/^'/, "") !== ind) continue;
+    if (u ? minus(f[iU]) === u : minus(f[iN]) === n) return true;
+  }
+  return false;
 }
