@@ -109,6 +109,10 @@ function doPost(e) {
     if (!auto || !hayNotaProfe(libro, usuario, nombre, limpiar(d.destino, 60), limpiar(d.indicador, 10)))
       actualizarValoraciones(libro, nombre, usuario, clase, columna, nota, auto);
   }
+  // 19-nov · Adaptación curricular: sus 10 pantallas no pasan por «retoCadena», así que «Progreso por rutas» se lleva aquí.
+  if (ses && ses.adaptado && nota !== "" && claveAuto(d.destino, d.ciudad).indexOf("Programación|") === 0) {
+    try { const al = { usuario, nombre, clase }, p = progresoAC(libro, al, [[limpiar(d.destino, 60), notaPantalla(nota, d.estrellas, d.intentos)]]); if (p.nuevo) actualizarResumenRutas(libro, al, p.hechas); } catch (e) { console.log("progresoAC: " + e); }
+  }
   return ContentService.createTextOutput("ok");
 }
 
@@ -129,6 +133,8 @@ function datosProfe(libro, d) {
       if (String(f[iP]).indexOf("Terminado") === 0 || String(f[iP]).indexOf("Desbloqueo") === 0) hechos.push([f[iN], iU >= 0 ? f[iU] : "", f[iC], f[iA], f[iP], f[iF] instanceof Date ? f[iF].toISOString() : String(f[iF])]);
     });
   }
+  // 19-nov · Adaptación curricular: «Progreso por rutas» con sus 10 pantallas (se rehace con lo que hay en Resultados).
+  try { rehacerProgresoAC(libro); } catch (e) { console.log("rehacerProgresoAC: " + e); }
   const au = libro.getSheetByName("Autoevaluación");
   const autoeval = au && au.getLastRow() > 0 ? au.getDataRange().getValues() : [];
   const al = libro.getSheetByName("Alumnado");
@@ -1044,7 +1050,42 @@ function alumnoDirecto(libro, d) {
    Una pestaña de resumen por alumno. Cada pantalla superada aporta la misma fracción
    del máximo de su ruta: Programa 5/30; Robot 2,5/10; Essential 3,5/10; Prime 5/10.
    La adaptación curricular mantiene el máximo de 2,5 puntos en Robot con 10 pantallas adaptadas. */
-function actualizarResumenRutas(libro, alumno) {
+/* 19-nov · Adaptación curricular: Programa son las 10 pantallas de la primera aventura (Madrid … Luxemburgo) y se superan
+   con nota 3 o más. Se guardan las ciudades superadas en ScriptProperties («acprog_» + base64 usuario). */
+function progresoAC(libro, alumno, filas) {
+  const props = PropertiesService.getScriptProperties();
+  const clave = "acprog_" + Utilities.base64EncodeWebSafe(minus(alumno.usuario)).replace(/=+$/g, "");
+  let hechas = []; try { hechas = JSON.parse(props.getProperty(clave) || "[]"); } catch (e) { hechas = []; }
+  const antes = hechas.length, diez = PROG_ORDEN.slice(0, 10);
+  filas.forEach(([actividad, nota]) => {
+    const k = claveAuto(actividad, ""), ciudad = k.split("|")[1];
+    if (ciudad && diez.indexOf(ciudad) >= 0 && Number(nota) >= 3 && hechas.indexOf(ciudad) < 0) hechas.push(ciudad);
+  });
+  if (hechas.length !== antes) props.setProperty(clave, JSON.stringify(hechas));
+  return { hechas: hechas.length, nuevo: hechas.length !== antes };
+}
+function rehacerProgresoAC(libro) {
+  const ad = leerAdaptados(); if (!ad.length) return;
+  const res = libro.getSheetByName("Resultados"); if (!res || res.getLastRow() < 2) return;
+  const r = res.getDataRange().getValues(), c = r[0], i = (t) => c.indexOf(t);
+  const iN = i("Nombre"), iU = i("Usuario Educacyl"), iC = i("Clase"), iA = i("Actividad"), iE = i("Estrellas"), iI = i("Intentos"), iV = i("Valoración (0-5)");
+  if (iU < 0 || iA < 0 || iV < 0) return;
+  const por = {};
+  r.slice(1).forEach((f) => {
+    const u = minus(f[iU]); if (ad.indexOf(u) < 0 || f[iV] === "" || f[iV] == null) return;
+    if (claveAuto(f[iA], "").indexOf("Programación|") !== 0) return;
+    const x = por[u] = por[u] || { alumno: { usuario: u, nombre: f[iN], clase: normGrupo(f[iC]) }, filas: [] };
+    x.filas.push([f[iA], notaPantalla(f[iV], f[iE], f[iI])]);
+  });
+  const pr = libro.getSheetByName("Progreso por rutas");
+  const filasPr = pr && pr.getLastRow() > 1 ? pr.getRange(2, 1, pr.getLastRow() - 1, 6).getValues() : [];
+  Object.keys(por).forEach((u) => {
+    const p = progresoAC(libro, por[u].alumno, por[u].filas);
+    const ya = filasPr.find((f) => minus(f[2]) === u);
+    if (p.nuevo || !ya || Number(ya[4]) !== p.hechas || Number(ya[5]) !== 10) actualizarResumenRutas(libro, por[u].alumno, p.hechas);
+  });
+}
+function actualizarResumenRutas(libro, alumno, programaAC) {
   const props = PropertiesService.getScriptProperties();
   const rutas = [
     { id: "programa", maximo: 5, total: 30, clave: "programa" },
@@ -1068,6 +1109,11 @@ function actualizarResumenRutas(libro, alumno) {
     const hechas = Array.isArray(estado.completados) ? estado.completados.length : 0;
     salida[r.clave] = { hechas, total, maximo: r.maximo, nota: Math.round((r.maximo * hechas / total) * 100) / 100 };
   });
+  // Adaptación curricular: Programa sobre sus 10 pantallas (máximo 5).
+  if (programaAC == null && alumno.usuario && leerAdaptados().indexOf(minus(alumno.usuario)) >= 0) {
+    try { programaAC = JSON.parse(props.getProperty("acprog_" + Utilities.base64EncodeWebSafe(minus(alumno.usuario)).replace(/=+$/g, "")) || "[]").length; } catch (e) { programaAC = 0; }
+  }
+  if (programaAC != null) salida.programa = { hechas: programaAC, total: 10, maximo: 5, nota: Math.round(5 * programaAC / 10 * 100) / 100 };
   const hoja = libro.getSheetByName("Progreso por rutas") || libro.insertSheet("Progreso por rutas");
   const cab = ["Última actualización", "Nombre", "Usuario Educacyl", "Clase",
     "Programa pantallas", "Programa total", "Nota Programa /5",

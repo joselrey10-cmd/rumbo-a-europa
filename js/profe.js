@@ -100,7 +100,7 @@ window.Profe = (function () {
       const r = (i) => ({ hechas: Number(f[i]) || 0, total: Number(f[i + 1]) || 0, nota: Number(f[i + 2]) || 0 });
       if (a) a.rutas = { prog: r(3), robot: r(6), essential: r(9), prime: r(12) };
       // Filas guardadas cuando Programa tenía 17 pantallas (6.º B, 10-nov): ahora son 30 y la nota se reparte entre 30.
-      if (a && a.rutas.prog.total && a.rutas.prog.total !== 30) { a.rutas.prog.total = 30; a.rutas.prog.nota = Math.round(5 * a.rutas.prog.hechas / 30 * 100) / 100; }
+      if (a && !esAC(a) && a.rutas.prog.total && a.rutas.prog.total !== 30) { a.rutas.prog.total = 30; a.rutas.prog.nota = Math.round(5 * a.rutas.prog.hechas / 30 * 100) / 100; }
     });
     // Comentarios del profe por indicador (pestaña «Comentarios»): [usuario, columna, texto]
     (datos.comentarios || []).forEach(([u, colC, t]) => {
@@ -696,7 +696,7 @@ window.Profe = (function () {
       const inds = x.inds; if (!inds.length) return;
       o.total++;
       // Crea: insignia = reto terminado + autoevaluación de ese reto (columnas «Crea · SA S · Ind.» de la pestaña Autoevaluación).
-      const autoCrea = x.rincon !== "crea" || Object.keys(a.auto || {}).some((k) => k.indexOf(`Crea · ${String(x.titulo).split(" · ")[0]} · Ind. `) === 0);
+      const autoCrea = x.rincon !== "crea" || esAC(a) || Object.keys(a.auto || {}).some((k) => k.indexOf(`Crea · ${String(x.titulo).split(" · ")[0]} · Ind. `) === 0);
       if ((x.rincon === "crea" || x.terminable) && ((a.terminados || {})[x.destino.slice(0, 60)] || filas.some((r) => r.act === x.destino.slice(0, 60) && /^Terminado/.test(r.prog)))) { if (autoCrea) o.ganadas++; return; }
       const n = inds.map((cod) => a.notas[columna(x.destino, cod)]).filter((v) => v !== undefined);
       if (n.length === inds.length && n.reduce((s, v) => s + v, 0) / n.length >= 2.5) o.ganadas++;
