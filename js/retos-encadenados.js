@@ -10,16 +10,32 @@ window.RetosCadena = (function () {
       return await r.json();
     } catch (e) { return { ok: false, error: "No se ha podido conectar con el servidor. Inténtalo de nuevo." }; }
   }
+  const pausa = (ms) => new Promise((r) => setTimeout(r, ms));
+  // 18-nov: con toda la clase a la vez el servidor a veces no responde a tiempo y la pantalla superada
+  // no quedaba apuntada (luego le pedía un código que no tenía). Ahora se reintenta hasta 4 veces.
   async function completar(secuencia, indice, total, notaPantalla) {
     if (!secuencias.includes(secuencia)) return { ok: false, error: "Secuencia no válida." };
-    return llamar(secuencia, "completar", indice, total, null, notaPantalla);
+    let r;
+    for (let k = 0; k < 4; k++) {
+      r = await llamar(secuencia, "completar", indice, total, null, notaPantalla);
+      if (r && (r.ok || r.sesion || (r.error && !r.ocupado && !/conectar/.test(r.error)))) return r;
+      await pausa(2000 + k * 3000 + Math.random() * 2000);
+    }
+    return r;
   }
-  async function entrar(secuencia, indice, total) {
+  // previoHecho: este ordenador sabe que el alumno superó el reto anterior. Si el servidor no lo tiene apuntado
+  // (se perdió el aviso), se le vuelve a mandar en vez de pedir un código que el alumno no tiene.
+  async function entrar(secuencia, indice, total, previoHecho) {
     if (!secuencias.includes(secuencia)) return false;
     const estado = await llamar(secuencia, "estado", indice, total);
     if (!estado.ok) { alert(estado.error || "No se ha podido comprobar el progreso."); return false; }
     if (indice <= estado.desbloqueado) return true;
     if (indice !== estado.desbloqueado + 1) { alert("Este reto está bloqueado. Completa primero los retos anteriores."); return false; }
+    const cambioAventura = secuencia === "programa" && indice % 10 === 0;
+    if (previoHecho && !cambioAventura && indice > 0) {
+      const r = await completar(secuencia, indice - 1, total);
+      if (r && r.ok && r.siguiente === indice && !r.codigo) return true;
+    }
     // Autoevaluación obligatoria: la aventura siguiente de Programa no se abre sin la de la aventura terminada.
     if (secuencia === "programa" && indice % 10 === 0 && window.Autoeval && !(await window.Autoeval.asegurar(window.Autoeval.etapaPrograma(indice / 10 - 1)))) return false;
     const codigo = prompt("🔐 Este reto está protegido. Escribe el código que conseguiste al terminar el reto anterior:");

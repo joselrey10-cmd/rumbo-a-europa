@@ -42,7 +42,7 @@ window.Profe = (function () {
     (window.PROG_NIVELES || []).forEach((n, i) => {
       if (ac && n.aventura !== 0) return;
       const cod = ((window.INDICADOR_PROGRAMACION || {})[c] || {})[n.ciudad];
-      L.push({ rincon: "prog", titulo: `${i + 1}. ${n.ciudad}`, destino: `Programación · ${i + 1}. ${n.ciudad}`, ciudad: n.ciudad, inds: cod ? [cod] : [], grupo: n.aventura });
+      L.push({ rincon: "prog", titulo: `${i + 1}. ${n.ciudad}`, destino: `Programación · ${i + 1}. ${n.ciudad}`, ciudad: n.ciudad, inds: cod ? [cod] : [], grupo: n.aventura, idx: i });
     });
     // Programa del 2.º trimestre: PiniCraft (5.º, js/pinicraft.js) y retos Scratch (6.º, js/scratch-retos.js).
     // Traen grupo de texto ("pc1", "pc2", "scratch") y nombreGrupo; los de Scratch son «terminables» como Crea.
@@ -112,6 +112,14 @@ window.Profe = (function () {
     extra.forEach((x) => { x.terminados = x.terminados || {}; if (!lista.some((a) => igual(a.nombre, x.nombre) && igual(a.clase, x.clase))) lista.push(x); });
     return lista;
   }
+  /* 18-nov: lo que el servidor tiene apuntado como superado (retos encadenados). Es lo que de verdad cuenta:
+     la fila de Resultados o la nota pueden perderse si la hoja está muy ocupada, pero esto no. */
+  const cadenaDe = (a) => (datos && datos.cadenas && a && a.usuario && datos.cadenas[String(a.usuario).trim().toLowerCase()]) || null;
+  const enServidor = (a, sec, i) => { const c = cadenaDe(a); return !!(c && c[sec] && c[sec].indexOf(i) >= 0); };
+  // ¿Superada según el servidor? (pantalla de los países o reto de Robótica)
+  const superadaSrv = (a, x) => !esAC(a) && (x.rincon === "prog" && Number.isInteger(x.idx) ? enServidor(a, "programa", x.idx) : x.rincon === "rob" && x.n ? enServidor(a, "robot-" + x.grupo, x.n - 1) : false);
+  // Las notas con decimales de Programa (6.º B, 10-nov: reparto de 5 puntos) son pantallas superadas, no suspensos.
+  const decimalProg = (x, v) => x.rincon === "prog" && v !== undefined && v % 1 !== 0;
   const esAdaptado = (a) => !!a.usuario && (datos && datos.adaptados || []).indexOf(String(a.usuario).trim().toLowerCase()) >= 0;
   const idDe = (a) => (a.usuario ? "u:" + String(a.usuario).trim().toLowerCase() : "n:" + String(a.nombre || "").trim().toLowerCase() + "|" + G(a.clase));
   /* Al pasar de 17 a 30 pantallas cambió el número de muchas ciudades (Dublín era la 8 y ahora es la 11).
@@ -175,7 +183,7 @@ window.Profe = (function () {
     RINC.forEach((r) => {
       const notas = [], total = cat.filter((x) => x.rincon === r.id).reduce((n, x) => n + indsAl(x, a).length, 0);
       cat.filter((x) => x.rincon === r.id).forEach((x) => indsAl(x, a).forEach((cod) => { const v = a.notas[columna(x.destino, cod)]; if (v !== undefined) notas.push(v); }));
-      out[r.id] = { retos: r.id === "crea" ? cat.filter((x) => x.rincon === "crea" && a.terminados && a.terminados[x.destino.slice(0, 60)]).length : 0, nRetos: cat.filter((x) => x.rincon === r.id).length, hechas: notas.length, total, bajas: notas.filter((v) => v <= SUSP).length, media: notas.length ? Math.round(notas.reduce((s, v) => s + v, 0) / notas.length * 10) / 10 : null };
+      out[r.id] = { retos: r.id === "crea" ? cat.filter((x) => x.rincon === "crea" && a.terminados && a.terminados[x.destino.slice(0, 60)]).length : 0, nRetos: cat.filter((x) => x.rincon === r.id).length, hechas: notas.length, total, bajas: notas.filter((v) => v <= SUSP && !(r.id === "prog" && v % 1 !== 0)).length, media: notas.length ? Math.round(notas.reduce((s, v) => s + v, 0) / notas.length * 10) / 10 : null };
     });
     return out;
   }
@@ -656,13 +664,14 @@ window.Profe = (function () {
     return rs.slice().sort((x, y) => (y.val || 0) - (x.val || 0) || (y.est || 0) - (x.est || 0) || String(y.fecha).localeCompare(String(x.fecha)))[0];
   }
   /* Tarjeta de una pantalla o reto: estado, mejor resultado, su programa y todos sus envíos. */
-  function tarjetaPrograma(titulo, rs, conEstrellas) {
+  // srv = el servidor la tiene apuntada como superada (aunque se perdiera la fila con su programa).
+  function tarjetaPrograma(titulo, rs, conEstrellas, srv) {
     const env = rs.filter(sinProfe).sort((x, y) => String(x.fecha).localeCompare(String(y.fecha)));
     const b = env.length ? mejor(env) : null;
-    const sup = !!b && ((b.val || 0) >= 3 || (conEstrellas && (b.est || 0) >= 1));
-    const estado = !b ? "sin" : sup ? "si" : "no";
+    const sup = srv || (!!b && ((b.val || 0) >= 3 || (conEstrellas && (b.est || 0) >= 1)));
+    const estado = !b ? (srv ? "si" : "sin") : sup ? "si" : "no";
     return `<details class="p-trab ${estado}"><summary><span class="p-trab-tit">${esc(titulo)}</span>
-        <span class="p-trab-est">${!b ? "Sin empezar" : sup ? "✓ Superada" : "Intentada"}</span>
+        <span class="p-trab-est">${!b ? (srv ? "✓ Superada (no llegó su programa)" : "Sin empezar") : sup ? "✓ Superada" : "Intentada"}</span>
         ${b ? `<span class="p-trab-dat">${conEstrellas && b.est != null ? `<span class="p-estrellas" title="${b.est} estrellas">${estrellas(b.est)}</span>` : ""}${b.val != null ? `<b>${b.val}</b>/5` : ""} · ${env.length} ${env.length === 1 ? "envío" : "envíos"}</span>` : ""}</summary>
       ${b ? `<div class="p-trab-cuerpo"><p class="p-trab-sub">Su mejor programa${b.bloques ? ` · ${b.bloques} bloques` : ""}${b.intentos ? ` · ${b.intentos} intentos` : ""}${b.pers ? ` · ${esc(b.pers)}` : ""} · ${fechaCorta(b.fecha)}</p>
         <div class="bq-prog">${bloquesHTML(b.prog)}</div>
@@ -674,8 +683,9 @@ window.Profe = (function () {
   function insignias(a, c, filas) {
     const out = {}, aventuras = {};
     const supera = (x) => {
+      if (superadaSrv(a, x)) return true;
       const v = x.inds[0] ? a.notas[columna(x.destino, x.inds[0])] : undefined;
-      if (v !== undefined && v >= 3) return true;
+      if (v !== undefined && (v >= 3 || decimalProg(x, v))) return true;
       const rs = x.rincon === "prog" ? filas.filter((r) => r.act.indexOf("Programación") === 0 && (r.reto === x.ciudad || r.act.replace(/^Programación · \d+\. /, "") === x.ciudad)) : filas.filter((r) => r.act === x.destino);
       return rs.filter(sinProfe).some((r) => (r.val || 0) >= 3 || (x.rincon === "prog" && (r.est || 0) >= 1));
     };
@@ -753,12 +763,13 @@ window.Profe = (function () {
     // Programa: se busca por ciudad (la numeración de las pantallas cambió al pasar a 30).
     const niveles = (window.PROG_NIVELES || []).map((n, i) => ({ n, i })).filter(({ n }) => !ac || n.aventura === 0);
     const deProg = (ciudad) => filas.filter((r) => r.act.indexOf("Programación") === 0 && (r.reto === ciudad || r.act.replace(/^Programación · \d+\. /, "") === ciudad));
-    const supProg = niveles.filter(({ n }) => deProg(n.ciudad).filter(sinProfe).some((r) => (r.val || 0) >= 3 || (r.est || 0) >= 1)).length;
+    const srvProg = (i) => !ac && enServidor(a, "programa", i);
+    const supProg = niveles.filter(({ n, i }) => srvProg(i) || deProg(n.ciudad).filter(sinProfe).some((r) => (r.val || 0) >= 3 || (r.est || 0) >= 1)).length;
     const AV = window.AVENTURAS || [];
     const progHTML = AV.map((av, k) => {
       const L = niveles.filter(({ n }) => n.aventura === k);
       if (!L.length) return "";
-      return `<h4 class="p-trab-grupo">${esc(av.nombre || "Aventura " + (k + 1))}</h4><div class="p-trab-lista">${L.map(({ n, i }) => tarjetaPrograma(`${i + 1}. ${n.ciudad}`, deProg(n.ciudad), true)).join("")}</div>`;
+      return `<h4 class="p-trab-grupo">${esc(av.nombre || "Aventura " + (k + 1))}</h4><div class="p-trab-lista">${L.map(({ n, i }) => tarjetaPrograma(`${i + 1}. ${n.ciudad}`, deProg(n.ciudad), true, srvProg(i))).join("")}</div>`;
     }).join("") + progExtraHTML(a, c, filas, deProg);
     // Robótica: por modalidad y reto.
     const modos = Object.keys(R.MODOS || {}).filter((k) => !ac || k === "robot"), retos = (ac && window.RETOS_ROB_AC) || R.RETOS || [];
@@ -767,8 +778,9 @@ window.Profe = (function () {
       const nombre = R.MODOS[k].nombre;
       const tarjetas = retos.map((r, i) => {
         const rs = filas.filter((x) => x.act === `Robótica · ${nombre} · reto ${i + 1}`);
-        if (rs.filter(sinProfe).some((x) => (x.val || 0) >= 3)) supRob++;
-        return tarjetaPrograma(`Reto ${i + 1}. ${r.titulo}`, rs, false);
+        const srv = !ac && enServidor(a, "robot-" + k, i);
+        if (srv || rs.filter(sinProfe).some((x) => (x.val || 0) >= 3)) supRob++;
+        return tarjetaPrograma(`Reto ${i + 1}. ${r.titulo}`, rs, false, srv);
       });
       return `<h4 class="p-trab-grupo">${esc(nombre)}</h4><div class="p-trab-lista">${tarjetas.join("")}</div>`;
     }).join("");
@@ -846,7 +858,13 @@ window.Profe = (function () {
         const items = por[k];
         if (!items.some((x) => m[x.destino])) return;   // nadie del grupo la ha empezado
         const sin = [], mal = [];
-        items.forEach((x) => { const cod = x.inds[0]; if (!cod) return; const v = nota(x, cod); if (v === undefined) sin.push(x); else if (v <= SUSP) mal.push(x); });
+        items.forEach((x) => {
+          const cod = x.inds[0]; if (!cod) return;
+          if (superadaSrv(a, x)) return;   // el servidor la tiene superada aunque falte la nota
+          const v = nota(x, cod);
+          if (decimalProg(x, v)) return;
+          if (v === undefined) sin.push(x); else if (v <= SUSP) mal.push(x);
+        });
         if (!sin.length && !mal.length) return;
         const nom = rinc === "prog" ? `Aventura «${items[0].nombreGrupo || ((window.AVENTURAS || [])[k] || {}).nombre || "Aventura " + (+k + 1)}»` : `${(((window.Robotica || {}).MODOS || {})[k] || {}).nombre || k}`;
         const ver = (x) => rinc === "prog" ? x.titulo : `${x.n}. ${x.reto}`;

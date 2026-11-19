@@ -242,7 +242,7 @@
     if (!desbloqueadoNivel(i)) return;
     if (!progreso.alumno.nombre) { if ($("#juego").hidden) pedirNombre(); else mostrarInicio(), pedirNombre(); return; }
     if (location.hash !== "#destino-" + (i + 1)) { location.hash = "destino-" + (i + 1); return; }
-    if (!AC && window.RetosCadena && !(await window.RetosCadena.entrar("programa", i, NIVELES.length))) return;
+    if (!AC && window.RetosCadena && !(await window.RetosCadena.entrar("programa", i, NIVELES.length, i > 0 && !!progreso[EST][i - 1]))) return;
     abrirNivel(i);
   }
 
@@ -626,9 +626,18 @@
       if (window.Acceso.requiere() && !window.Acceso.token()) { window.Acceso.avisar(); return; }
       Object.assign(datos, window.Acceso.datosEnvio());
     }
-    try {
-      fetch(REGISTRO.url, { method: "POST", mode: "no-cors", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify(datos) }).catch(() => {});
-    } catch (e) { /* sin conexión: el juego sigue */ }
+    // 18-nov: antes se mandaba sin mirar la respuesta y, con toda la clase a la vez, algunas filas se perdían
+    // (la pantalla quedaba sin nota en el panel). Ahora se lee la respuesta y se reintenta hasta 4 veces.
+    (async () => {
+      for (let k = 0; k < 4; k++) {
+        try {
+          const r = await fetch(REGISTRO.url, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify(datos) });
+          const t = (await r.text()).trim();
+          if (r.ok && (t === "ok" || t === "sesion")) return;
+        } catch (e) { /* sin conexión o servidor ocupado: se reintenta */ }
+        await new Promise((res) => setTimeout(res, 3000 + k * 4000 + Math.random() * 3000));
+      }
+    })();
   }
 
   /* ---------- Alumno ---------- */
@@ -684,7 +693,7 @@
     const m = /^#destino-(\d+)$/.exec(location.hash);
     const i = m ? +m[1] - 1 : -1;
     if (i >= 0 && i < NIVELES.length && desbloqueadoNivel(i) && progreso.alumno.nombre) {
-      if (!AC && window.RetosCadena && !(await window.RetosCadena.entrar("programa", i, NIVELES.length))) { mostrarInicio(); return; }
+      if (!AC && window.RetosCadena && !(await window.RetosCadena.entrar("programa", i, NIVELES.length, i > 0 && !!progreso[EST][i - 1]))) { mostrarInicio(); return; }
       abrirNivel(i);
     }
     else mostrarInicio();
