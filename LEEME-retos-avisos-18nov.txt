@@ -1,0 +1,26 @@
+RETOS QUE NO SE VALIDABAN Y AVISOS QUE SE ACTUALIZAN SOLOS (18-nov)
+
+Qué pasaba
+- Con toda la clase a la vez, el servidor de la hoja tardaba más de 10 s en responder y algunas
+  pantallas superadas no llegaban (en el panel faltaba la nota y a veces se pedía un código que el
+  alumno no tenía). Pasaba en los cuatro grupos (1 o 2 pantallas por alumno).
+- 6.º B tenía las notas del 10-nov con decimales (0,29; 0,59…) y se leían como suspensos.
+- Los avisos eran un texto guardado y no cambiaban aunque el alumno ya hubiera hecho la tarea.
+
+Qué cambia
+- js/juego.js y js/retos-encadenados.js: si el servidor no responde se reintenta solo (hasta 4 veces);
+  si una pantalla superada no quedó apuntada, se apunta al abrir la siguiente en vez de pedir código.
+- registro-google-apps-script.gs: espera más (30 s), trabaja menos en cada nota (ordena y recalcula
+  medias como mucho cada 90 s y siempre al abrir el panel), arregla una sola vez los decimales de 6.º B
+  y manda al panel las pantallas que el servidor tiene como superadas.
+- js/profe.js: el panel da por superada la pantalla que el servidor tiene apuntada (avisos, «Su trabajo»,
+  insignias) y no cuenta los decimales como suspensos.
+- Avisos: al entrar el alumno, el aviso se rehace con lo que tiene en ese momento. Se quita lo que ya ha
+  superado, entregado o le has subido de nota, y si no le queda nada el aviso ya no sale.
+
+Orden
+1. Apps Script (script.google.com, proyecto de rumboaeuropa@): pega el script entero, cambia CLAVE_PROFE
+   por tu clave, guarda y Gestionar implementaciones → lápiz → Nueva versión → Implementar.
+2. GitHub: sube la carpeta js (3 archivos) a la raíz del repo, sustituyendo.
+Incluye lo de Robótica sin códigos (script). Si aún no subiste robotica-sin-codigos-18nov.zip, sube
+también su js/robotica.js y css/estilo.css.
