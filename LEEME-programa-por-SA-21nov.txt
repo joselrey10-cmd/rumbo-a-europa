@@ -1,0 +1,16 @@
+PROGRAMA ABIERTO POR SITUACIÓN DE APRENDIZAJE (21-nov)
+
+Qué cambia
+- En Programa, cada aventura (Europa Occidental, Europa del Norte, Europa del Este) se puede empezar
+  sin haber terminado la anterior. Dentro de cada aventura, cada pantalla se abre al superar la anterior.
+- Ya no se pide código ni autoevaluación para pasar de una aventura a otra. La autoevaluación se sigue
+  pidiendo al terminar cada aventura (y al entrar en otro rincón si está pendiente).
+- Solo queda el «Código final de progreso» al superar la última pantalla (Belgrado).
+- Robótica, PiniCraft, Scratch y la adaptación curricular no cambian.
+
+Pasos
+1. script.google.com (cuenta rumboaeuropa@) → proyecto de la web → borrar todo el código → pegar
+   registro-google-apps-script.gs (incluye el arreglo del 21-nov de «alumnado sin notas») → Guardar →
+   Implementar → Gestionar implementaciones → lápiz → Versión: Nueva versión → Implementar.
+   (Nunca «Nueva implementación».)
+2. GitHub: subir js/retos-encadenados.js (sustituye al que hay).

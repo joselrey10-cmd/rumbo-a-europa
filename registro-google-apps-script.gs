@@ -5,8 +5,8 @@
 
   Pestañas que crea:
   - "Autoevaluación": lo que cada alumno dice que sabe hacer en Programa, Robótica y en cada reto de Crea (aparte de las notas).
-    Desde el 18-nov es obligatoria: sin la autoevaluación de una aventura de Programa no se abre la siguiente
-    (lo comprueba este script), y la web la pide antes del siguiente reto de Crea o de entrar en otro rincón.
+    Desde el 18-nov es obligatoria; la web la pide al terminar cada aventura de Programa, antes del siguiente reto
+    de Crea o al entrar en otro rincón. Desde el 21-nov cada aventura de Programa se abre sin terminar la anterior.
   - "Alumnado": la lista importada por el profe (con el correo de la familia).
   - "Resultados": una fila cada vez que un alumno termina (o intenta) una actividad.
   - "Valoraciones": una fila por alumno (usuario Educacyl, o nombre + clase) y una columna por actividad
@@ -277,6 +277,22 @@ function importarAlumnado(libro, d) {
   } finally { lock.releaseLock(); }
 }
 
+// 21-nov: el alumno dado de alta (a mano o por CSV) que aún no tiene ninguna nota no salía en «Valoraciones» ni en
+// «Medias por indicador». Ahora se le pone su fila (sin notas) en «Valoraciones»; las medias se rehacen en ordenarTodo.
+function filaValoracionesVacia(libro, alumnado) {
+  const hoja = libro.getSheetByName("Valoraciones") || libro.insertSheet("Valoraciones");
+  if (hoja.getLastRow() === 0) {
+    hoja.appendRow(["Nombre", "Usuario Educacyl", "Clase"]);
+    hoja.setFrozenRows(1); hoja.setFrozenColumns(3);
+    hoja.getRange(1, 1, 1, 3).setFontWeight("bold");
+  }
+  const hay = {};
+  if (hoja.getLastRow() > 1) hoja.getRange(2, 2, hoja.getLastRow() - 1, 1).getValues().forEach((f) => { if (f[0]) hay[minus(f[0])] = 1; });
+  const nuevas = alumnado.filter((f) => f[2] && !hay[minus(f[2])] && ["P5A", "P5B", "P6A", "P6B"].indexOf(normGrupo(f[3])) >= 0)
+    .map((f) => [textoAlumno(f), String(f[2]).trim(), normGrupo(f[3])]);
+  if (nuevas.length) { hoja.getRange(hoja.getLastRow() + 1, 1, nuevas.length, 3).setValues(nuevas); SpreadsheetApp.flush(); }
+}
+
 /* Guarda de forma directa los dos correos familiares de un alumno ya registrado. */
 function guardarCorreosFamilia(libro, d) {
   if (CLAVE_PROFE === "cambia-esta-clave" || String(d.clave || "") !== CLAVE_PROFE)
@@ -523,6 +539,7 @@ function limpiarAlumnado(libro) {
 function ordenarTodo(libro) {
   libro = libro || abrirLibro();
   limpiarAlumnado(libro);
+  filaValoracionesVacia(libro, filasAlumnado(libro));
   ordenarHoja(libro, "Alumnado", 0, 2, 3, 1);
   ordenarHoja(libro, "Valoraciones", 0, 1, 2);
   ordenarHoja(libro, "Autoevaluación", 1, 2, 3);
@@ -1238,17 +1255,25 @@ function gestionarRetoCadena(libro, d) {
     estado.total = total;
     // Robótica (18-nov): ya no hay código entre retos. Si una versión anterior dejó al alumno esperando un código
     // dentro de la modalidad, se le abre el siguiente reto que le toca.
-    if (secuencia.indexOf("robot-") === 0) {
+    // Programa (21-nov): cada aventura (Occidental, Norte, Este) se abre sin terminar la anterior, así que
+    // «desbloqueado» solo marca hasta dónde llegan seguidas sus pantallas superadas.
+    if (secuencia.indexOf("robot-") === 0 || secuencia === "programa") {
       let avanzo = false;
       while (estado.desbloqueado + 1 < total && estado.completados.indexOf(estado.desbloqueado) >= 0) { estado.desbloqueado++; avanzo = true; }
       if (avanzo) { estado.codigos = {}; props.setProperty(clave, JSON.stringify(estado)); }
     }
+    // Programa (21-nov, pedido del profe): cada situación de aprendizaje se puede empezar sin haber superado la
+    // anterior. La primera pantalla de cada aventura está siempre abierta; dentro de la aventura, cada pantalla se
+    // abre al superar la anterior. Ya no hay códigos ni autoevaluación para pasar de una aventura a otra.
+    const abiertaProg = (i) => i % 10 === 0 || i <= estado.desbloqueado || estado.completados.indexOf(i - 1) >= 0;
+    const abiertosProg = () => { const a = []; for (let i = 0; i < total; i++) if (abiertaProg(i)) a.push(i); return a; };
     const op = String(d.op || "estado");
-    if (op === "estado") return json({ ok: true, desbloqueado: estado.desbloqueado, completados: estado.completados });
+    if (op === "estado") return json(Object.assign({ ok: true, desbloqueado: estado.desbloqueado, completados: estado.completados },
+      secuencia === "programa" ? { abiertos: abiertosProg() } : {}));
     const indice = Number(d.indice);
     if (!Number.isInteger(indice) || indice < 0 || indice >= total) return json({ ok: false, error: "Reto no válido." });
     if (op === "completar") {
-      if (indice > estado.desbloqueado) return json({ ok: false, error: "Este reto todavía está bloqueado." });
+      if (secuencia === "programa" ? !abiertaProg(indice) : indice > estado.desbloqueado) return json({ ok: false, error: "Este reto todavía está bloqueado." });
       if (estado.completados.indexOf(indice) < 0) estado.completados.push(indice);
       // La nota representa el mejor resultado demostrado en esta pantalla.
       // Repetir no suma puntos por sí mismo: solo se actualiza si la nueva
@@ -1262,8 +1287,15 @@ function gestionarRetoCadena(libro, d) {
       }
       let codigo = "";
       // Código solo al terminar cada aventura de Programa y cada modalidad de Robótica (Robot, SPIKE Essential, SPIKE Prime).
-      const finAventura = secuencia === "programa" ? [9, 19, 29].includes(indice) : secuencia.indexOf("robot-") === 0 && indice === total - 1;
-      if (indice === estado.desbloqueado) {
+      // Programa (21-nov): solo queda el código final (pantalla 30); entre aventuras ya no hace falta.
+      const finAventura = secuencia === "programa" ? indice === total - 1 : secuencia.indexOf("robot-") === 0 && indice === total - 1;
+      if (secuencia === "programa" && finAventura) {
+        if (!estado.codigos[indice + 1]) estado.codigos[indice + 1] = Utilities.getUuid().replace(/-/g, "").slice(0, 8).toUpperCase();
+        codigo = estado.codigos[indice + 1];
+      }
+      if (secuencia === "programa") {
+        while (estado.desbloqueado + 1 < total && estado.completados.indexOf(estado.desbloqueado) >= 0) estado.desbloqueado++;
+      } else if (indice === estado.desbloqueado) {
         if (finAventura) {
           // Se entrega código de progreso al cerrar cada aventura, incluida la última.
           if (!estado.codigos[indice + 1]) estado.codigos[indice + 1] = Utilities.getUuid().replace(/-/g, "").slice(0, 8).toUpperCase();
@@ -1277,12 +1309,15 @@ function gestionarRetoCadena(libro, d) {
       const claveResumen = secuencia === "programa" ? "programa" : secuencia === "robot-robot" ? "robot" : secuencia === "robot-essential" ? "essential" : secuencia === "robot-prime" ? "prime" : "";
       const resumen = claveResumen ? actualizarResumenRutas(libro, alumno) : null;
       const datoRuta = claveResumen ? resumen[claveResumen] : null;
-      return json({ ok: true, codigo, siguiente: indice + 1 < total ? indice + 1 : null, completado: indice,
+      return json(Object.assign({ ok: true, codigo, siguiente: indice + 1 < total ? indice + 1 : null, completado: indice,
         completados: estado.completados.length, total, nota: datoRuta ? datoRuta.nota : null, maximo: datoRuta ? datoRuta.maximo : null,
-        notaPantalla: estado.notas[indice] == null ? null : estado.notas[indice] });
+        notaPantalla: estado.notas[indice] == null ? null : estado.notas[indice] },
+        secuencia === "programa" ? { abiertos: abiertosProg() } : {}));
     }
     if (op === "desbloquear") {
       if (indice <= estado.desbloqueado) return json({ ok: true, desbloqueado: estado.desbloqueado });
+      if (secuencia === "programa") return abiertaProg(indice) ? json({ ok: true, desbloqueado: estado.desbloqueado })
+        : json({ ok: false, error: "Esta pantalla está bloqueada. Supera primero la pantalla anterior de esta aventura." });
       // La aventura siguiente no se abre sin la autoevaluación de la aventura terminada.
       if (secuencia === "programa" && indice % 10 === 0 && !etapasAutoeval(alumno.usuario)["prog-av" + (indice / 10 - 1)])
         return json({ ok: false, autoeval: "prog-av" + (indice / 10 - 1), error: "Antes de abrir la aventura siguiente, haz tu autoevaluación de la aventura que has terminado." });
