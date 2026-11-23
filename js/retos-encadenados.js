@@ -30,6 +30,17 @@ window.RetosCadena = (function () {
     const estado = await llamar(secuencia, "estado", indice, total);
     if (!estado.ok) { alert(estado.error || "No se ha podido comprobar el progreso."); return false; }
     if (indice <= estado.desbloqueado) return true;
+    // Programa (21-nov): cada aventura (situación de aprendizaje) se empieza sin terminar la anterior; dentro de la
+    // aventura, cada pantalla se abre al superar la anterior. El servidor manda la lista de pantallas abiertas.
+    if (secuencia === "programa" && Array.isArray(estado.abiertos)) {
+      if (estado.abiertos.map(Number).indexOf(indice) >= 0) return true;
+      if (previoHecho && indice > 0) {
+        const r = await completar(secuencia, indice - 1, total);
+        if (r && r.ok && Array.isArray(r.abiertos) && r.abiertos.map(Number).indexOf(indice) >= 0) return true;
+      }
+      alert("Esta pantalla está bloqueada. Supera primero la pantalla anterior de esta aventura.");
+      return false;
+    }
     if (indice !== estado.desbloqueado + 1) { alert("Este reto está bloqueado. Completa primero los retos anteriores."); return false; }
     const cambioAventura = secuencia === "programa" && indice % 10 === 0;
     if (previoHecho && !cambioAventura && indice > 0) {
@@ -63,7 +74,7 @@ window.RetosCadena = (function () {
     ultimoToken = tk; ultimaVez = Date.now();
     await Promise.all(Object.keys(TOTALES).map(async (sec) => {
       const r = await llamar(sec, "estado", 0, TOTALES[sec]);
-      if (r && r.ok) remoto[sec] = { desbloqueado: Number(r.desbloqueado) || 0, completados: (r.completados || []).map(Number) };
+      if (r && r.ok) remoto[sec] = { desbloqueado: Number(r.desbloqueado) || 0, completados: (r.completados || []).map(Number), abiertos: Array.isArray(r.abiertos) ? r.abiertos.map(Number) : null };
     }));
     window.dispatchEvent(new CustomEvent("progreso-remoto"));
   }
@@ -78,10 +89,11 @@ window.RetosCadena = (function () {
       const g = remoto[secuencia] || (remoto[secuencia] = { desbloqueado: 0, completados: [] });
       if (g.completados.indexOf(indice) < 0) g.completados.push(indice);
       if (!r.codigo && r.siguiente != null) g.desbloqueado = Math.max(g.desbloqueado, r.siguiente);
+      if (Array.isArray(r.abiertos)) g.abiertos = r.abiertos.map(Number);
     }
     return r;
   }
   const hecho = (sec, i) => !!(remoto[sec] && remoto[sec].completados.indexOf(i) >= 0);
-  const abierto = (sec, i) => !!(remoto[sec] && i <= remoto[sec].desbloqueado);
+  const abierto = (sec, i) => !!(remoto[sec] && (i <= remoto[sec].desbloqueado || (remoto[sec].abiertos && remoto[sec].abiertos.indexOf(i) >= 0)));
   return { completar: completarYGuardar, entrar, sincronizar, remoto, hecho, abierto };
 })();
