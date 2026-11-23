@@ -48,7 +48,7 @@ window.Profe = (function () {
     // Traen grupo de texto ("pc1", "pc2", "scratch") y nombreGrupo; los de Scratch son «terminables» como Crea.
     if (!ac && typeof window.PROG_EXTRA === "function") (window.PROG_EXTRA(c, a) || []).forEach((x) => L.push(x));
     const R = window.Robotica || {};
-    Object.keys(R.MODOS || {}).filter((k) => !ac || k === "robot").forEach((k) => ((ac && window.RETOS_ROB_AC) || R.RETOS || []).forEach((r, i) => {
+    Object.keys(R.MODOS || {}).filter((k) => !ac || k === "robot" || k === "essential").forEach((k) => ((ac && window.RETOS_ROB_AC) || R.RETOS || []).forEach((r, i) => {
       const cod = (((window.INDICADOR_ROBOTICA || {})[c] || {})[k] || [])[i];
       L.push({ rincon: "rob", titulo: `${R.MODOS[k].nombre} · ${r.titulo}`, destino: `Robótica · ${R.MODOS[k].nombre} · reto ${i + 1}`, ciudad: r.titulo, inds: cod ? [cod] : [], grupo: k, n: i + 1, reto: r.titulo });
     }));
@@ -190,7 +190,7 @@ window.Profe = (function () {
   // Desglose de Robótica por modalidad para que el profesor compare Robot, Essential y Prime.
   function resumenRobotica(a, c) {
     const cat = catalogo(c, a), modos = (window.Robotica && window.Robotica.MODOS) || {};
-    return Object.keys(modos).filter((k) => !esAC(a) || k === "robot").map((k) => {
+    return Object.keys(modos).filter((k) => !esAC(a) || k === "robot" || k === "essential").map((k) => {
       const nombre = modos[k].nombre;
       const retos = cat.filter((x) => x.rincon === "rob" && x.destino.indexOf(`Robótica · ${nombre} ·`) === 0);
       const notas = [];
@@ -798,7 +798,7 @@ window.Profe = (function () {
       return `<h4 class="p-trab-grupo">${esc(av.nombre || "Aventura " + (k + 1))}</h4><div class="p-trab-lista">${L.map(({ n, i }) => tarjetaPrograma(`${i + 1}. ${n.ciudad}`, deProg(n.ciudad), true, srvProg(i))).join("")}</div>`;
     }).join("") + progExtraHTML(a, c, filas, deProg);
     // Robótica: por modalidad y reto.
-    const modos = Object.keys(R.MODOS || {}).filter((k) => !ac || k === "robot"), retos = (ac && window.RETOS_ROB_AC) || R.RETOS || [];
+    const modos = Object.keys(R.MODOS || {}).filter((k) => !ac || k === "robot" || k === "essential"), retos = (ac && window.RETOS_ROB_AC) || R.RETOS || [];
     let supRob = 0;
     const robHTML = modos.map((k) => {
       const nombre = R.MODOS[k].nombre;

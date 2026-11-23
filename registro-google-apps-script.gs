@@ -611,7 +611,7 @@ function indicadoresAuto(curso, mejor, adaptado) {
   const nProg = adaptado ? 10 : 30;
   const tp = reparte(IND_PROG_TODAS[curso].slice(0, nProg), (i) => mejor["Programación|" + PROG_ORDEN[i]]);
   Object.keys(tp).forEach((cod) => { if (tp[cod].hechas) out.prog[cod] = Math.round(tp[cod].s / tp[cod].n); });
-  Object.keys(IND_ROB[curso]).filter((m) => !adaptado || m === "Robot").forEach((m) => {
+  Object.keys(IND_ROB[curso]).filter((m) => !adaptado || m === "Robot" || m === "SPIKE Essential").forEach((m) => {
     const tr = reparte(IND_ROB[curso][m], (i) => mejor["Robótica|" + m + "|" + (i + 1)]);
     Object.keys(tr).forEach((cod) => { if (tr[cod].hechas) { const v = Math.round(tr[cod].s / tr[cod].n); if (!(cod in out.rob) || v > out.rob[cod]) out.rob[cod] = v; } });
   });

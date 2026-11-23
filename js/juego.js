@@ -732,7 +732,10 @@
       const tiene = (pref) => cols.some((k) => k.indexOf(pref) === 0);
       const H = { prog: {}, rob: {} };
       NIVELES.forEach((n, i) => { if (tiene(`Programación · ${i + 1}. ${n.ciudad} · Ind. `)) H.prog[i] = true; });
-      for (let i = 0; i < 10; i++) if (tiene(`Robótica · Robot · reto ${i + 1} · Ind. `)) H.rob["robot-" + i] = true;
+      for (let i = 0; i < 10; i++) {
+        if (tiene(`Robótica · Robot · reto ${i + 1} · Ind. `)) H.rob["robot-" + i] = true;
+        if (tiene(`Robótica · SPIKE Essential · reto ${i + 1} · Ind. `)) H.rob["essential-" + i] = true;
+      }
       window.HOJA_AC = H;
       // Las notas de la hoja también vuelven a «Mis notas» de este ordenador.
       if (window.Valoraciones) window.Valoraciones.filas().filter((x) => x.grupo === "prog" || x.grupo === "rob").forEach((x) => {
