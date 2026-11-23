@@ -207,7 +207,7 @@ footer { padding-block: 28px; color: var(--ink-soft); font-size: 14px; border-to
 .aviso.info { background: #e3ecfd; color: #1d3a8a; }
 
 /* Ventana de resultado */
-.velo { position: fixed; inset: 0; background: rgba(12, 20, 54, .6); display: grid; place-items: center; z-index: 20; padding: 16px; }
+.velo { position: fixed; inset: 0; background: rgba(12, 20, 54, .6); display: grid; place-items: center; z-index: 200; padding: 16px; }
 .ventana {
   background: #fff; border-radius: 20px; max-width: 440px; width: 100%; padding: 26px 24px; text-align: center;
   box-shadow: 0 20px 60px rgba(0,0,0,.3); position: relative; overflow: hidden;
