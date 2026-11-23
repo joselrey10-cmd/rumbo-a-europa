@@ -705,7 +705,8 @@
 
   async function victoria(prog) {
     const cadena = !AC && window.RetosCadena ? await window.RetosCadena.completar(`robot-${modo}`, retoI, RETOS.length) : null;
-    const val = valorar(true, prog, cadena && cadena.ok && Number.isFinite(cadena.nota) ? cadena.nota : null);
+    // El indicador lleva la nota del reto (3 a 5), como en Programa; el reparto proporcional va en «Valoración de …».
+    const val = valorar(true, prog, cadena && cadena.ok && Number.isFinite(cadena.notaPantalla) ? cadena.notaPantalla : null);
     enviarResultado(prog, val);
     hechos[modo] = hechos[modo] || {}; hechos[modo][retoI] = true; guardar();
     const sig = retoI + 1 < RETOS.length;
