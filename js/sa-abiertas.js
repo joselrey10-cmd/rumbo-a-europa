@@ -14,17 +14,13 @@ window.EXTRATIC_ABIERTO = false;
 
 /* ---------- A qué SA pertenece cada cosa (normalmente no hace falta tocarlo) ---------- */
 window.SA_DE = {
-  // Programa: aventuras de los países, en orden (Occidental = SA1, Norte = SA2 S3, Este = SA2 S4).
-  programa: [1, 2, 2],
+  // Programa: las 3 aventuras de los países (Occidental, Norte, Este) son de la SA1 (lo dijo el profe el 24-nov).
+  programa: [1, 1, 1],
   // PiniCraft (5.º, 2.º trimestre): Aventurero y El viaje del héroe.
   pinicraft: [2, 2],
-  // Robótica: SA de cada uno de los 10 retos, según el indicador que evalúa (programaciones de 5.º y 6.º).
-  //  5.º: 3.2.3 = SA1, 3.2.6 = SA2, 3.2.9 = SA3 (SPIKE Prime no está en 5.º hasta la SA3).
-  //  6.º: los tres robots se usan ya en la SA1 (S5 SPIKE Prime, S6 robot ratón / Essential / Prime).
-  robotica: {
-    "5º": { robot: [1, 1, 1, 1, 2, 2, 2, 2, 2, 2], essential: [1, 1, 3, 3, 3, 3, 3, 3, 3, 3], prime: [3, 3, 3, 3, 3, 3, 3, 3, 3, 3] },
-    "6º": { robot: [1, 1, 1, 1, 1, 1, 1, 1, 1, 1], essential: [1, 1, 1, 1, 1, 1, 1, 1, 1, 1], prime: [1, 1, 1, 1, 1, 1, 1, 1, 1, 1] }
-  }
+  // Robótica: las 3 modalidades (Robot, SPIKE Essential, SPIKE Prime) son de la SA1 en 5.º y 6.º (profe, 24-nov).
+  // Si algún reto fuera de otra SA, pon aquí su número, p. ej. "5º": { prime: [1, 1, 2, 2, ...] }.
+  robotica: {}
 };
 
 window.SA = (function () {
