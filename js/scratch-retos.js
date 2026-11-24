@@ -102,7 +102,8 @@
   }
   const hoja = {};   // retos terminados según la hoja
   const terminado = (r) => !!((mio()[r.id] || {}).fin || hoja[r.id]);
-  const abierto = (k) => k === 0 || terminado(RETOS[k]) || terminado(RETOS[k - 1]);
+  const saAbierta = (k) => !window.SA || window.SA.abierta(RETOS[k].sda);   // js/sa-abiertas.js
+  const abierto = (k) => saAbierta(k) && (k === 0 || terminado(RETOS[k]) || terminado(RETOS[k - 1]));
 
   // «Mis notas», Excel e insignias: un apartado por reto, con sus indicadores (las notas las pone el profe).
   if (V() && V().añadirActividades) V().añadirActividades("prog", () => esSexto() ? [].concat(...RETOS.map((r) => codigos(r).map((cod) => ({
@@ -144,7 +145,7 @@
     L.innerHTML = `<div class="aventura sc-aventura"><div class="aventura-cab"><span class="etiqueta">Retos Scratch</span><h3>Agencia EuroRuta</h3><p>Programa en <b>Pinicratch</b> (o en scratch.mit.edu), guarda con Archivo → Guardar en tu ordenador y súbelo a OneDrive (carpeta TIAC / Scratch EuroRuta). Las rutas se suman: para la intermedia, haz antes la sencilla; para la avanzada, la intermedia.</p><span class="aventura-cuenta">${RETOS.filter(terminado).length} / ${RETOS.length}</span></div>
       <div class="destinos sc-retos">${RETOS.map((r, k) => {
         const ok = abierto(k), fin = terminado(r), ruta = (mio()[r.id] || {}).ruta || (typeof hoja[r.id] === "string" ? hoja[r.id] : "");
-        return `<button class="destino sc-reto" data-id="${r.id}" ${ok ? "" : "disabled"}><span class="num">${esc(r.id)} · ${esc(r.tri)}</span><span class="sc-ico" aria-hidden="true">${["🔤", "🧭", "🎤", "🎵", "🧳", "✈️"][k]}</span><strong>${esc(r.titulo)}</strong><span class="pais">${esc(r.sda)}</span><span class="ind-mini">Ind. ${esc(codigos(r).join(" · "))}</span><span class="estrellas">${!ok ? "Bloqueado" : fin ? `<b>✓ Terminado${ruta && ruta !== true ? " · " + esc(ruta) : ""}</b>` : "Por hacer"}</span></button>`;
+        return `<button class="destino sc-reto" data-id="${r.id}" ${ok ? "" : "disabled"}><span class="num">${esc(r.id)} · ${esc(r.tri)}</span><span class="sc-ico" aria-hidden="true">${["🔤", "🧭", "🎤", "🎵", "🧳", "✈️"][k]}</span><strong>${esc(r.titulo)}</strong><span class="pais">${esc(r.sda)}</span><span class="ind-mini">Ind. ${esc(codigos(r).join(" · "))}</span><span class="estrellas">${!saAbierta(k) ? "🔒 " + esc(window.SA.etiqueta(r.sda)) : !ok ? "Bloqueado" : fin ? `<b>✓ Terminado${ruta && ruta !== true ? " · " + esc(ruta) : ""}</b>` : "Por hacer"}</span></button>`;
       }).join("")}</div></div>`;
     L.querySelectorAll(".sc-reto").forEach((b) => (b.onclick = () => { location.hash = "programa-scratch-" + b.dataset.id; }));
   }
@@ -224,7 +225,7 @@
     const k = RETOS.findIndex((x) => x.id === m[1]);
     if (!esSexto() || !alumno().nombre) { location.replace("#programa"); return; }
     await recuperarHoja();
-    if (!abierto(k)) { alert("Este reto está bloqueado: termina antes el anterior."); location.replace("#programa"); return; }
+    if (!abierto(k)) { alert(!saAbierta(k) ? window.SA.aviso(RETOS[k].sda) : "Este reto está bloqueado: termina antes el anterior."); location.replace("#programa"); return; }
     // Antes de abrir un reto nuevo, la autoevaluación del anterior tiene que estar hecha.
     if (k > 0 && !terminado(RETOS[k]) && window.Autoeval && window.Autoeval.asegurar) {
       let ok = true; try { ok = await window.Autoeval.asegurar(etapa(RETOS[k - 1])); } catch (e) {}

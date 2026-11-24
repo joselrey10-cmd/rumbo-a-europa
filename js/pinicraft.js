@@ -47,7 +47,7 @@
     let g = {}; try { g = (JSON.parse(localStorage.getItem("rumbo-a-europa-v1") || "{}") || {}).estrellas || {}; } catch (e) {}
     return N.length > 0 && N.every((_, i) => g[i] || (RC && RC.hecho && RC.hecho("programa", i)));
   }
-  const aventuraAbierta = (ai) => ai === 0 ? (!ABRIR_TRAS_PAISES || paisesHechos()) : todasHechas(ai - 1);
+  const aventuraAbierta = (ai) => (!window.SA || window.SA.pinicraft(ai)) && (ai === 0 ? (!ABRIR_TRAS_PAISES || paisesHechos()) : todasHechas(ai - 1));
   const abierta = (ai, i) => aventuraAbierta(ai) && (i === 0 || hecho(ai, i) || hecho(ai, i - 1));
   const destino = (ai, i) => `Programación · ${AVS[ai].nombre.replace(/^PiniCraft: /, "")} ${i + 1}. ${AVS[ai].niveles[i].lugar}`.slice(0, 60);
   const actividad = (ai, i) => `${AVS[ai].nombre} · ${AVS[ai].niveles[i].lugar}`;
@@ -501,7 +501,7 @@
           <span class="estrellas">${!ok ? "Bloqueado" : est ? "<b>" + "★".repeat(est) + "</b>" + "★".repeat(3 - est) : hecho(a, i) ? "<b>✓ Hecha</b>" : "★★★"}</span>
         </button>`;
       }).join("");
-      return `<div class="aventura pc-aventura"><div class="aventura-cab"><span class="etiqueta">Aventura ${4 + a}</span><h3>${esc(av.nombre)}</h3><p>${esc(av.resumen)}${!abiertaAv ? (a === 0 ? " · Se abre al terminar las aventuras de los países." : " · Se abre al superar las 10 pantallas de PiniCraft Aventurero.") : ""}</p><span class="aventura-cuenta">${hechas} / ${av.niveles.length}</span></div><div class="destinos">${tarjetas}</div></div>`;
+      return `<div class="aventura pc-aventura"><div class="aventura-cab"><span class="etiqueta">Aventura ${4 + a}</span><h3>${esc(av.nombre)}</h3><p>${esc(av.resumen)}${window.SA && !window.SA.pinicraft(a) ? " · " + esc(window.SA.aviso((window.SA_DE.pinicraft || [])[a])) : !abiertaAv ? (a === 0 ? " · Se abre al terminar las aventuras de los países." : " · Se abre al superar las 10 pantallas de PiniCraft Aventurero.") : ""}</p><span class="aventura-cuenta">${hechas} / ${av.niveles.length}</span></div><div class="destinos">${tarjetas}</div></div>`;
     }).join("");
     L.querySelectorAll(".pc-destino").forEach((b) => (b.onclick = () => { location.hash = `programa-pinicraft-${+b.dataset.a + 1}-${+b.dataset.i + 1}`; }));
   }

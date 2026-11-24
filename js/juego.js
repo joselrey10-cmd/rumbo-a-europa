@@ -45,7 +45,9 @@
   const hechoAC = (i) => !!(AC && window.HOJA_AC && window.HOJA_AC.prog[i]);
   const hecho = (i) => !!progreso[EST][i] || hechoEnHoja(i) || hechoAC(i);
   const completados = () => NIVELES.filter((_, i) => hecho(i)).length;
-  const desbloqueadoNivel = (i) => NIVELES[i].pos === 0 || hecho(i) || hecho(i - 1) || !!(RC() && RC().abierto("programa", i));
+  // SA cerrada (js/sa-abiertas.js): sus pantallas no se abren aunque estén hechas.
+  const saAbierta = (i) => !window.SA || window.SA.programa(NIVELES[i].aventura);
+  const desbloqueadoNivel = (i) => saAbierta(i) && (NIVELES[i].pos === 0 || hecho(i) || hecho(i - 1) || !!(RC() && RC().abierto("programa", i)));
   const desbloqueadoPers = (p) => completados() >= (p.desbloquea || 0);
   function personajeActual() {
     const p = PERSONAJES.find((x) => x.id === progreso.personaje);
@@ -203,7 +205,7 @@
         ${hecho(i) ? `<span class="sello-hecho">${SELLO_HECHO(n.ciudad.toUpperCase().slice(0, 9))}</span>` : ""}
       </button>`;
       }).join("");
-      return `<div class="aventura"><div class="aventura-cab"><span class="etiqueta">Aventura ${ai + 1}</span><h3>${av.nombre}</h3><p>${av.resumen}</p><span class="aventura-cuenta">${hechas} / ${av.niveles.length}</span></div><div class="destinos">${tarjetas}</div></div>`;
+      return `<div class="aventura"><div class="aventura-cab"><span class="etiqueta">Aventura ${ai + 1}</span><h3>${av.nombre}</h3><p>${av.resumen}</p><span class="aventura-cuenta">${hechas} / ${av.niveles.length}</span>${window.SA && !window.SA.programa(ai) ? `<p class="aviso-bloq">${window.SA.aviso((window.SA_DE.programa || [])[ai])}</p>` : ""}</div><div class="destinos">${tarjetas}</div></div>`;
     }).join("");
     $("#lista-destinos").querySelectorAll(".destino").forEach((b) => {
       b.onclick = () => irANivel(+b.dataset.i);

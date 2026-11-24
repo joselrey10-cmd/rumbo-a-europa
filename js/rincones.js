@@ -188,6 +188,10 @@ window.Rincones = (function () {
   }
   function tarjetaCreaAC(a, i) {
     const x = a.ac, lista = crea(), h = V().leer()[claveHecho(a)] || {};
+    if (window.SA && !window.SA.abierta(a.sa) && !hecho(a)) {
+      return `<article class="reto-r bloqueado ac-reto" data-tipo="crea" data-i="${i}"><div class="reto-r-cab"><span class="ses">${a.sa} · ${a.s}</span><h3>🔒 ${esc(x.facil)}</h3></div>
+        <p class="aviso-bloq">${esc(window.SA.aviso(a.sa))}</p></article>`;
+    }
     if (i > 0 && !hecho(a) && !hecho(lista[i - 1])) {
       return `<article class="reto-r bloqueado ac-reto" data-tipo="crea" data-i="${i}"><div class="reto-r-cab"><span class="ses">${a.sa} · ${a.s}</span><h3>🔒 ${esc(x.facil)}</h3></div>
         <p class="aviso-bloq">Primero termina: <b>${esc(lista[i - 1].ac ? lista[i - 1].ac.facil : lista[i - 1].titulo)}</b>.</p></article>`;
@@ -221,6 +225,7 @@ window.Rincones = (function () {
   // Qué falta para abrir el reto i (o "" si está abierto).
   function bloqueoCrea(i) {
     const lista = crea(), a = lista[i], prev = lista[i - 1];
+    if (window.SA && !window.SA.abierta(a.sa) && !hecho(a)) return esc(window.SA.aviso(a.sa));   // SA cerrada (js/sa-abiertas.js)
     if (i === 0 || hecho(a) || (V().leer()[claveAbierto(a)] || {}).abierto) return "";
     if (!hecho(prev)) return `Se abre cuando termines el reto anterior: <b>${esc(prev.titulo)}</b>.`;
     if (!Autoeval.hecha(Autoeval.etapaCrea(prev).etapa))
@@ -272,11 +277,23 @@ window.Rincones = (function () {
     return { error: "La llave no corresponde a esta actividad." };
   }
   const enviada = (p) => indPiensa(p).every(([cod]) => valorDe(clavePiensa(p, cod)) !== null);
+  // Parada cerrada porque su SA no está abierta (js/sa-abiertas.js). Si ya mandó la llave, se ve como hecha.
+  const sesPiensa = (p) => (cursoN() === "6" ? p.sa6 : p.sa5) || "";
+  const piensaCerrada = (p) => !!window.SA && !window.SA.piensa(sesPiensa(p));
+  const avisoPiensa = (p) => /extra/i.test(sesPiensa(p)) ? "🔒 Actividad ExtraTIC: tu profe la abrirá más adelante." : window.SA.aviso(sesPiensa(p));
+  function tarjetaPiensaCerrada(p, i, ac) {
+    return `<article class="reto-r bloqueado${ac ? " ac-reto" : ""}" data-i="${i}">
+          <div class="reto-r-cab"><span class="ses">Parada ${i + 1} · ${esc(sesPiensa(p))}</span><h3>🔒 ${esc(ac && window.PIENSA_AC[p.slug] && window.PIENSA_AC[p.slug].titulo || p.titulo)}</h3></div>
+          ${enviada(p) ? `<p class="hecho-ok">✓ Llave enviada a tu profe</p>` : ""}
+          <p class="aviso-bloq">${esc(avisoPiensa(p))}</p>
+        </article>`;
+  }
   function pintarPiensa() {
     const r = RINCONES[3], L = llaves();
     if (window.ADAPTADO && window.PIENSA_AC) return pintarPiensaAC(r, L);
     raiz.innerHTML = cabecera(r, "Piensa · Pasaporte TIC", `Diez paradas de ciudadanía digital. Abre la actividad, termínala y vuelve aquí: la llave se rellena sola (o pégala). Pulsa «Enviar mi llave» y tu profe verá tu resultado.`) +
       `<div class="envoltura seccion"><div class="retos-r">${(window.PIENSA || []).map((p, i) => {
+        if (piensaCerrada(p)) return tarjetaPiensaCerrada(p, i, false);
         const g = L[p.pre], auto = g ? leerLlave(g.llave, p) : {};
         return `<article class="reto-r" data-tipo="piensa" data-i="${i}">
           <div class="reto-r-cab"><span class="ses">Parada ${i + 1} · ${esc((cursoN() === "6" ? p.sa6 : p.sa5) || "")}</span><h3>${esc(p.titulo)}</h3></div>
@@ -296,6 +313,7 @@ window.Rincones = (function () {
     raiz.innerHTML = cabecera(r, "Piensa", `${esc(intro)} <button type="button" class="leer mini" data-leer="${esc(intro)}" aria-label="Escuchar">🔊</button>`) +
       `<div class="envoltura seccion"><div class="retos-r ac-piensa">${(window.PIENSA || []).map((p, i) => {
         const A = window.PIENSA_AC[p.slug]; if (!A) return "";
+        if (piensaCerrada(p)) return tarjetaPiensaCerrada(p, i, true);
         const g = L[p.pre], hecha = enviada(p);
         return `<article class="reto-r ac-reto" data-tipo="piensa" data-i="${i}">
           <div class="reto-r-cab"><span class="ses">${i + 1}</span><h3><span aria-hidden="true">${A.juego[0][0]}</span> ${esc(p.titulo)}</h3></div>

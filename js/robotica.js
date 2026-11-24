@@ -736,12 +736,13 @@
       return `<div class="modo" style="--modo:${m.color}">
         <div class="modo-cab"><h3>${m.nombre}</h3><span>${m.sub}</span></div>
         <p>${m.texto}</p>
-        <ol class="retos">${RETOS.map((r, i) => `<li><a href="#robotica-${k}-${i + 1}" class="${hecho(k, i) ? "ok" : ""}"><b>${i + 1}</b>${r.titulo}${hecho(k, i) ? " ✓" : ""}${indicadorReto(k, i) ? `<span class="ind-mini">Ind. ${indicadorReto(k, i).codigo}</span>` : ""}</a></li>`).join("")}</ol>
+        <ol class="retos">${RETOS.map((r, i) => window.SA && !window.SA.robotica(k, i) ? `<li><span class="rb-cerrado" title="${window.SA.aviso(window.SA.saRobotica(k, i))}"><b>${i + 1}</b>🔒 ${r.titulo}${hecho(k, i) ? " ✓" : ""}<span class="ind-mini">SA${window.SA.saRobotica(k, i)}</span></span></li>` : `<li><a href="#robotica-${k}-${i + 1}" class="${hecho(k, i) ? "ok" : ""}"><b>${i + 1}</b>${r.titulo}${hecho(k, i) ? " ✓" : ""}${indicadorReto(k, i) ? `<span class="ind-mini">Ind. ${indicadorReto(k, i).codigo}</span>` : ""}</a></li>`).join("")}</ol>
         <small>${n} de ${RETOS.length} retos</small></div>`;
     }).join("");
   }
 
   async function abrirReto(m, i) {
+    if (window.SA && !window.SA.robotica(m, i)) { alert(window.SA.aviso(window.SA.saRobotica(m, i))); location.hash = "robotica"; return; }
     if (!AC && window.RetosCadena && !(await window.RetosCadena.entrar(`robot-${m}`, i, RETOS.length))) { location.hash = "robotica"; return; }
     // Para empezar otra modalidad hay que autoevaluar antes las modalidades terminadas.
     if (!AC && i === 0 && window.Autoeval && !(await window.Autoeval.revisar((x) => x.id === "rob" && x.modo !== m))) { location.hash = "robotica"; return; }
