@@ -9,8 +9,8 @@
   y en el panel; solo se cierra la entrada a las pantallas y retos de las SA cerradas.
 */
 window.SA_ABIERTAS = ["SA1"];
-// Actividades «ExtraTIC» de Piensa (no están en la programación de ese curso): true = abiertas.
-window.EXTRATIC_ABIERTO = false;
+// Actividades «ExtraTIC» de Piensa: abiertas todo el curso (lo pidió el profe el 24-nov). false = cerradas.
+window.EXTRATIC_ABIERTO = true;
 
 /* ---------- A qué SA pertenece cada cosa (normalmente no hace falta tocarlo) ---------- */
 window.SA_DE = {
