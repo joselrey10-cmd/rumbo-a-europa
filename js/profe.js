@@ -701,7 +701,22 @@ window.Profe = (function () {
       const n = inds.map((cod) => a.notas[columna(x.destino, cod)]).filter((v) => v !== undefined);
       if (n.length === inds.length && n.reduce((s, v) => s + v, 0) / n.length >= 2.5) o.ganadas++;
     });
-    Object.keys(aventuras).forEach((k) => { const g = aventuras[k]; g.o.total++; if (g.items.every(supera)) g.o.ganadas++; });
+    // Programa y Robótica (24-nov): todas sus pantallas o retos con nota y media de 2,5 o más (como Piensa).
+    // Nota con decimales (6ºB, 10-nov) o superada en el servidor sin nota → cuenta 3.
+    const notaIns = (x) => {
+      const v = x.inds[0] ? a.notas[columna(x.destino, x.inds[0])] : undefined;
+      const nv = v === undefined || v === null || v === "" ? NaN : Number(v);
+      if (Number.isFinite(nv)) return nv % 1 !== 0 ? 3 : nv;
+      const rs = x.rincon === "prog" ? filas.filter((r) => r.act.indexOf("Programación") === 0 && (r.reto === x.ciudad || r.act.replace(/^Programación · \d+\. /, "") === x.ciudad)) : filas.filter((r) => r.act === x.destino);
+      const vs = rs.filter(sinProfe).map((r) => r.val).filter((n) => typeof n === "number");
+      if (vs.length) return Math.max(...vs);
+      return supera(x) ? 3 : null;
+    };
+    Object.keys(aventuras).forEach((k) => {
+      const g = aventuras[k]; g.o.total++;
+      const n = g.items.map(notaIns);
+      if (n.every((v) => v !== null) && n.reduce((s, v) => s + v, 0) / n.length >= 2.5) g.o.ganadas++;
+    });
     return out;
   }
   /* Indicadores automáticos de Programa y Robótica (lo mismo que hace el script al preparar «Notas para el Excel»):
@@ -842,7 +857,7 @@ window.Profe = (function () {
         ${caja(ri("rob"), `${supRob}/${modos.length * retos.length}`, "retos superados" + insTxt("rob"))}
         ${caja(ri("piensa"), `${nPiensa}/${(window.PIENSA || []).length}`, "llaves enviadas" + insTxt("piensa"))}
       </div>
-      <p class="intro">🏅 ${ganIns} de ${totIns} insignias, según las notas de la hoja (Programa: una por aventura y Robótica: una por modalidad, al superar todas sus pantallas o retos; Crea: al terminar el reto y hacer su autoevaluación; Piensa: todos sus indicadores con nota y media de 2,5 o más). Pulsa una pantalla o un reto para ver su programa y todos sus envíos.
+      <p class="intro">🏅 ${ganIns} de ${totIns} insignias, según las notas de la hoja (Programa: una por aventura y Robótica: una por modalidad, con todas sus pantallas o retos hechos y media de 2,5 o más; Crea: al terminar el reto y hacer su autoevaluación; Piensa: todos sus indicadores con nota y media de 2,5 o más). Pulsa una pantalla o un reto para ver su programa y todos sus envíos.
         <button type="button" class="btn sec" id="p-trab-recargar">Recargar su trabajo</button></p>
       ${!filas.length ? `<p class="estado">Todavía no hay nada suyo en la hoja.</p>` : ""}
       ${autoIndHTML(a, c, filas)}

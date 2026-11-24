@@ -503,6 +503,15 @@ window.Rincones = (function () {
   /* Una pantalla de Programa o un reto de Robótica cuenta como superado si el servidor lo tiene completado
      (progreso guardado en la hoja), si tiene nota 3 o más, o si tiene una nota con decimales: así se guardaban
      las pantallas del 10-nov en 6ºB (0,29; 0,59…) y por eso no les salía la insignia aunque las habían pasado. */
+  /* Nota de una pantalla o reto para la insignia (24-nov, pedido del profe: media de 2,5 como en Piensa).
+     Nota entera → esa nota. Nota con decimales (reparto del 10-nov en 6ºB) o superada en el servidor sin nota aquí → 3.
+     Sin nota y sin superar → null (falta por hacer). */
+  function notaInsignia(f, r) {
+    const n = r && typeof r.nota === "number" ? r.nota : null;
+    if (n !== null && n === Math.round(n)) return n;
+    if (n !== null && n > 0) return 3;
+    return superada(f, r) ? 3 : null;
+  }
   function superada(f, r) {
     const RC = window.RetosCadena, m = /^prog-(\d+)$/.exec(f.clave) || /^rob-(\w+)-(\d+)$/.exec(f.clave);
     if (RC && RC.hecho && m) { if (m.length === 2 ? RC.hecho("programa", +m[1]) : RC.hecho("robot-" + m[1], +m[2])) return true; }
@@ -521,7 +530,7 @@ window.Rincones = (function () {
       if (!mapa.has(k)) mapa.set(k, { grupo: f.grupo, destino: porAventura ? String(f.destino) : f.destino, actividad: porAventura ? (f.grupo === "prog" ? "Aventura " + nomAv : "Robótica · " + nomAv) : (f.actividad || f.destino), aventura: porAventura, notas: [], total: 0, registradas: 0, superadas: 0 });
       const g = mapa.get(k), r = registros[f.clave];
       g.total++;
-      if (porAventura) { if (superada(f, r)) g.superadas++; return; }
+      if (porAventura) { if (superada(f, r)) g.superadas++; const v = notaInsignia(f, r); if (v !== null) { g.notas.push(v); g.registradas++; } return; }
       if (r && typeof r.nota === "number") { g.notas.push(r.nota); g.registradas++; }
       // Crea: el alumno no tiene nota propia (la pone el profe); la insignia se gana al terminar el reto.
       else if (f.grupo === "crea" && r && r.hecho) { g.registradas++; g.hechoCrea = true; }
@@ -530,7 +539,8 @@ window.Rincones = (function () {
     const resultado = Array.from(mapa.values()).map((g) => {
       const media = g.notas.length ? g.notas.reduce((x,y)=>x+y,0)/g.notas.length : 0;
       const completa = g.total > 0 && g.registradas === g.total;
-      if (g.aventura) return Object.assign(g, { media: 5, completa: g.superadas === g.total, ganada: g.total > 0 && g.superadas === g.total });
+      // Programa (por aventura) y Robótica (por modalidad): todas las pantallas o retos con nota y media de 2,5 o más.
+      if (g.aventura) return Object.assign(g, { media: Math.round(media*10)/10, completa, ganada: completa && media >= 2.5 });
       // Crea: la insignia se gana al marcar el reto como terminado y hacer su autoevaluación.
       if (g.hechoCrea) {
         const ca = crea().find((x) => destinoCrea(x) === g.destino);
@@ -557,8 +567,8 @@ window.Rincones = (function () {
         return `<h2 class="sa-tit">${grupoNombre[id]}</h2><div class="insignias-grid">${items.map(x=>`
           <article class="insignia ${x.ganada?"ganada":"pendiente"}">
             <div class="insignia-sello">${x.ganada?"🏅":"🔒"}</div>
-            <h3>${esc(x.actividad)}</h3><p>${x.aventura?`${x.superadas} de ${x.total} ${x.grupo==="prog"?"pantallas superadas":"retos superados"}`:x.crea?(x.faltaAuto?"Reto terminado · falta tu autoevaluación":"Reto terminado y autoevaluado"):x.completa?`Media: ${x.media.toFixed(1)} / 5`:x.grupo==="crea"?"Termina el reto para conseguirla":"Pendiente de completar las valoraciones"}</p>
-            <span>${x.ganada?"¡Insignia conseguida!":x.aventura?`Supera ${x.grupo==="prog"?"todas las pantallas de la aventura":"todos los retos de esta modalidad"}`:x.faltaAuto?"Haz la autoevaluación del reto en Crea":x.completa?"Necesitas una media de 2,5":"Aún no conseguida"}</span>
+            <h3>${esc(x.actividad)}</h3><p>${x.aventura?`${x.registradas} de ${x.total} ${x.grupo==="prog"?"pantallas hechas":"retos hechos"}${x.registradas?` · media ${x.media.toFixed(1).replace(".", ",")} / 5`:""}`:x.crea?(x.faltaAuto?"Reto terminado · falta tu autoevaluación":"Reto terminado y autoevaluado"):x.completa?`Media: ${x.media.toFixed(1)} / 5`:x.grupo==="crea"?"Termina el reto para conseguirla":"Pendiente de completar las valoraciones"}</p>
+            <span>${x.ganada?"¡Insignia conseguida!":x.aventura?(x.completa?"Necesitas una media de 2,5":`Haz ${x.grupo==="prog"?"todas las pantallas de la aventura":"todos los retos de esta modalidad"} con una media de 2,5`):x.faltaAuto?"Haz la autoevaluación del reto en Crea":x.completa?"Necesitas una media de 2,5":"Aún no conseguida"}</span>
           </article>`).join("")}</div>`;
       }).join("")}
       <div class="pasaporte-final ${todas?"desbloqueado":"bloqueado"}">
@@ -576,7 +586,7 @@ window.Rincones = (function () {
     w.document.write(`<!doctype html><html lang="es"><head><meta charset="utf-8"><title>Pasaporte Rumbo a Europa</title>
     <style>body{font-family:Arial,sans-serif;color:#173b62;margin:25px}.pas{border:8px double #b78a36;border-radius:18px;padding:28px;text-align:center;min-height:850px}h1{font-size:34px;margin:12px}h2{color:#b78a36}.nombre{font-size:24px;border-bottom:1px solid #aaa;padding:14px}.sellos{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin:28px 0}.sello{border:2px solid #b78a36;border-radius:14px;padding:16px;min-height:90px}.emoji{font-size:32px}.pie{margin-top:40px}@media print{button{display:none}}</style></head><body>
     <main class="pas"><h2>CEIP TIERRA DE PINARES</h2><h1>🌍 PASAPORTE</h1><h2>RUMBO A EUROPA</h2><p class="nombre">${esc(a.nombre||"")} · ${esc(a.clase||"")}</p>
-    <h2>Mis insignias de aprendizaje</h2><div class="sellos">${lista.map(x=>`<div class="sello"><div class="emoji">🏅</div><b>${esc(x.actividad)}</b><p>${x.aventura?(x.grupo==="prog"?"Aventura completada":"Modalidad completada"):x.crea?"Reto terminado":`Media ${x.media.toFixed(1)} / 5`}</p></div>`).join("")}</div>
+    <h2>Mis insignias de aprendizaje</h2><div class="sellos">${lista.map(x=>`<div class="sello"><div class="emoji">🏅</div><b>${esc(x.actividad)}</b><p>${x.aventura?`Media ${x.media.toFixed(1)} / 5`:x.crea?"Reto terminado":`Media ${x.media.toFixed(1)} / 5`}</p></div>`).join("")}</div>
     <h2>¡MISIÓN CUMPLIDA!</h2><p>Explorador/a digital de Europa</p><p class="pie">Fecha: ${new Date().toLocaleDateString("es-ES")}</p></main><script>window.onload=()=>window.print();</script></body></html>`);
     w.document.close();
   }
