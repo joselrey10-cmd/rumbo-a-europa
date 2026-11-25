@@ -63,7 +63,7 @@
   window.PROG_EXTRA = function (c, a) {
     const L = extraAnterior ? extraAnterior(c, a) || [] : [];
     if (c !== "5º" || (a && a.adaptado === true)) return L;
-    AVS.forEach((av, ai) => av.niveles.forEach((n, i) => L.push({ rincon: "prog", titulo: `${av.nombre.replace(/^PiniCraft: /, "")} ${i + 1}. ${n.lugar}`, destino: destino(ai, i), ciudad: n.lugar, inds: [indicadorDe(ai)], grupo: av.id, nombreGrupo: av.nombre })));
+    AVS.forEach((av, ai) => av.niveles.forEach((n, i) => L.push({ rincon: "prog", titulo: `${av.nombre.replace(/^PiniCraft: /, "")} ${i + 1}. ${n.lugar}`, destino: destino(ai, i), ciudad: n.lugar, inds: [indicadorDe(ai)], grupo: av.id, nombreGrupo: av.nombre, sa: "SA" + (((window.SA_DE || {}).pinicraft || [])[ai] || 2) })));
     return L;
   };
 

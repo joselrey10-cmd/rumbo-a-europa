@@ -114,7 +114,7 @@
   window.PROG_EXTRA = function (c, a) {
     const L = extraAnterior ? extraAnterior(c, a) || [] : [];
     if (c !== "6º" || (a && a.adaptado === true)) return L;
-    RETOS.forEach((r) => L.push({ rincon: "prog", titulo: `Scratch ${r.id} · ${r.titulo}`, destino: destino(r), ciudad: r.titulo, inds: codigos(r), grupo: "scratch", nombreGrupo: "Retos Scratch", terminable: true }));
+    RETOS.forEach((r) => L.push({ rincon: "prog", titulo: `Scratch ${r.id} · ${r.titulo}`, destino: destino(r), ciudad: r.titulo, inds: codigos(r), grupo: "scratch", nombreGrupo: "Retos Scratch", terminable: true, sa: r.sda }));
     return L;
   };
 
